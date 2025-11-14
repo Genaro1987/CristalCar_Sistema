@@ -1,0 +1,31 @@
+name: Backend - Criar tabela teste (Turso)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  create-test-table:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    env:
+      TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+      TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar dependências do backend
+        run: npm install
+
+      - name: Criar tabela teste no Turso
+        run: node src/criar-tabela-teste.mjs
