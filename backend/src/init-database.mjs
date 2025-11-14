@@ -1,0 +1,101 @@
+// backend/src/init-database.mjs
+import { turso } from "./db.mjs";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+async function initDatabase() {
+  try {
+    console.log("🚀 Iniciando criação do banco de dados...\n");
+
+    // Ler o arquivo schema.sql
+    const schemaPath = path.join(__dirname, "schema.sql");
+    const schema = fs.readFileSync(schemaPath, "utf8");
+
+    // Dividir o schema em comandos individuais
+    const commands = schema
+      .split(";")
+      .map((cmd) => cmd.trim())
+      .filter((cmd) => cmd.length > 0 && !cmd.startsWith("--"));
+
+    console.log(`📝 Total de comandos SQL a executar: ${commands.length}\n`);
+
+    // Executar cada comando
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (let i = 0; i < commands.length; i++) {
+      const command = commands[i] + ";";
+
+      try {
+        // Extrair nome da tabela/índice/view/trigger para log
+        const match =
+          command.match(
+            /CREATE\s+(TABLE|INDEX|VIEW|TRIGGER)\s+IF\s+NOT\s+EXISTS\s+(\w+)/i
+          ) || command.match(/CREATE\s+(TABLE|INDEX|VIEW|TRIGGER)\s+(\w+)/i);
+
+        const objectType = match ? match[1] : "OBJECT";
+        const objectName = match ? match[2] : `comando_${i + 1}`;
+
+        await turso.execute(command);
+        console.log(`✅ ${objectType}: ${objectName}`);
+        successCount++;
+      } catch (error) {
+        console.error(`❌ Erro no comando ${i + 1}:`, error.message);
+        errorCount++;
+      }
+    }
+
+    console.log("\n" + "=".repeat(60));
+    console.log(`✅ Comandos executados com sucesso: ${successCount}`);
+    console.log(`❌ Comandos com erro: ${errorCount}`);
+    console.log("=".repeat(60) + "\n");
+
+    // Verificar tabelas criadas
+    const result = await turso.execute(`
+      SELECT name, type
+      FROM sqlite_master
+      WHERE type IN ('table', 'view')
+      AND name NOT LIKE 'sqlite_%'
+      ORDER BY type, name
+    `);
+
+    console.log("📊 Estrutura do banco criada:\n");
+    console.log("TABELAS:");
+    result.rows
+      .filter((row) => row.type === "table")
+      .forEach((row) => {
+        console.log(`  - ${row.name}`);
+      });
+
+    console.log("\nVIEWS:");
+    result.rows
+      .filter((row) => row.type === "view")
+      .forEach((row) => {
+        console.log(`  - ${row.name}`);
+      });
+
+    console.log("\n✅ Banco de dados inicializado com sucesso!");
+  } catch (error) {
+    console.error("❌ Erro ao inicializar banco de dados:", error);
+    throw error;
+  }
+}
+
+// Executar se chamado diretamente
+if (import.meta.url === `file://${process.argv[1]}`) {
+  initDatabase()
+    .then(() => {
+      console.log("\n🎉 Processo concluído!");
+      process.exit(0);
+    })
+    .catch((error) => {
+      console.error("\n💥 Processo finalizado com erro:", error);
+      process.exit(1);
+    });
+}
+
+export { initDatabase };

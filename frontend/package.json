@@ -9,8 +9,16 @@
   },
   "dependencies": {
     "@libsql/client": "^0.15.0",
+    "bcryptjs": "^2.4.3",
     "next": "14.2.4",
     "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "react-dom": "18.2.0",
+    "recharts": "^2.12.0",
+    "date-fns": "^3.0.0"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.4.0"
   }
 }

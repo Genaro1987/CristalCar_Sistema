@@ -4,9 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test:db": "node src/test-db.mjs"
+    "test:db": "node src/test-db.mjs",
+    "db:init": "node src/init-database.mjs",
+    "db:seed": "node src/seed-database.mjs",
+    "db:setup": "node src/init-database.mjs && node src/seed-database.mjs"
   },
   "dependencies": {
-    "@libsql/client": "^0.15.0"
+    "@libsql/client": "^0.15.0",
+    "bcryptjs": "^2.4.3"
   }
 }
