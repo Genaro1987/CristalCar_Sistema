@@ -1,0 +1,12 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:db": "node src/test-db.mjs"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.15.0"
+  }
+}
