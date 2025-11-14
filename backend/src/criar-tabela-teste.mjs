@@ -2,7 +2,6 @@
 import { turso } from "./db.mjs";
 
 async function main() {
-  // 1) Criar tabela se não existir
   const createSql = `
     CREATE TABLE IF NOT EXISTS teste_turso (
       id INTEGER PRIMARY KEY,
@@ -14,7 +13,6 @@ async function main() {
   await turso.execute(createSql);
   console.log("✅ Tabela teste_turso criada (ou já existia).");
 
-  // 2) Inserir um registro de teste
   const now = new Date().toISOString();
   await turso.execute({
     sql: "INSERT INTO teste_turso (descricao) VALUES (?)",
@@ -22,7 +20,6 @@ async function main() {
   });
   console.log("✅ Registro de teste inserido em teste_turso.");
 
-  // 3) Consultar quantidade de registros
   const res = await turso.execute("SELECT COUNT(*) as total FROM teste_turso;");
   console.log("📊 Total de registros na tabela teste_turso:", res.rows[0].total);
 }
