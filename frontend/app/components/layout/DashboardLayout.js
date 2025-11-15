@@ -31,7 +31,7 @@ export default function DashboardLayout({ children, screenCode = '', onShowHelp 
       <Sidebar />
 
       {/* Main Content */}
-      <div className="ml-64">
+      <div className="ml-80">
         {/* Header */}
         <Header
           screenCode={screenCode}
