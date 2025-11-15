@@ -4,8 +4,6 @@ import { useState, useEffect } from 'react';
 import DashboardLayout from '@/app/components/layout/DashboardLayout';
 import Card from '@/app/components/ui/Card';
 import Button from '@/app/components/ui/Button';
-import HelpButton from '@/app/components/ui/HelpButton';
-import { helpContents } from '@/app/utils/helpContent';
 
 export default function LayoutsImportacaoPage() {
   const [layouts, setLayouts] = useState([]);
@@ -232,16 +230,13 @@ export default function LayoutsImportacaoPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Buscar Layout
                   </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Nome ou descrição do layout..."
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                    <HelpButton helpContent={helpContents['ADM-003']} />
-                  </div>
+                  <input
+                    type="text"
+                    placeholder="Nome ou descrição do layout..."
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
                 </div>
 
                 {/* Filtro de Tipo */}
