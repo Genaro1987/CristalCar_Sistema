@@ -1,12 +1,12 @@
-// backend/src/test-db.mjs
-import { pingTurso } from "./db.mjs";
+// backend/test-db.mjs
+import { testConnection } from "./db.mjs";
 
 async function main() {
   try {
-    const row = await pingTurso();
-    console.log("✅ Conexão com Turso OK:", row);
+    await testConnection();
+    console.log("🏁 Teste de conexão finalizado com sucesso.");
   } catch (err) {
-    console.error("❌ Erro ao conectar no Turso:", err);
+    console.error("❌ Erro ao testar conexão:", err);
     process.exit(1);
   }
 }
