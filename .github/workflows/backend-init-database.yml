@@ -1,10 +1,10 @@
-name: Backend - Criar tabela teste (Turso)
+name: Backend - Inicializar Banco de Dados (Turso)
 
 on:
   workflow_dispatch:
 
 jobs:
-  create-test-table:
+  init-database:
     runs-on: ubuntu-latest
 
     defaults:
@@ -27,5 +27,5 @@ jobs:
       - name: Instalar dependências do backend
         run: npm install
 
-      - name: Criar tabela teste no Turso
-        run: node src/criar-tabela-teste.mjs
+      - name: Inicializar banco de dados completo
+        run: npm run init:db

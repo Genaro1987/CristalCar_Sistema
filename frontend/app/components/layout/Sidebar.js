@@ -14,6 +14,7 @@ export default function Sidebar() {
       name: 'Início',
       icon: '🏠',
       href: '/dashboard',
+      code: 'HOME-001',
       submenu: []
     },
     {
@@ -24,45 +25,50 @@ export default function Sidebar() {
         {
           id: 'administrativo',
           name: 'Administrativo',
+          icon: '⚙️',
           submenu: [
-            { name: 'Cadastro da Empresa', href: '/modules/administrativo/empresa' },
-            { name: 'Funcionários', href: '/modules/administrativo/funcionarios' },
-            { name: 'Layouts de Importação', href: '/modules/administrativo/layouts' },
-            { name: 'Configuração de Backup', href: '/modules/administrativo/backup' },
-            { name: 'Registro de Log', href: '/modules/administrativo/logs' },
+            { name: 'Cadastro da Empresa', href: '/modules/administrativo/empresa', code: 'ADM-001' },
+            { name: 'Funcionários', href: '/modules/administrativo/funcionarios', code: 'ADM-002' },
+            { name: 'Layouts de Importação', href: '/modules/administrativo/layouts', code: 'ADM-003' },
+            { name: 'Configuração de Backup', href: '/modules/administrativo/backup', code: 'ADM-004' },
+            { name: 'Registro de Log', href: '/modules/administrativo/logs', code: 'ADM-005' },
           ]
         },
         {
           id: 'modelos-plano',
           name: 'Modelos de Plano',
+          icon: '📊',
           submenu: [
-            { name: 'Plano de Contas', href: '/modules/modelos-plano/plano-contas' },
-            { name: 'Estrutura DRE', href: '/modules/modelos-plano/estrutura-dre' },
+            { name: 'Plano de Contas', href: '/modules/modelos-plano/plano-contas', code: 'FIN-001' },
+            { name: 'Estrutura DRE', href: '/modules/modelos-plano/estrutura-dre', code: 'FIN-002' },
           ]
         },
         {
           id: 'financeiro',
           name: 'Financeiro',
+          icon: '💰',
           submenu: [
-            { name: 'Formas de Pagamento', href: '/modules/financeiro/formas-pagamento' },
-            { name: 'Condições de Pagamento', href: '/modules/financeiro/condicoes-pagamento' },
-            { name: 'Cadastro de Bancos', href: '/modules/financeiro/bancos' },
-            { name: 'Regras de Conciliação', href: '/modules/financeiro/regras-conciliacao' },
+            { name: 'Formas de Pagamento', href: '/modules/financeiro/formas-pagamento', code: 'FIN-010' },
+            { name: 'Condições de Pagamento', href: '/modules/financeiro/condicoes-pagamento', code: 'FIN-011' },
+            { name: 'Cadastro de Bancos', href: '/modules/financeiro/bancos', code: 'FIN-012' },
+            { name: 'Regras de Conciliação', href: '/modules/financeiro/regras-conciliacao', code: 'FIN-013' },
           ]
         },
         {
           id: 'parceiros',
           name: 'Parceiros',
+          icon: '👥',
           submenu: [
-            { name: 'Cadastro de Parceiros', href: '/modules/parceiros/cadastro' },
+            { name: 'Cadastro de Parceiros', href: '/modules/parceiros/cadastro', code: 'PAR-001' },
           ]
         },
         {
           id: 'tabelas',
-          name: 'Cadastro de Tabelas',
+          name: 'Tabelas de Preços',
+          icon: '📋',
           submenu: [
-            { name: 'Tabelas de Preços', href: '/modules/tabelas-precos/cadastro' },
-            { name: 'Histórico de Alterações', href: '/modules/tabelas-precos/historico' },
+            { name: 'Tabelas de Preços', href: '/modules/tabelas-precos/cadastro', code: 'TAB-001' },
+            { name: 'Histórico de Alterações', href: '/modules/tabelas-precos/historico', code: 'TAB-002' },
           ]
         },
       ]
@@ -97,7 +103,7 @@ export default function Sidebar() {
         <ul className="space-y-2">
           {menuItems.map((item) => (
             <li key={item.id}>
-              {/* Item Principal */}
+              {/* Item Principal - Nível 1 */}
               {item.submenu.length === 0 ? (
                 <Link
                   href={item.href}
@@ -108,7 +114,7 @@ export default function Sidebar() {
                   }`}
                 >
                   <span className="text-xl">{item.icon}</span>
-                  <span className="font-medium">{item.name}</span>
+                  <span className="font-medium text-base">{item.name}</span>
                 </Link>
               ) : (
                 <>
@@ -118,7 +124,7 @@ export default function Sidebar() {
                   >
                     <div className="flex items-center space-x-3">
                       <span className="text-xl">{item.icon}</span>
-                      <span className="font-medium">{item.name}</span>
+                      <span className="font-medium text-base">{item.name}</span>
                     </div>
                     <svg
                       className={`w-4 h-4 transition-transform duration-200 ${
@@ -132,15 +138,18 @@ export default function Sidebar() {
                     </svg>
                   </button>
 
-                  {/* Submenu Nível 1 */}
+                  {/* Submenu Nível 2 */}
                   {expandedModule === item.id && (
-                    <ul className="mt-2 ml-4 space-y-1">
+                    <ul className="mt-2 ml-3 space-y-1 border-l-2 border-secondary-700 pl-2">
                       {item.submenu.map((subitem) => (
                         <li key={subitem.id}>
                           <details className="group">
-                            <summary className="cursor-pointer list-none px-4 py-2 rounded-lg text-sm text-secondary-400 hover:bg-secondary-700 hover:text-white transition-all duration-200">
+                            <summary className="cursor-pointer list-none px-3 py-2.5 rounded-lg text-sm font-medium text-secondary-300 hover:bg-secondary-700 hover:text-white transition-all duration-200">
                               <div className="flex items-center justify-between">
-                                <span>▸ {subitem.name}</span>
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-base">{subitem.icon}</span>
+                                  <span>{subitem.name}</span>
+                                </div>
                                 <svg
                                   className="w-3 h-3 transition-transform group-open:rotate-90"
                                   fill="none"
@@ -152,19 +161,23 @@ export default function Sidebar() {
                               </div>
                             </summary>
 
-                            {/* Submenu Nível 2 */}
-                            <ul className="mt-1 ml-4 space-y-1">
+                            {/* Submenu Nível 3 */}
+                            <ul className="mt-1 ml-2 space-y-0.5 border-l-2 border-secondary-700/50 pl-3">
                               {subitem.submenu.map((subsubitem, idx) => (
                                 <li key={idx}>
                                   <Link
                                     href={subsubitem.href}
-                                    className={`block px-4 py-2 rounded-lg text-sm transition-all duration-200 ${
+                                    className={`group flex items-center justify-between px-3 py-2 rounded-lg text-xs transition-all duration-200 ${
                                       isActive(subsubitem.href)
-                                        ? 'bg-primary-500 text-white font-medium'
+                                        ? 'bg-primary-500 text-white font-semibold shadow-md'
                                         : 'text-secondary-400 hover:bg-secondary-700 hover:text-white'
                                     }`}
+                                    title={`Código: ${subsubitem.code}`}
                                   >
-                                    • {subsubitem.name}
+                                    <span className="flex-1">• {subsubitem.name}</span>
+                                    <span className="text-[10px] opacity-60 group-hover:opacity-100">
+                                      {subsubitem.code}
+                                    </span>
                                   </Link>
                                 </li>
                               ))}

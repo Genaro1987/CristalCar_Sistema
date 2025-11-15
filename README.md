@@ -29,53 +29,42 @@ CristalCar_Sistema/
 
 ## 📊 Módulos do Sistema
 
-### 1. **Módulo Administrativo** (Prefixo: `adm_`)
-- ✅ Cadastro de Funcionários
-- ✅ Cadastro de Usuários
-- ✅ Controle de Permissões por Módulo
-- ✅ Log de Acessos
-- 🔄 Sistema de Autenticação (estrutura pronta, desativado temporariamente)
+### 01.01 - **Administrativo** (Prefixo: `adm_`)
+- ✅ Cadastro da Empresa (com upload de logo)
+- ✅ Cadastro de Funcionários (controle de admissão/demissão, horários)
+- ✅ Cadastro de Usuários com Permissões Detalhadas
+- 🔄 Layouts de Importação (estrutura pronta)
+- 🔄 Configuração de Backup (Google Drive)
+- ✅ Registro de Log por Tela
 
-### 2. **Módulo Financeiro** (Prefixo: `fin_`)
-- ✅ Plano de Contas (até 9 níveis)
-- ✅ Estrutura do DRE
-- ✅ Cadastro de Bancos
+### 01.02 - **Modelos de Plano** (Prefixo: `fin_`)
+- ✅ Plano de Contas em Árvore (até 9 níveis hierárquicos)
+- ✅ Estrutura do DRE Customizável
+- ✅ Vinculação DRE x Plano de Contas
+
+### 01.03 - **Financeiro** (Prefixo: `fin_`)
 - ✅ Formas de Pagamento
+- ✅ Condições de Pagamento (parcelamento)
+- ✅ Cadastro de Bancos
+- ✅ Regras de Conciliação Bancária (De-Para automático)
 - ✅ Centro de Custo
 
-### 3. **Movimentação Financeira** (Prefixo: `mov_`)
+### 01.04 - **Parceiros** (Prefixo: `par_`)
+- ✅ Cadastro Unificado (Clientes/Fornecedores/Ambos)
+- ✅ Múltiplos Contatos por Parceiro
+- ✅ Dados Bancários e PIX
+
+### 01.05 - **Tabelas de Preços** (Prefixo: `tab_`)
+- ✅ Tabelas de Compra/Venda
+- ✅ Vigência e Exclusividade
+- ✅ Política de Descontos
+- ✅ Histórico de Alterações
+
+### **Movimentação Financeira** (Prefixo: `mov_`)
 - ✅ Registro de Entradas e Saídas
 - ✅ Conciliação Bancária
 - ✅ Controle de Saldo
-
-### 4. **Faturamento** (Prefixo: `fat_`)
-- ✅ Cadastro de Clientes
-- ✅ Notas Fiscais de Venda
-- ✅ Contas a Receber
-- ✅ Controle de Recebimentos
-
-### 5. **Compras** (Prefixo: `com_`)
-- ✅ Cadastro de Fornecedores
-- ✅ Notas Fiscais de Compra
-- ✅ Contas a Pagar
-- ✅ Controle de Pagamentos
-
-### 6. **Importação** (Prefixo: `imp_`)
-- ✅ Importação de XML (Vendas/Compras)
-- ✅ Log de Importações
-- 🔄 Importação via E-mail (em desenvolvimento)
-- 🔄 Importação via API SEFAZ (em desenvolvimento)
-
-### 7. **Objetivos e Metas** (Prefixo: `obj_`)
-- ✅ Objetivos Trimestrais
-- ✅ Metas Semanais
-- ✅ Acompanhamento Meta x Realizado
-
-### 8. **Relatórios**
-- ✅ DRE (Demonstrativo de Resultado)
-- ✅ Fluxo de Caixa (Realizado/Projetado/Consolidado)
-- ✅ Visões Personalizadas
-- 🔄 Exportação para Excel/PDF (em desenvolvimento)
+- ✅ Origem rastreável (Manual, XML, API)
 
 ## 🚀 Tecnologias Utilizadas
 
@@ -114,14 +103,21 @@ TURSO_AUTH_TOKEN=your-auth-token
 ### 3. Inicializar Banco de Dados
 
 ```bash
-# Criar todas as tabelas
-npm run db:init
+# Criar todas as tabelas e inserir dados iniciais
+npm run init:db
+```
 
-# Popular com dados iniciais
-npm run db:seed
+Este comando irá:
+- ✅ Criar todas as tabelas do sistema (37 tabelas + views + triggers)
+- ✅ Inserir dados da empresa Cristal Car
+- ✅ Criar usuário administrador (admin/admin123)
+- ✅ Criar plano de contas básico
+- ✅ Cadastrar formas e condições de pagamento padrão
+- ✅ Listar todas as tabelas criadas
 
-# Ou executar os dois comandos
-npm run db:setup
+**Verificar conexão:**
+```bash
+npm run test:db
 ```
 
 ### 4. Configurar Frontend
@@ -147,18 +143,28 @@ Acesse: `http://localhost:3000`
 
 ## 🔑 Acesso ao Sistema
 
-**IMPORTANTE**: Nesta versão inicial, o sistema **não requer login**. A página inicial redireciona automaticamente para o dashboard.
+Após executar `npm run init:db`, você pode acessar o sistema:
 
-A estrutura completa de autenticação já está implementada no banco de dados e nas APIs, pronta para ser ativada no futuro:
-- Tabelas de usuários, permissões e logs
-- API de login com bcrypt
-- Controle de acesso por módulo
-- Sistema de tentativas de login
+**URL:** `http://localhost:3000`
 
-Para ativar a autenticação futuramente:
-1. Descomentar a verificação de login em `/app/page.js`
-2. Descomentar a verificação de autenticação em `/app/dashboard/page.js`
-3. Executar o seed do banco: `npm run db:seed` (cria usuário admin/admin123)
+**Credenciais Padrão:**
+- **Usuário:** admin
+- **Senha:** admin123
+
+⚠️ **IMPORTANTE:** Altere a senha padrão após o primeiro acesso!
+
+### Sistema de Autenticação
+
+A estrutura completa de autenticação está implementada:
+- ✅ Tabelas de usuários, permissões detalhadas e logs
+- ✅ API de login com bcrypt
+- ✅ Controle de acesso por tela/função
+- ✅ Sistema de bloqueio após tentativas falhas
+- 🔄 Login desativado temporariamente (acesso direto ao dashboard)
+
+Para ativar o login:
+1. Descomentar verificação em `/app/page.js`
+2. Descomentar verificação em `/app/dashboard/page.js`
 
 ## 📋 Estrutura do Banco de Dados
 
@@ -166,15 +172,32 @@ Para ativar a autenticação futuramente:
 
 | Prefixo | Módulo | Quantidade de Tabelas |
 |---------|--------|----------------------|
-| `adm_` | Administrativo | 4 tabelas |
-| `fin_` | Financeiro | 7 tabelas |
-| `mov_` | Movimentação | 2 tabelas |
-| `fat_` | Faturamento | 4 tabelas |
-| `com_` | Compras | 4 tabelas |
-| `imp_` | Importação | 2 tabelas |
-| `obj_` | Objetivos | 2 tabelas |
+| `adm_` | Administrativo | 9 tabelas |
+| `fin_` | Financeiro | 12 tabelas |
+| `mov_` | Movimentação | 1 tabela |
+| `par_` | Parceiros | 2 tabelas |
+| `tab_` | Tabelas de Preços | 2 tabelas |
 
-**Total**: 25 tabelas + 4 views + triggers automáticos
+**Total**: 26 tabelas + 3 views + triggers automáticos
+
+### Detalhamento das Tabelas
+
+**Administrativo:**
+- adm_empresa, adm_funcionarios, adm_usuarios, adm_permissoes
+- adm_layouts_importacao, adm_configuracao_backup, adm_historico_backup
+- adm_configuracao_log, adm_log_acoes
+
+**Financeiro:**
+- fin_plano_contas, fin_estrutura_dre, fin_dre_plano_contas
+- fin_formas_pagamento, fin_condicoes_pagamento, fin_condicoes_pagamento_parcelas
+- fin_bancos, fin_tipos_registro_conciliacao, fin_regras_conciliacao
+- fin_centro_custo
+
+**Parceiros:**
+- par_parceiros (cadastro unificado), par_contatos
+
+**Tabelas de Preços:**
+- tab_tabelas_precos, tab_tabelas_historico
 
 ### Características do Plano de Contas
 

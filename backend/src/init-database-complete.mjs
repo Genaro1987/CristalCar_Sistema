@@ -1,6 +1,7 @@
 // backend/src/init-database-complete.mjs
 // Inicializa o banco de dados completo do CristalCar
 
+import { createClient } from '@libsql/client';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -15,31 +16,11 @@ if (!TURSO_DATABASE_URL || !TURSO_AUTH_TOKEN) {
   process.exit(1);
 }
 
-// Converte libsql:// para https://
-const baseUrl = TURSO_DATABASE_URL.replace(/^libsql:\/\//, 'https://');
-
-async function executarSQL(sql) {
-  const response = await fetch(`${baseUrl}/v2/pipeline`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${TURSO_AUTH_TOKEN}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      requests: [
-        { type: 'execute', stmt: { sql } },
-        { type: 'close' }
-      ]
-    }),
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`HTTP ${response.status}: ${text}`);
-  }
-
-  return response.json();
-}
+// Criar cliente Turso
+const db = createClient({
+  url: TURSO_DATABASE_URL,
+  authToken: TURSO_AUTH_TOKEN
+});
 
 async function main() {
   console.log('🚀 Iniciando criação do banco de dados CristalCar...\n');
@@ -60,6 +41,7 @@ async function main() {
     // Executar cada statement
     let sucessos = 0;
     let erros = 0;
+    const errosDetalhes = [];
 
     for (let i = 0; i < statements.length; i++) {
       const stmt = statements[i];
@@ -71,12 +53,14 @@ async function main() {
 
       try {
         process.stdout.write(`  [${i + 1}/${statements.length}] ${tipo} ${nome}...`);
-        await executarSQL(stmt + ';');
+        await db.execute(stmt);
         console.log(' ✅');
         sucessos++;
       } catch (error) {
         console.log(' ❌');
-        console.error(`     Erro: ${error.message}`);
+        const errorMsg = error.message || String(error);
+        console.error(`     Erro: ${errorMsg}`);
+        errosDetalhes.push({ tipo, nome, erro: errorMsg, sql: stmt.substring(0, 100) });
         erros++;
       }
     }
@@ -84,6 +68,14 @@ async function main() {
     console.log('\n' + '='.repeat(70));
     console.log(`✅ Concluído: ${sucessos} sucessos, ${erros} erros`);
     console.log('='.repeat(70));
+
+    if (errosDetalhes.length > 0) {
+      console.log('\n⚠️  Detalhes dos erros:');
+      errosDetalhes.forEach((err, idx) => {
+        console.log(`\n${idx + 1}. ${err.tipo} ${err.nome}`);
+        console.log(`   Erro: ${err.erro}`);
+      });
+    }
 
     if (erros === 0) {
       console.log('\n🎉 Banco de dados CristalCar criado com sucesso!\n');
@@ -94,9 +86,37 @@ async function main() {
       console.log('\n⚠️  Banco criado com alguns erros. Verifique os logs acima.\n');
     }
 
+    // Listar tabelas criadas
+    await listarTabelas();
+
   } catch (error) {
     console.error('\n❌ Erro fatal:', error);
     process.exit(1);
+  }
+}
+
+async function listarTabelas() {
+  console.log('\n📊 Listando tabelas criadas no banco de dados:\n');
+
+  try {
+    const result = await db.execute(`
+      SELECT name FROM sqlite_master
+      WHERE type='table'
+      AND name NOT LIKE 'sqlite_%'
+      AND name NOT LIKE '_litestream_%'
+      ORDER BY name
+    `);
+
+    if (result.rows && result.rows.length > 0) {
+      result.rows.forEach((row, idx) => {
+        console.log(`  ${idx + 1}. ${row.name}`);
+      });
+      console.log(`\n  Total: ${result.rows.length} tabelas criadas`);
+    } else {
+      console.log('  ⚠️  Nenhuma tabela encontrada');
+    }
+  } catch (error) {
+    console.error('  ❌ Erro ao listar tabelas:', error.message);
   }
 }
 
@@ -105,7 +125,7 @@ async function inserirDadosIniciais() {
 
   try {
     // 1. Dados da Empresa (se não existir)
-    await executarSQL(`
+    await db.execute(`
       INSERT OR IGNORE INTO adm_empresa (
         id, razao_social, nome_fantasia, cnpj, telefone, email, cidade, estado
       ) VALUES (
@@ -123,7 +143,7 @@ async function inserirDadosIniciais() {
 
     // 2. Usuário Administrador Padrão
     // Senha: admin123 (hash bcrypt)
-    await executarSQL(`
+    await db.execute(`
       INSERT OR IGNORE INTO adm_usuarios (
         id, codigo_unico, username, senha_hash, email, nome_completo, perfil, status
       ) VALUES (
@@ -166,7 +186,7 @@ async function inserirDadosIniciais() {
 
       const tipoGasto = conta.tipo_gasto ? `'${conta.tipo_gasto}'` : 'NULL';
 
-      await executarSQL(`
+      await db.execute(`
         INSERT OR IGNORE INTO fin_plano_contas (
           codigo_conta, descricao, tipo, nivel, conta_pai_id, aceita_lancamento, tipo_gasto, compoe_dre, status
         ) VALUES (
@@ -195,7 +215,7 @@ async function inserirDadosIniciais() {
     ];
 
     for (const fp of formasPagamento) {
-      await executarSQL(`
+      await db.execute(`
         INSERT OR IGNORE INTO fin_formas_pagamento (
           codigo, descricao, tipo, dias_recebimento, status
         ) VALUES (
@@ -218,7 +238,7 @@ async function inserirDadosIniciais() {
     ];
 
     for (const cp of condicoesPagamento) {
-      await executarSQL(`
+      await db.execute(`
         INSERT OR IGNORE INTO fin_condicoes_pagamento (
           codigo, descricao, tipo, quantidade_parcelas, dias_primeira_parcela, dias_entre_parcelas, status
         ) VALUES (
@@ -235,7 +255,7 @@ async function inserirDadosIniciais() {
     console.log(`  ✅ Condições de pagamento criadas (${condicoesPagamento.length} condições)`);
 
     // 6. Centro de Custo Padrão
-    await executarSQL(`
+    await db.execute(`
       INSERT OR IGNORE INTO fin_centro_custo (
         codigo, descricao, status
       ) VALUES (
@@ -256,7 +276,7 @@ async function inserirDadosIniciais() {
     ];
 
     for (const mod of modulos) {
-      await executarSQL(`
+      await db.execute(`
         INSERT OR IGNORE INTO adm_configuracao_log (
           modulo, tela, registrar_log, registrar_inclusao, registrar_edicao, registrar_exclusao
         ) VALUES (
@@ -271,7 +291,8 @@ async function inserirDadosIniciais() {
     console.log('\n✅ Dados iniciais inseridos com sucesso!\n');
 
   } catch (error) {
-    console.error('❌ Erro ao inserir dados iniciais:', error);
+    console.error('❌ Erro ao inserir dados iniciais:', error.message);
+    throw error;
   }
 }
 
