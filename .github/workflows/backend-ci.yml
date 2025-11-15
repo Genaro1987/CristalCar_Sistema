@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'backend/**'
-      - '.github/workflows/backend-ci.yml'
+      - "backend/**"
+      - ".github/workflows/backend-ci-turso.yml"
 
 jobs:
   test-db:
@@ -27,9 +27,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: "npm"
+          cache-dependency-path: "backend/package-lock.json"
 
       - name: Instalar dependências do backend
         run: npm install
 
       - name: Testar conexão com Turso
-        run: npm run test:db
+        run: node test-db.mjs
+
+      - name: Criar tabela de teste no Turso
+        run: node criar-tabela-teste.mjs
