@@ -5,6 +5,7 @@
   "scripts": {
     "test:db": "node src/test-db.mjs",
     "init:db": "node src/init-database.mjs",
+    "init:db:simple": "node src/init-database-simple.mjs",
     "init:db:complete": "node src/init-database-complete.mjs",
     "init:db:old": "node src/criar-tabela-teste.mjs"
   },
