@@ -5,7 +5,6 @@ async function main() {
   try {
     console.log("📊 Criando tabela de teste (teste_ci)...");
 
-    // Cria a tabela se não existir
     await db.execute(`
       CREATE TABLE IF NOT EXISTS teste_ci (
         id INTEGER PRIMARY KEY,
@@ -16,7 +15,6 @@ async function main() {
 
     console.log("✅ Tabela teste_ci criada (ou já existia).");
 
-    // Insere um registro de exemplo para validar
     const descricao = "Registro criado via GitHub Actions";
 
     await db.execute({
