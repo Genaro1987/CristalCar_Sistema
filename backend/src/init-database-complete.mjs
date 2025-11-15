@@ -81,21 +81,47 @@ async function main() {
 
     console.log(`📋 Encontrados ${statements.length} statements SQL\n`);
 
-    // Executar cada statement
+    // Separar statements por tipo para executar na ordem correta
+    const tabelas = [];
+    const indices = [];
+    const views = [];
+    const triggers = [];
+    const outros = [];
+
+    for (const stmt of statements) {
+      const upperStmt = stmt.trim().toUpperCase();
+      if (upperStmt.startsWith('CREATE TABLE')) {
+        tabelas.push(stmt);
+      } else if (upperStmt.startsWith('CREATE INDEX') || upperStmt.startsWith('CREATE UNIQUE INDEX')) {
+        indices.push(stmt);
+      } else if (upperStmt.startsWith('CREATE VIEW')) {
+        views.push(stmt);
+      } else if (upperStmt.startsWith('CREATE TRIGGER')) {
+        triggers.push(stmt);
+      } else {
+        outros.push(stmt);
+      }
+    }
+
+    console.log(`   📊 ${tabelas.length} tabelas, ${indices.length} índices, ${views.length} views, ${triggers.length} triggers\n`);
+
+    // Executar na ordem: tabelas -> índices -> views -> triggers
+    const orderedStatements = [...tabelas, ...indices, ...views, ...triggers, ...outros];
+
     let sucessos = 0;
     let erros = 0;
     const errosDetalhes = [];
 
-    for (let i = 0; i < statements.length; i++) {
-      const stmt = statements[i];
+    for (let i = 0; i < orderedStatements.length; i++) {
+      const stmt = orderedStatements[i];
 
       // Extrair o tipo de comando (CREATE TABLE, CREATE INDEX, etc)
-      const match = stmt.match(/^(CREATE\s+(?:TABLE|INDEX|VIEW|TRIGGER))\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)/i);
-      const tipo = match ? match[1] : 'SQL';
+      const match = stmt.match(/^(CREATE\s+(?:UNIQUE\s+)?(?:TABLE|INDEX|VIEW|TRIGGER))\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)/i);
+      const tipo = match ? match[1].replace(/\s+/g, ' ') : 'SQL';
       const nome = match ? match[2] : `Statement ${i + 1}`;
 
       try {
-        process.stdout.write(`  [${i + 1}/${statements.length}] ${tipo} ${nome}...`);
+        process.stdout.write(`  [${i + 1}/${orderedStatements.length}] ${tipo} ${nome}...`);
         await db.execute(stmt);
         console.log(' ✅');
         sucessos++;
