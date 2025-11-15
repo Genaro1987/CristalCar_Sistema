@@ -54,29 +54,44 @@ export default function ConfiguracaoBackupPage() {
     loadHistorico();
   }, []);
 
-  const loadConfig = () => {
-    // Banco de dados vazio - configuração padrão sem backups executados
-    setConfig({
-      id: null,
-      ativo: false,
-      tipo_backup: 'LOCAL',
-      google_drive_folder_id: '',
-      frequencia: 'DIARIA',
-      hora_execucao: '02:00',
-      dia_semana: 0,
-      dia_mes: 1,
-      manter_ultimos: 30,
-      email_notificacao: '',
-      notificar_sucesso: false,
-      notificar_erro: true,
-      ultimo_backup: null,
-      proximo_backup: null
-    });
+  const loadConfig = async () => {
+    try {
+      const response = await fetch('/api/backup/config');
+      if (response.ok) {
+        const data = await response.json();
+        setConfig({
+          id: data.id,
+          ativo: data.backup_automatico === 1,
+          tipo_backup: data.tipo_backup || 'LOCAL',
+          diretorio_local: data.diretorio_local || '',
+          google_drive_folder_id: data.google_drive_folder_id || '',
+          frequencia: data.frequencia || 'DIARIA',
+          hora_execucao: data.horario_execucao || '02:00',
+          dia_semana: data.dia_semana || 0,
+          dia_mes: data.dia_mes || 1,
+          manter_ultimos: data.quantidade_manter || 30,
+          email_notificacao: '',
+          notificar_sucesso: false,
+          notificar_erro: true,
+          ultimo_backup: data.ultimo_backup,
+          proximo_backup: data.proximo_backup
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao carregar configuração:', error);
+    }
   };
 
-  const loadHistorico = () => {
-    // Banco de dados vazio - nenhum backup executado
-    setHistorico([]);
+  const loadHistorico = async () => {
+    try {
+      const response = await fetch('/api/backup/historico');
+      if (response.ok) {
+        const data = await response.json();
+        setHistorico(data);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar histórico:', error);
+    }
   };
 
   const handleInputChange = (e) => {
@@ -93,8 +108,8 @@ export default function ConfiguracaoBackupPage() {
 
     // Validações
     if (config.ativo) {
-      if (!config.email_notificacao) {
-        alert('Informe um e-mail para notificações');
+      if (config.tipo_backup === 'LOCAL' && !config.diretorio_local) {
+        alert('Informe o diretório local para backup');
         setIsSaving(false);
         return;
       }
@@ -106,12 +121,36 @@ export default function ConfiguracaoBackupPage() {
       }
     }
 
-    // Simular salvamento
-    setTimeout(() => {
+    try {
+      const response = await fetch('/api/backup/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tipo_backup: config.tipo_backup,
+          diretorio_local: config.diretorio_local,
+          google_drive_folder_id: config.google_drive_folder_id,
+          frequencia: config.frequencia,
+          horario_execucao: config.hora_execucao,
+          dia_semana: config.dia_semana,
+          dia_mes: config.dia_mes,
+          quantidade_manter: config.manter_ultimos,
+          backup_automatico: config.ativo
+        })
+      });
+
+      if (response.ok) {
+        await loadConfig();
+        setIsEditing(false);
+        alert('Configuração salva com sucesso!');
+      } else {
+        alert('Erro ao salvar configuração');
+      }
+    } catch (error) {
+      console.error('Erro ao salvar:', error);
+      alert('Erro ao salvar configuração');
+    } finally {
       setIsSaving(false);
-      setIsEditing(false);
-      alert('Configuração salva com sucesso!');
-    }, 500);
+    }
   };
 
   const handleExecutarBackup = () => {
