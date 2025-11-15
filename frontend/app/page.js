@@ -7,13 +7,9 @@ export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Verificar se usuário está logado
-    const user = localStorage.getItem("user");
-    if (user) {
-      router.push("/dashboard");
-    } else {
-      router.push("/login");
-    }
+    // Redirecionar direto para o dashboard
+    // TODO: Ativar autenticação no futuro
+    router.push("/dashboard");
   }, [router]);
 
   return (
