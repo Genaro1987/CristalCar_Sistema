@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Modal from './Modal';
-import Button from './Button';
+import Button from '@/app/components/ui/Button';
 
 export default function ConfigurarFavoritosModal({ isOpen, onClose, onSave }) {
   const [telasDisponiveis, setTelasDisponiveis] = useState([]);
