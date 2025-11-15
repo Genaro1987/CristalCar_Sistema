@@ -18,7 +18,6 @@ export default function FormasPagamentoPage() {
     tipo: 'DINHEIRO',
     taxa_percentual: '0',
     taxa_fixa: '0',
-    dias_recebimento: '0',
     gera_movimento_bancario: true,
     status: 'ATIVO'
   });
@@ -52,7 +51,6 @@ export default function FormasPagamentoPage() {
         tipo: 'DINHEIRO',
         taxa_percentual: 0,
         taxa_fixa: 0,
-        dias_recebimento: 0,
         gera_movimento_bancario: false,
         status: 'ATIVO'
       },
@@ -63,7 +61,6 @@ export default function FormasPagamentoPage() {
         tipo: 'PIX',
         taxa_percentual: 0,
         taxa_fixa: 0,
-        dias_recebimento: 0,
         gera_movimento_bancario: true,
         status: 'ATIVO'
       },
@@ -74,7 +71,6 @@ export default function FormasPagamentoPage() {
         tipo: 'CARTAO_CREDITO',
         taxa_percentual: 3.50,
         taxa_fixa: 0,
-        dias_recebimento: 30,
         gera_movimento_bancario: true,
         status: 'ATIVO'
       },
@@ -85,7 +81,6 @@ export default function FormasPagamentoPage() {
         tipo: 'BOLETO',
         taxa_percentual: 0,
         taxa_fixa: 2.50,
-        dias_recebimento: 2,
         gera_movimento_bancario: true,
         status: 'ATIVO'
       }
@@ -130,8 +125,7 @@ export default function FormasPagamentoPage() {
     const dataToSave = {
       ...formData,
       taxa_percentual: parseFloat(formData.taxa_percentual) || 0,
-      taxa_fixa: parseFloat(formData.taxa_fixa) || 0,
-      dias_recebimento: parseInt(formData.dias_recebimento) || 0
+      taxa_fixa: parseFloat(formData.taxa_fixa) || 0
     };
 
     if (editingId) {
@@ -153,7 +147,6 @@ export default function FormasPagamentoPage() {
       tipo: forma.tipo,
       taxa_percentual: forma.taxa_percentual?.toString() || '0',
       taxa_fixa: forma.taxa_fixa?.toString() || '0',
-      dias_recebimento: forma.dias_recebimento?.toString() || '0',
       gera_movimento_bancario: forma.gera_movimento_bancario !== undefined ? forma.gera_movimento_bancario : true,
       status: forma.status
     });
@@ -174,7 +167,6 @@ export default function FormasPagamentoPage() {
       tipo: 'DINHEIRO',
       taxa_percentual: '0',
       taxa_fixa: '0',
-      dias_recebimento: '0',
       gera_movimento_bancario: true,
       status: 'ATIVO'
     });
@@ -265,9 +257,6 @@ export default function FormasPagamentoPage() {
                         Taxa Fixa
                       </th>
                       <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Dias Receb.
-                      </th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Status
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -278,7 +267,7 @@ export default function FormasPagamentoPage() {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredFormas.length === 0 ? (
                       <tr>
-                        <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
+                        <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
                           Nenhuma forma de pagamento encontrada
                         </td>
                       </tr>
@@ -302,9 +291,6 @@ export default function FormasPagamentoPage() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
                             {forma.taxa_fixa > 0 ? `R$ ${forma.taxa_fixa.toFixed(2)}` : '-'}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                            {forma.dias_recebimento > 0 ? `${forma.dias_recebimento} dias` : 'Imediato'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">
                             <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadge(forma.status)}`}>
@@ -454,24 +440,6 @@ export default function FormasPagamentoPage() {
                       />
                       <p className="text-xs text-gray-500 mt-1">
                         Valor fixo por transação
-                      </p>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Dias para Recebimento
-                      </label>
-                      <input
-                        type="number"
-                        name="dias_recebimento"
-                        value={formData.dias_recebimento}
-                        onChange={handleInputChange}
-                        min="0"
-                        placeholder="0"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Prazo médio para recebimento
                       </p>
                     </div>
                   </div>
