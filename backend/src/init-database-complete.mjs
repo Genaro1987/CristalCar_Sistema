@@ -108,12 +108,32 @@ async function main() {
     // Executar na ordem: tabelas -> índices -> views -> triggers
     const orderedStatements = [...tabelas, ...indices, ...views, ...triggers, ...outros];
 
+    // Verificar se há statements para executar
+    if (orderedStatements.length === 0) {
+      console.log('⚠️  Nenhum statement SQL encontrado para executar');
+      return;
+    }
+
     let sucessos = 0;
     let erros = 0;
     const errosDetalhes = [];
+    let currentType = '';
 
     for (let i = 0; i < orderedStatements.length; i++) {
       const stmt = orderedStatements[i];
+
+      // Detectar mudança de tipo para mostrar separador
+      const stmtType = stmt.trim().toUpperCase();
+      let newType = '';
+      if (stmtType.startsWith('CREATE TABLE')) newType = 'TABELAS';
+      else if (stmtType.startsWith('CREATE INDEX')) newType = 'ÍNDICES';
+      else if (stmtType.startsWith('CREATE VIEW')) newType = 'VIEWS';
+      else if (stmtType.startsWith('CREATE TRIGGER')) newType = 'TRIGGERS';
+
+      if (newType && newType !== currentType) {
+        console.log(`\n  ═══ ${newType} ═══\n`);
+        currentType = newType;
+      }
 
       // Extrair o tipo de comando (CREATE TABLE, CREATE INDEX, etc)
       const match = stmt.match(/^(CREATE\s+(?:UNIQUE\s+)?(?:TABLE|INDEX|VIEW|TRIGGER))\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)/i);
@@ -129,8 +149,13 @@ async function main() {
         console.log(' ❌');
         const errorMsg = error.message || String(error);
         console.error(`     Erro: ${errorMsg}`);
-        errosDetalhes.push({ tipo, nome, erro: errorMsg, sql: stmt.substring(0, 100) });
+        errosDetalhes.push({ tipo, nome, erro: errorMsg, sql: stmt.substring(0, 150) });
         erros++;
+
+        // Para índices, tentar continuar mesmo com erro
+        if (tipo.includes('INDEX')) {
+          console.error(`     ⚠️  Índice pulado, continuando...`);
+        }
       }
     }
 
