@@ -1,23 +1,72 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
-export default function Header({ title, pageCode = '' }) {
-  const openDocumentation = () => {
-    // Abre a documentação da tela em nova janela
-    const docUrl = `/docs/${pageCode || 'general'}`;
-    window.open(docUrl, '_blank', 'width=800,height=600,scrollbars=yes');
+export default function Header({ screenCode = '', screenName = '', onShowHelp }) {
+  const router = useRouter();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [showResults, setShowResults] = useState(false);
+
+  // Todas as telas do sistema
+  const allScreens = [
+    // Administrativo
+    { code: 'ADM-001', name: 'Cadastro da Empresa', path: '/modules/administrativo/empresa', module: 'Administrativo' },
+    { code: 'ADM-002', name: 'Funcionários', path: '/modules/administrativo/funcionarios', module: 'Administrativo' },
+    { code: 'ADM-003', name: 'Layouts de Importação', path: '/modules/administrativo/layouts', module: 'Administrativo' },
+    { code: 'ADM-004', name: 'Configuração de Backup', path: '/modules/administrativo/backup', module: 'Administrativo' },
+    { code: 'ADM-005', name: 'Registro de Log', path: '/modules/administrativo/logs', module: 'Administrativo' },
+
+    // Modelos de Plano
+    { code: 'FIN-001', name: 'Plano de Contas', path: '/modules/modelos-plano/plano-contas', module: 'Modelos de Plano' },
+    { code: 'FIN-002', name: 'Estrutura DRE', path: '/modules/modelos-plano/estrutura-dre', module: 'Modelos de Plano' },
+
+    // Financeiro
+    { code: 'FIN-010', name: 'Formas de Pagamento', path: '/modules/financeiro/formas-pagamento', module: 'Financeiro' },
+    { code: 'FIN-011', name: 'Condições de Pagamento', path: '/modules/financeiro/condicoes-pagamento', module: 'Financeiro' },
+    { code: 'FIN-012', name: 'Cadastro de Bancos', path: '/modules/financeiro/bancos', module: 'Financeiro' },
+    { code: 'FIN-013', name: 'Regras de Conciliação', path: '/modules/financeiro/regras-conciliacao', module: 'Financeiro' },
+
+    // Parceiros
+    { code: 'PAR-001', name: 'Cadastro de Parceiros', path: '/modules/parceiros/cadastro', module: 'Parceiros' },
+
+    // Tabelas de Preços
+    { code: 'TAB-001', name: 'Tabelas de Preços', path: '/modules/tabelas-precos/cadastro', module: 'Tabelas de Preços' },
+    { code: 'TAB-002', name: 'Histórico de Alterações', path: '/modules/tabelas-precos/historico', module: 'Tabelas de Preços' },
+  ];
+
+  useEffect(() => {
+    if (searchTerm.trim().length >= 2) {
+      const term = searchTerm.toLowerCase();
+      const results = allScreens.filter(screen =>
+        screen.name.toLowerCase().includes(term) ||
+        screen.code.toLowerCase().includes(term) ||
+        screen.module.toLowerCase().includes(term)
+      ).slice(0, 8); // Máximo 8 resultados
+      setSearchResults(results);
+      setShowResults(true);
+    } else {
+      setSearchResults([]);
+      setShowResults(false);
+    }
+  }, [searchTerm]);
+
+  const handleNavigate = (path) => {
+    setSearchTerm('');
+    setShowResults(false);
+    router.push(path);
   };
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200">
       <div className="px-6 py-4">
         <div className="flex items-center justify-between">
-          {/* Título da Página */}
+          {/* Título da Tela */}
           <div>
-            <h1 className="text-2xl font-bold text-primary-600">{title}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{screenName || 'Dashboard'}</h1>
             <div className="flex items-center space-x-3 mt-1">
-              <span className="text-sm text-secondary-500">
+              <span className="text-sm text-gray-500">
                 {new Date().toLocaleDateString('pt-BR', {
                   weekday: 'long',
                   year: 'numeric',
@@ -25,11 +74,11 @@ export default function Header({ title, pageCode = '' }) {
                   day: 'numeric'
                 })}
               </span>
-              {pageCode && (
+              {screenCode && (
                 <>
-                  <span className="text-secondary-300">•</span>
-                  <span className="text-xs text-secondary-400 font-mono bg-secondary-50 px-2 py-0.5 rounded">
-                    {pageCode}
+                  <span className="text-gray-300">•</span>
+                  <span className="text-xs text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded">
+                    {screenCode}
                   </span>
                 </>
               )}
@@ -38,12 +87,16 @@ export default function Header({ title, pageCode = '' }) {
 
           {/* Ações do Header */}
           <div className="flex items-center space-x-4">
-            {/* Pesquisa Rápida */}
+            {/* Pesquisa Global de Telas */}
             <div className="relative">
               <input
                 type="text"
-                placeholder="Pesquisar..."
-                className="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onBlur={() => setTimeout(() => setShowResults(false), 200)}
+                onFocus={() => searchTerm.trim().length >= 2 && setShowResults(true)}
+                placeholder="Buscar tela por nome ou código..."
+                className="w-80 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
               />
               <svg
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
@@ -53,18 +106,49 @@ export default function Header({ title, pageCode = '' }) {
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
+
+              {/* Resultados da Pesquisa */}
+              {showResults && searchResults.length > 0 && (
+                <div className="absolute top-full mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
+                  {searchResults.map((screen, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleNavigate(screen.path)}
+                      className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-0 transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-900">{screen.name}</div>
+                          <div className="text-xs text-gray-500 mt-0.5">{screen.module}</div>
+                        </div>
+                        <span className="text-xs font-mono bg-orange-100 text-orange-800 px-2 py-1 rounded">
+                          {screen.code}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {showResults && searchTerm.trim().length >= 2 && searchResults.length === 0 && (
+                <div className="absolute top-full mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-4 text-center text-gray-500 text-sm">
+                  Nenhuma tela encontrada
+                </div>
+              )}
             </div>
 
-            {/* Ajuda / Documentação */}
-            <button
-              onClick={openDocumentation}
-              className="p-2 text-gray-600 hover:text-primary-600 hover:bg-gray-100 rounded-lg transition-colors"
-              title="Abrir documentação desta tela"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </button>
+            {/* Botão de Ajuda */}
+            {onShowHelp && (
+              <button
+                onClick={onShowHelp}
+                className="p-2 text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                title="Abrir ajuda desta tela"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
       </div>

@@ -1,12 +1,45 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 export default function Sidebar() {
   const pathname = usePathname();
   const [expandedModule, setExpandedModule] = useState(null);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  useEffect(() => {
+    // Carregar estado do menu do localStorage
+    const savedCollapsed = localStorage.getItem('sidebarCollapsed');
+    if (savedCollapsed !== null) {
+      setIsCollapsed(savedCollapsed === 'true');
+    }
+
+    const savedExpanded = localStorage.getItem('expandedModule');
+    if (savedExpanded) {
+      setExpandedModule(savedExpanded);
+    }
+  }, []);
+
+  // Manter menu expandido baseado na rota atual
+  useEffect(() => {
+    // Encontrar qual módulo deve estar expandido baseado na rota atual
+    for (const item of menuItems) {
+      if (item.submenu && item.submenu.length > 0) {
+        for (const subitem of item.submenu) {
+          if (subitem.submenu) {
+            const hasActiveScreen = subitem.submenu.some(s => s.href === pathname);
+            if (hasActiveScreen) {
+              setExpandedModule(item.id);
+              localStorage.setItem('expandedModule', item.id);
+              break;
+            }
+          }
+        }
+      }
+    }
+  }, [pathname]);
 
   const menuItems = [
     {
@@ -15,6 +48,14 @@ export default function Sidebar() {
       icon: '🏠',
       href: '/dashboard',
       code: 'HOME-001',
+      submenu: []
+    },
+    {
+      id: 'ajuda',
+      name: 'Ajuda do Sistema',
+      icon: '❓',
+      href: '/ajuda',
+      code: 'HELP-001',
       submenu: []
     },
     {
@@ -76,137 +117,202 @@ export default function Sidebar() {
   ];
 
   const toggleModule = (moduleId) => {
-    setExpandedModule(expandedModule === moduleId ? null : moduleId);
+    const newExpanded = expandedModule === moduleId ? null : moduleId;
+    setExpandedModule(newExpanded);
+    if (newExpanded) {
+      localStorage.setItem('expandedModule', newExpanded);
+    } else {
+      localStorage.removeItem('expandedModule');
+    }
+  };
+
+  const toggleCollapse = () => {
+    const newCollapsed = !isCollapsed;
+    setIsCollapsed(newCollapsed);
+    localStorage.setItem('sidebarCollapsed', newCollapsed.toString());
   };
 
   const isActive = (href) => pathname === href;
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 bg-gradient-to-b from-secondary-800 to-secondary-900 text-white shadow-xl flex flex-col">
-      {/* Logo */}
-      <div className="flex-shrink-0 p-6 border-b border-secondary-700">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
-            <span className="text-2xl font-bold text-white">C</span>
-          </div>
-          <div>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-primary-400 to-primary-500 bg-clip-text text-transparent">
-              Cristal Car
-            </h1>
-            <p className="text-xs text-secondary-400">Sistema ERP</p>
-          </div>
+    <>
+      <aside className={`fixed left-0 top-0 h-screen bg-gradient-to-b from-secondary-800 to-secondary-900 text-white shadow-xl flex flex-col transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
+        {/* Logo */}
+        <div className="flex-shrink-0 p-6 border-b border-secondary-700">
+          {!isCollapsed ? (
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
+                <span className="text-2xl font-bold text-white">C</span>
+              </div>
+              <div>
+                <h1 className="text-xl font-bold bg-gradient-to-r from-primary-400 to-primary-500 bg-clip-text text-transparent">
+                  Cristal Car
+                </h1>
+                <p className="text-xs text-secondary-400">Sistema ERP</p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex justify-center">
+              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
+                <span className="text-2xl font-bold text-white">C</span>
+              </div>
+            </div>
+          )}
         </div>
-      </div>
 
-      {/* Menu - com rolagem */}
-      <nav className="flex-1 overflow-y-auto p-4">
-        <ul className="space-y-2">
-          {menuItems.map((item) => (
-            <li key={item.id}>
-              {/* Item Principal - Nível 1 */}
-              {item.submenu.length === 0 ? (
-                <Link
-                  href={item.href}
-                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                    isActive(item.href)
-                      ? 'bg-primary-500 text-white shadow-lg'
-                      : 'hover:bg-secondary-700 text-secondary-300 hover:text-white'
-                  }`}
-                >
-                  <span className="text-xl">{item.icon}</span>
-                  <span className="font-medium text-base">{item.name}</span>
-                </Link>
-              ) : (
-                <>
-                  <button
-                    onClick={() => toggleModule(item.id)}
-                    className="w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 hover:bg-secondary-700 text-secondary-300 hover:text-white"
+        {/* Menu - com rolagem */}
+        <nav className="flex-1 overflow-y-auto p-4">
+          <ul className="space-y-2">
+            {menuItems.map((item) => (
+              <li key={item.id}>
+                {/* Item Principal - Nível 1 */}
+                {item.submenu.length === 0 ? (
+                  <Link
+                    href={item.href}
+                    className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} px-4 py-3 rounded-lg transition-all duration-200 ${
+                      isActive(item.href)
+                        ? 'bg-primary-500 text-white shadow-lg'
+                        : 'hover:bg-secondary-700 text-secondary-300 hover:text-white'
+                    }`}
+                    title={isCollapsed ? item.name : ''}
                   >
-                    <div className="flex items-center space-x-3">
-                      <span className="text-xl">{item.icon}</span>
-                      <span className="font-medium text-base">{item.name}</span>
-                    </div>
-                    <svg
-                      className={`w-4 h-4 transition-transform duration-200 ${
-                        expandedModule === item.id ? 'rotate-180' : ''
-                      }`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                    <span className="text-xl">{item.icon}</span>
+                    {!isCollapsed && <span className="font-medium text-base">{item.name}</span>}
+                  </Link>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => !isCollapsed && toggleModule(item.id)}
+                      className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} px-4 py-3 rounded-lg transition-all duration-200 hover:bg-secondary-700 text-secondary-300 hover:text-white`}
+                      title={isCollapsed ? item.name : ''}
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
+                      {!isCollapsed ? (
+                        <>
+                          <div className="flex items-center space-x-3">
+                            <span className="text-xl">{item.icon}</span>
+                            <span className="font-medium text-base">{item.name}</span>
+                          </div>
+                          <svg
+                            className={`w-4 h-4 transition-transform duration-200 ${
+                              expandedModule === item.id ? 'rotate-180' : ''
+                            }`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </>
+                      ) : (
+                        <span className="text-xl">{item.icon}</span>
+                      )}
+                    </button>
 
-                  {/* Submenu Nível 2 */}
-                  {expandedModule === item.id && (
-                    <ul className="mt-2 ml-3 space-y-1 border-l-2 border-secondary-700 pl-2">
-                      {item.submenu.map((subitem) => (
-                        <li key={subitem.id}>
-                          <details className="group">
-                            <summary className="cursor-pointer list-none px-3 py-2.5 rounded-lg text-sm font-medium text-secondary-300 hover:bg-secondary-700 hover:text-white transition-all duration-200">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-2">
-                                  <span className="text-base">{subitem.icon}</span>
-                                  <span>{subitem.name}</span>
-                                </div>
-                                <svg
-                                  className="w-3 h-3 transition-transform group-open:rotate-90"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                </svg>
-                              </div>
-                            </summary>
-
-                            {/* Submenu Nível 3 */}
-                            <ul className="mt-1 ml-2 space-y-0.5 border-l-2 border-secondary-700/50 pl-3">
-                              {subitem.submenu.map((subsubitem, idx) => (
-                                <li key={idx}>
-                                  <Link
-                                    href={subsubitem.href}
-                                    className={`block px-3 py-2 rounded-lg text-xs transition-all duration-200 ${
-                                      isActive(subsubitem.href)
-                                        ? 'bg-primary-500 text-white font-semibold shadow-md'
-                                        : 'text-secondary-400 hover:bg-secondary-700 hover:text-white'
-                                    }`}
+                    {/* Submenu Nível 2 */}
+                    {!isCollapsed && expandedModule === item.id && (
+                      <ul className="mt-2 ml-3 space-y-1 border-l-2 border-secondary-700 pl-2">
+                        {item.submenu.map((subitem) => (
+                          <li key={subitem.id}>
+                            <details className="group" open>
+                              <summary className="cursor-pointer list-none px-3 py-2.5 rounded-lg text-sm font-medium text-secondary-300 hover:bg-secondary-700 hover:text-white transition-all duration-200">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center space-x-2">
+                                    <span className="text-base">{subitem.icon}</span>
+                                    <span>{subitem.name}</span>
+                                  </div>
+                                  <svg
+                                    className="w-3 h-3 transition-transform group-open:rotate-90"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
                                   >
-                                    • {subsubitem.name}
-                                  </Link>
-                                </li>
-                              ))}
-                            </ul>
-                          </details>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </>
-              )}
-            </li>
-          ))}
-        </ul>
-      </nav>
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                  </svg>
+                                </div>
+                              </summary>
 
-      {/* Rodapé - fixo no bottom */}
-      <div className="flex-shrink-0 p-4 border-t border-secondary-700 bg-secondary-900">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center">
-            <span className="text-sm font-bold">A</span>
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-white">Admin</p>
-            <p className="text-xs text-secondary-400">Administrador</p>
-          </div>
-          <button className="text-secondary-400 hover:text-white transition-colors">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                              {/* Submenu Nível 3 */}
+                              <ul className="mt-1 ml-2 space-y-0.5 border-l-2 border-secondary-700/50 pl-3">
+                                {subitem.submenu.map((subsubitem, idx) => (
+                                  <li key={idx}>
+                                    <Link
+                                      href={subsubitem.href}
+                                      className={`block px-3 py-2 rounded-lg text-xs transition-all duration-200 ${
+                                        isActive(subsubitem.href)
+                                          ? 'bg-primary-500 text-white font-semibold shadow-md'
+                                          : 'text-secondary-400 hover:bg-secondary-700 hover:text-white'
+                                      }`}
+                                    >
+                                      • {subsubitem.name}
+                                    </Link>
+                                  </li>
+                                ))}
+                              </ul>
+                            </details>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </>
+                )}
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        {/* Botão Recolher Menu */}
+        <div className="flex-shrink-0 px-4 py-2 border-t border-secondary-700">
+          <button
+            onClick={toggleCollapse}
+            className="w-full flex items-center justify-center py-2 text-secondary-400 hover:text-white hover:bg-secondary-700 rounded-lg transition-colors"
+            title={isCollapsed ? 'Expandir menu' : 'Recolher menu'}
+          >
+            <svg
+              className={`w-5 h-5 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
             </svg>
+            {!isCollapsed && <span className="ml-2 text-sm">Recolher Menu</span>}
           </button>
         </div>
-      </div>
-    </aside>
+
+        {/* Rodapé - fixo no bottom */}
+        <div className="flex-shrink-0 p-4 border-t border-secondary-700 bg-secondary-900">
+          {!isCollapsed ? (
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center">
+                <span className="text-sm font-bold">A</span>
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-white">Admin</p>
+                <p className="text-xs text-secondary-400">Administrador</p>
+              </div>
+              <button className="text-secondary-400 hover:text-white transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              </button>
+            </div>
+          ) : (
+            <div className="flex justify-center">
+              <button className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center hover:bg-primary-600 transition-colors">
+                <span className="text-sm font-bold">A</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </aside>
+
+      {/* Ajustar margem do conteúdo quando sidebar colapsa */}
+      <style jsx global>{`
+        .ml-64 {
+          margin-left: ${isCollapsed ? '5rem' : '16rem'};
+          transition: margin-left 0.3s;
+        }
+      `}</style>
+    </>
   );
 }
