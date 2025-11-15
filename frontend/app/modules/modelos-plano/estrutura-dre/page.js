@@ -59,85 +59,8 @@ export default function EstruturaDREPage() {
   }, []);
 
   const loadItens = () => {
-    // Mock data - substituir por chamada API real
-    const mockData = [
-      {
-        id: 1,
-        codigo: '1',
-        descricao: 'RECEITA BRUTA',
-        nivel: 1,
-        tipo: 'RECEITA_BRUTA',
-        ordem_exibicao: 1,
-        eh_totalizadora: true,
-        formula: null,
-        exibir_negativo: false,
-        negrito: true,
-        italico: false,
-        cor_texto: '#16a34a',
-        status: 'ATIVO'
-      },
-      {
-        id: 2,
-        codigo: '2',
-        descricao: '(-) Deduções',
-        nivel: 1,
-        tipo: 'DEDUCOES',
-        ordem_exibicao: 2,
-        eh_totalizadora: true,
-        formula: null,
-        exibir_negativo: true,
-        negrito: false,
-        italico: false,
-        cor_texto: '',
-        status: 'ATIVO'
-      },
-      {
-        id: 3,
-        codigo: '3',
-        descricao: '(=) RECEITA LÍQUIDA',
-        nivel: 1,
-        tipo: 'RECEITA_LIQUIDA',
-        ordem_exibicao: 3,
-        eh_totalizadora: true,
-        formula: '{RECEITA_BRUTA} - {DEDUCOES}',
-        exibir_negativo: false,
-        negrito: true,
-        italico: false,
-        cor_texto: '#2563eb',
-        status: 'ATIVO'
-      },
-      {
-        id: 4,
-        codigo: '4',
-        descricao: '(-) CPV',
-        nivel: 1,
-        tipo: 'CPV',
-        ordem_exibicao: 4,
-        eh_totalizadora: true,
-        formula: null,
-        exibir_negativo: true,
-        negrito: false,
-        italico: false,
-        cor_texto: '',
-        status: 'ATIVO'
-      },
-      {
-        id: 5,
-        codigo: '5',
-        descricao: '(=) LUCRO BRUTO',
-        nivel: 1,
-        tipo: 'LUCRO_BRUTO',
-        ordem_exibicao: 5,
-        eh_totalizadora: true,
-        formula: '{RECEITA_LIQUIDA} - {CPV}',
-        exibir_negativo: false,
-        negrito: true,
-        italico: false,
-        cor_texto: '#16a34a',
-        status: 'ATIVO'
-      }
-    ];
-    setItens(mockData);
+    // Banco de dados vazio - nenhum item DRE cadastrado
+    setItens([]);
   };
 
   const handleInputChange = (e) => {
