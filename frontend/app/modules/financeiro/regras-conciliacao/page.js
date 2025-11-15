@@ -721,19 +721,19 @@ export default function RegrasConciliacaoPage() {
                     <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
                       <div className="font-medium text-green-900">PIX Recebidos</div>
                       <p className="text-sm text-gray-700">
-                        Tipo: Contém | Texto: "PIX RECEBIDO" | Operação: Crédito | Conta: Receitas > Vendas
+                        Tipo: Contém | Texto: "PIX RECEBIDO" | Operação: Crédito | Conta: Receitas &gt; Vendas
                       </p>
                     </div>
                     <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
                       <div className="font-medium text-red-900">Energia Elétrica</div>
                       <p className="text-sm text-gray-700">
-                        Tipo: Contém | Texto: "ENERGIA" | Operação: Débito | Conta: Despesas > Utilidades
+                        Tipo: Contém | Texto: "ENERGIA" | Operação: Débito | Conta: Despesas &gt; Utilidades
                       </p>
                     </div>
                     <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                       <div className="font-medium text-blue-900">Aluguel</div>
                       <p className="text-sm text-gray-700">
-                        Tipo: Igual | Texto: "ALUGUEL" | Operação: Débito | Conta: Despesas > Aluguel
+                        Tipo: Igual | Texto: "ALUGUEL" | Operação: Débito | Conta: Despesas &gt; Aluguel
                       </p>
                     </div>
                   </div>
