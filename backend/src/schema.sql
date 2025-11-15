@@ -603,19 +603,25 @@ CREATE TABLE IF NOT EXISTS com_baixas_pagamento (
 -- Tabela de Parceiros (Unifica Clientes, Fornecedores, etc)
 CREATE TABLE IF NOT EXISTS par_parceiros (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    codigo VARCHAR(20) UNIQUE NOT NULL,
-    tipo_pessoa VARCHAR(20) NOT NULL, -- FISICA, JURIDICA
+    codigo_unico VARCHAR(20) UNIQUE NOT NULL,
     tipo_parceiro VARCHAR(100) NOT NULL, -- CLIENTE, FORNECEDOR, TRANSPORTADORA, PRESTADOR_SERVICO, FUNCIONARIO, OUTRO (pode ter múltiplos separados por vírgula)
-    cpf_cnpj VARCHAR(18) UNIQUE NOT NULL,
-    rg_inscricao_estadual VARCHAR(20),
-    inscricao_municipal VARCHAR(20),
-    nome VARCHAR(200), -- Para pessoa física
-    razao_social VARCHAR(200), -- Para pessoa jurídica
+    tipo_pessoa VARCHAR(20) NOT NULL, -- FISICA, JURIDICA
+    -- Documentos - PJ
+    cnpj VARCHAR(18),
+    razao_social VARCHAR(200),
     nome_fantasia VARCHAR(200),
+    inscricao_estadual VARCHAR(20),
+    inscricao_municipal VARCHAR(20),
+    -- Documentos - PF
+    cpf VARCHAR(14),
+    nome_completo VARCHAR(200),
+    rg VARCHAR(20),
+    data_nascimento DATE,
+    -- Contatos
     telefone VARCHAR(20),
     celular VARCHAR(20),
     email VARCHAR(100),
-    site VARCHAR(200),
+    website VARCHAR(200),
     -- Endereço
     endereco VARCHAR(200),
     numero VARCHAR(20),
@@ -626,20 +632,24 @@ CREATE TABLE IF NOT EXISTS par_parceiros (
     cep VARCHAR(10),
     -- Informações Comerciais
     limite_credito DECIMAL(15,2) DEFAULT 0,
-    tabela_preco_id INTEGER, -- Tabela de preços padrão
-    condicao_pagamento_id INTEGER, -- Condição de pagamento padrão
-    dia_vencimento_padrao INTEGER, -- Dia do mês padrão para vencimento
+    condicao_pagamento_padrao_id INTEGER,
+    forma_pagamento_padrao_id INTEGER,
+    tabela_preco_id INTEGER,
     -- Informações Bancárias
     banco VARCHAR(100),
     agencia VARCHAR(20),
     conta VARCHAR(30),
-    pix VARCHAR(200),
+    tipo_conta VARCHAR(20), -- CORRENTE, POUPANCA
+    pix_chave VARCHAR(200),
+    pix_tipo VARCHAR(20), -- CPF, CNPJ, EMAIL, TELEFONE, ALEATORIA
     -- Controle
     status VARCHAR(20) DEFAULT 'ATIVO',
     observacoes TEXT,
     criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
     atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (condicao_pagamento_id) REFERENCES fin_condicoes_pagamento(id)
+    FOREIGN KEY (condicao_pagamento_padrao_id) REFERENCES fin_condicoes_pagamento(id),
+    FOREIGN KEY (forma_pagamento_padrao_id) REFERENCES fin_formas_pagamento(id),
+    FOREIGN KEY (tabela_preco_id) REFERENCES tab_tabelas_precos(id)
 );
 
 -- ============================================================================
