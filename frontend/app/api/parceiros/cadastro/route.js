@@ -9,7 +9,7 @@ export async function GET() {
   try {
     const result = await turso.execute(`
       SELECT * FROM par_parceiros
-      ORDER BY ativo DESC, nome_fantasia ASC
+      ORDER BY status DESC, nome_fantasia ASC
     `);
 
     return Response.json(result.rows);
@@ -23,24 +23,30 @@ export async function POST(request) {
   try {
     const data = await request.json();
 
+    // Gerar código único se não fornecido
+    const codigo = data.codigo || `PAR${Date.now()}`;
+
     const result = await turso.execute({
       sql: `
         INSERT INTO par_parceiros (
-          tipo, tipo_pessoa, nome_fantasia, razao_social,
-          cpf_cnpj, ie_rg, email, telefone, celular, site,
+          codigo, tipo_pessoa, tipo_parceiro, nome_fantasia, razao_social, nome,
+          cpf_cnpj, rg_inscricao_estadual, inscricao_municipal, email, telefone, celular, site,
           cep, endereco, numero, complemento, bairro,
-          cidade, estado, pais,
+          cidade, estado,
           banco, agencia, conta, pix,
-          limite_credito, observacoes, ativo
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          limite_credito, observacoes, status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       args: [
-        data.tipo,
-        data.tipo_pessoa,
-        data.nome_fantasia,
+        codigo,
+        data.tipo_pessoa || 'JURIDICA',
+        data.tipo_parceiro || data.tipo || 'CLIENTE',
+        data.nome_fantasia || null,
         data.razao_social || null,
+        data.nome || null,
         data.cpf_cnpj,
-        data.ie_rg || null,
+        data.rg_inscricao_estadual || data.ie_rg || null,
+        data.inscricao_municipal || null,
         data.email || null,
         data.telefone || null,
         data.celular || null,
@@ -52,14 +58,13 @@ export async function POST(request) {
         data.bairro || null,
         data.cidade || null,
         data.estado || null,
-        data.pais || 'Brasil',
         data.banco || null,
         data.agencia || null,
         data.conta || null,
         data.pix || null,
         data.limite_credito || 0,
         data.observacoes || null,
-        data.ativo ? 1 : 0
+        data.status || (data.ativo ? 'ATIVO' : 'INATIVO')
       ]
     });
 

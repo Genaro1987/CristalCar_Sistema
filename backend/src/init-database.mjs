@@ -7,6 +7,53 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Função para processar comandos SQL corretamente
+function parseSQL(sqlContent) {
+  const commands = [];
+  let currentCommand = '';
+  let inTrigger = false;
+
+  const lines = sqlContent.split('\n');
+
+  for (let line of lines) {
+    const trimmedLine = line.trim();
+
+    // Ignorar comentários e linhas vazias
+    if (!trimmedLine || trimmedLine.startsWith('--')) {
+      continue;
+    }
+
+    // Detectar início de trigger
+    if (trimmedLine.match(/CREATE\s+TRIGGER/i)) {
+      inTrigger = true;
+    }
+
+    currentCommand += line + '\n';
+
+    // Se estamos em um trigger, procurar por END;
+    if (inTrigger) {
+      if (trimmedLine === 'END;') {
+        commands.push(currentCommand.trim());
+        currentCommand = '';
+        inTrigger = false;
+      }
+    } else {
+      // Para outros comandos, usar ; como delimitador
+      if (trimmedLine.endsWith(';')) {
+        commands.push(currentCommand.trim());
+        currentCommand = '';
+      }
+    }
+  }
+
+  // Adicionar último comando se houver
+  if (currentCommand.trim()) {
+    commands.push(currentCommand.trim());
+  }
+
+  return commands;
+}
+
 async function initDatabase() {
   try {
     console.log("🚀 Iniciando criação do banco de dados...\n");
@@ -15,20 +62,18 @@ async function initDatabase() {
     const schemaPath = path.join(__dirname, "schema.sql");
     const schema = fs.readFileSync(schemaPath, "utf8");
 
-    // Dividir o schema em comandos individuais
-    const commands = schema
-      .split(";")
-      .map((cmd) => cmd.trim())
-      .filter((cmd) => cmd.length > 0 && !cmd.startsWith("--"));
+    // Processar comandos SQL
+    const commands = parseSQL(schema);
 
     console.log(`📝 Total de comandos SQL a executar: ${commands.length}\n`);
 
     // Executar cada comando
     let successCount = 0;
     let errorCount = 0;
+    const errors = [];
 
     for (let i = 0; i < commands.length; i++) {
-      const command = commands[i] + ";";
+      const command = commands[i];
 
       try {
         // Extrair nome da tabela/índice/view/trigger para log
@@ -45,6 +90,7 @@ async function initDatabase() {
         successCount++;
       } catch (error) {
         console.error(`❌ Erro no comando ${i + 1}:`, error.message);
+        errors.push({ command: i + 1, error: error.message, sql: command.substring(0, 100) });
         errorCount++;
       }
     }
@@ -53,6 +99,16 @@ async function initDatabase() {
     console.log(`✅ Comandos executados com sucesso: ${successCount}`);
     console.log(`❌ Comandos com erro: ${errorCount}`);
     console.log("=".repeat(60) + "\n");
+
+    if (errors.length > 0 && errors.length < 10) {
+      console.log("Detalhes dos erros:");
+      errors.forEach(err => {
+        console.log(`\nComando ${err.command}:`);
+        console.log(`SQL: ${err.sql}...`);
+        console.log(`Erro: ${err.error}`);
+      });
+      console.log();
+    }
 
     // Verificar tabelas criadas
     const result = await turso.execute(`

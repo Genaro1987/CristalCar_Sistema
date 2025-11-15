@@ -13,12 +13,14 @@ export async function PUT(request, { params }) {
     await turso.execute({
       sql: `
         UPDATE par_parceiros
-        SET tipo = ?,
+        SET tipo_parceiro = ?,
             tipo_pessoa = ?,
             nome_fantasia = ?,
             razao_social = ?,
+            nome = ?,
             cpf_cnpj = ?,
-            ie_rg = ?,
+            rg_inscricao_estadual = ?,
+            inscricao_municipal = ?,
             email = ?,
             telefone = ?,
             celular = ?,
@@ -30,24 +32,25 @@ export async function PUT(request, { params }) {
             bairro = ?,
             cidade = ?,
             estado = ?,
-            pais = ?,
             banco = ?,
             agencia = ?,
             conta = ?,
             pix = ?,
             limite_credito = ?,
             observacoes = ?,
-            ativo = ?,
-            updated_at = CURRENT_TIMESTAMP
+            status = ?,
+            atualizado_em = CURRENT_TIMESTAMP
         WHERE id = ?
       `,
       args: [
-        data.tipo,
-        data.tipo_pessoa,
-        data.nome_fantasia,
+        data.tipo_parceiro || data.tipo || 'CLIENTE',
+        data.tipo_pessoa || 'JURIDICA',
+        data.nome_fantasia || null,
         data.razao_social || null,
+        data.nome || null,
         data.cpf_cnpj,
-        data.ie_rg || null,
+        data.rg_inscricao_estadual || data.ie_rg || null,
+        data.inscricao_municipal || null,
         data.email || null,
         data.telefone || null,
         data.celular || null,
@@ -59,14 +62,13 @@ export async function PUT(request, { params }) {
         data.bairro || null,
         data.cidade || null,
         data.estado || null,
-        data.pais || 'Brasil',
         data.banco || null,
         data.agencia || null,
         data.conta || null,
         data.pix || null,
         data.limite_credito || 0,
         data.observacoes || null,
-        data.ativo ? 1 : 0,
+        data.status || (data.ativo ? 'ATIVO' : 'INATIVO'),
         id
       ]
     });

@@ -23,7 +23,7 @@ export async function GET() {
         cidade,
         estado,
         cep,
-        ativo
+        status
       FROM par_parceiros
       ORDER BY COALESCE(razao_social, nome) ASC
     `);
