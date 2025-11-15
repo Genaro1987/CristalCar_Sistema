@@ -1,0 +1,246 @@
+// frontend/app/api/plano-contas/route.js
+import { NextResponse } from "next/server";
+import { createClient } from "@libsql/client";
+
+const turso = createClient({
+  url: process.env.TURSO_DATABASE_URL,
+  authToken: process.env.TURSO_AUTH_TOKEN,
+});
+
+// GET - Listar plano de contas
+export async function GET(request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const tipo = searchParams.get("tipo"); // RECEITA ou DESPESA
+    const apenasLancaveis = searchParams.get("lancaveis") === "true";
+    const status = searchParams.get("status") || "ATIVO";
+
+    let sql = `
+      SELECT
+        pc.id,
+        pc.codigo_conta,
+        pc.descricao,
+        pc.tipo,
+        pc.nivel,
+        pc.conta_pai_id,
+        pc.considera_resultado,
+        pc.tipo_gasto,
+        pc.utilizado_objetivo,
+        pc.aceita_lancamento,
+        pc.status,
+        pai.codigo_conta as codigo_pai,
+        pai.descricao as descricao_pai
+      FROM fin_plano_contas pc
+      LEFT JOIN fin_plano_contas pai ON pc.conta_pai_id = pai.id
+      WHERE 1=1
+    `;
+
+    const args = [];
+
+    if (tipo) {
+      sql += " AND pc.tipo = ?";
+      args.push(tipo);
+    }
+
+    if (apenasLancaveis) {
+      sql += " AND pc.aceita_lancamento = 1";
+    }
+
+    if (status) {
+      sql += " AND pc.status = ?";
+      args.push(status);
+    }
+
+    sql += " ORDER BY pc.codigo_conta";
+
+    const result = await turso.execute({ sql, args });
+
+    return NextResponse.json({
+      success: true,
+      data: result.rows,
+      total: result.rows.length,
+    });
+  } catch (error) {
+    console.error("Erro ao buscar plano de contas:", error);
+    return NextResponse.json(
+      { success: false, error: "Erro ao buscar plano de contas" },
+      { status: 500 }
+    );
+  }
+}
+
+// POST - Criar nova conta
+export async function POST(request) {
+  try {
+    const dados = await request.json();
+
+    const {
+      codigo_conta,
+      descricao,
+      tipo,
+      nivel,
+      conta_pai_id,
+      considera_resultado,
+      tipo_gasto,
+      utilizado_objetivo,
+      aceita_lancamento,
+    } = dados;
+
+    // Validações
+    if (!codigo_conta || !descricao || !tipo || !nivel) {
+      return NextResponse.json(
+        { success: false, error: "Campos obrigatórios não preenchidos" },
+        { status: 400 }
+      );
+    }
+
+    // Verificar se código já existe
+    const existe = await turso.execute({
+      sql: "SELECT id FROM fin_plano_contas WHERE codigo_conta = ?",
+      args: [codigo_conta],
+    });
+
+    if (existe.rows.length > 0) {
+      return NextResponse.json(
+        { success: false, error: "Código de conta já existe" },
+        { status: 400 }
+      );
+    }
+
+    const result = await turso.execute({
+      sql: `INSERT INTO fin_plano_contas
+            (codigo_conta, descricao, tipo, nivel, conta_pai_id, considera_resultado, tipo_gasto, utilizado_objetivo, aceita_lancamento, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'ATIVO')`,
+      args: [
+        codigo_conta,
+        descricao,
+        tipo,
+        nivel,
+        conta_pai_id || null,
+        considera_resultado ? 1 : 0,
+        tipo_gasto || null,
+        utilizado_objetivo ? 1 : 0,
+        aceita_lancamento ? 1 : 0,
+      ],
+    });
+
+    return NextResponse.json({
+      success: true,
+      id: result.lastInsertRowid,
+      message: "Conta criada com sucesso",
+    });
+  } catch (error) {
+    console.error("Erro ao criar conta:", error);
+    return NextResponse.json(
+      { success: false, error: "Erro ao criar conta" },
+      { status: 500 }
+    );
+  }
+}
+
+// PUT - Atualizar conta
+export async function PUT(request) {
+  try {
+    const dados = await request.json();
+    const { id, ...campos } = dados;
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: "ID não fornecido" },
+        { status: 400 }
+      );
+    }
+
+    const updates = [];
+    const args = [];
+
+    Object.entries(campos).forEach(([key, value]) => {
+      if (
+        [
+          "descricao",
+          "tipo_gasto",
+          "considera_resultado",
+          "utilizado_objetivo",
+          "aceita_lancamento",
+          "status",
+        ].includes(key)
+      ) {
+        updates.push(`${key} = ?`);
+        args.push(value);
+      }
+    });
+
+    if (updates.length === 0) {
+      return NextResponse.json(
+        { success: false, error: "Nenhum campo para atualizar" },
+        { status: 400 }
+      );
+    }
+
+    args.push(id);
+
+    await turso.execute({
+      sql: `UPDATE fin_plano_contas SET ${updates.join(", ")}, atualizado_em = CURRENT_TIMESTAMP WHERE id = ?`,
+      args,
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Conta atualizada com sucesso",
+    });
+  } catch (error) {
+    console.error("Erro ao atualizar conta:", error);
+    return NextResponse.json(
+      { success: false, error: "Erro ao atualizar conta" },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE - Inativar conta (soft delete)
+export async function DELETE(request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: "ID não fornecido" },
+        { status: 400 }
+      );
+    }
+
+    // Verificar se tem lançamentos
+    const temLancamentos = await turso.execute({
+      sql: "SELECT COUNT(*) as total FROM mov_financeiro WHERE plano_contas_id = ?",
+      args: [id],
+    });
+
+    if (temLancamentos.rows[0].total > 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Não é possível excluir conta com lançamentos associados",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Inativar conta
+    await turso.execute({
+      sql: "UPDATE fin_plano_contas SET status = 'INATIVO', atualizado_em = CURRENT_TIMESTAMP WHERE id = ?",
+      args: [id],
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Conta inativada com sucesso",
+    });
+  } catch (error) {
+    console.error("Erro ao inativar conta:", error);
+    return NextResponse.json(
+      { success: false, error: "Erro ao inativar conta" },
+      { status: 500 }
+    );
+  }
+}
