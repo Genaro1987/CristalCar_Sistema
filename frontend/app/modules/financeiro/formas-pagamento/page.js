@@ -41,51 +41,22 @@ export default function FormasPagamentoPage() {
     filterFormas();
   }, [searchTerm, tipoFilter, formas]);
 
-  const loadFormas = () => {
-    // Mock data - substituir por chamada API real
-    const mockData = [
-      {
-        id: 1,
-        codigo: 'FP001',
-        descricao: 'Dinheiro',
-        tipo: 'DINHEIRO',
-        taxa_percentual: 0,
-        taxa_fixa: 0,
-        gera_movimento_bancario: false,
-        status: 'ATIVO'
-      },
-      {
-        id: 2,
-        codigo: 'FP002',
-        descricao: 'PIX',
-        tipo: 'PIX',
-        taxa_percentual: 0,
-        taxa_fixa: 0,
-        gera_movimento_bancario: true,
-        status: 'ATIVO'
-      },
-      {
-        id: 3,
-        codigo: 'FP003',
-        descricao: 'Cartão de Crédito - Visa',
-        tipo: 'CARTAO_CREDITO',
-        taxa_percentual: 3.50,
-        taxa_fixa: 0,
-        gera_movimento_bancario: true,
-        status: 'ATIVO'
-      },
-      {
-        id: 4,
-        codigo: 'FP004',
-        descricao: 'Boleto Bancário',
-        tipo: 'BOLETO',
-        taxa_percentual: 0,
-        taxa_fixa: 2.50,
-        gera_movimento_bancario: true,
-        status: 'ATIVO'
+  const loadFormas = async () => {
+    try {
+      const response = await fetch('/api/financeiro/formas-pagamento');
+      if (response.ok) {
+        const data = await response.json();
+        // Converte os valores booleanos e status do banco
+        const formasFormatadas = data.map(forma => ({
+          ...forma,
+          gera_movimento_bancario: forma.gera_movimento_bancario === 1,
+          status: forma.ativo === 1 ? 'ATIVO' : 'INATIVO'
+        }));
+        setFormas(formasFormatadas);
       }
-    ];
-    setFormas(mockData);
+    } catch (error) {
+      console.error('Erro ao carregar formas de pagamento:', error);
+    }
   };
 
   const filterFormas = () => {
@@ -114,7 +85,7 @@ export default function FormasPagamentoPage() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!formData.codigo || !formData.descricao) {
@@ -128,16 +99,27 @@ export default function FormasPagamentoPage() {
       taxa_fixa: parseFloat(formData.taxa_fixa) || 0
     };
 
-    if (editingId) {
-      setFormas(prev =>
-        prev.map(forma => forma.id === editingId ? { ...dataToSave, id: editingId } : forma)
-      );
-    } else {
-      const newId = Math.max(...formas.map(f => f.id), 0) + 1;
-      setFormas(prev => [...prev, { ...dataToSave, id: newId }]);
-    }
+    try {
+      const url = editingId
+        ? `/api/financeiro/formas-pagamento/${editingId}`
+        : '/api/financeiro/formas-pagamento';
 
-    resetForm();
+      const response = await fetch(url, {
+        method: editingId ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dataToSave)
+      });
+
+      if (response.ok) {
+        await loadFormas();
+        resetForm();
+      } else {
+        alert('Erro ao salvar forma de pagamento');
+      }
+    } catch (error) {
+      console.error('Erro ao salvar forma de pagamento:', error);
+      alert('Erro ao salvar forma de pagamento');
+    }
   };
 
   const handleEdit = (forma) => {
@@ -154,9 +136,22 @@ export default function FormasPagamentoPage() {
     setShowForm(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (confirm('Tem certeza que deseja excluir esta forma de pagamento?')) {
-      setFormas(prev => prev.filter(forma => forma.id !== id));
+      try {
+        const response = await fetch(`/api/financeiro/formas-pagamento/${id}`, {
+          method: 'DELETE'
+        });
+
+        if (response.ok) {
+          await loadFormas();
+        } else {
+          alert('Erro ao excluir forma de pagamento');
+        }
+      } catch (error) {
+        console.error('Erro ao excluir forma de pagamento:', error);
+        alert('Erro ao excluir forma de pagamento');
+      }
     }
   };
 

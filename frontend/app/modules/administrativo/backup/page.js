@@ -55,11 +55,10 @@ export default function ConfiguracaoBackupPage() {
   }, []);
 
   const loadConfig = () => {
-    // Mock data - substituir por chamada API real
-    // Na prática, carregar a configuração do banco (deve ter apenas 1 registro)
-    const mockConfig = {
-      id: 1,
-      ativo: true,
+    // Banco de dados vazio - configuração padrão sem backups executados
+    setConfig({
+      id: null,
+      ativo: false,
       tipo_backup: 'LOCAL',
       google_drive_folder_id: '',
       frequencia: 'DIARIA',
@@ -67,45 +66,17 @@ export default function ConfiguracaoBackupPage() {
       dia_semana: 0,
       dia_mes: 1,
       manter_ultimos: 30,
-      email_notificacao: 'admin@cristalcar.com.br',
+      email_notificacao: '',
       notificar_sucesso: false,
       notificar_erro: true,
-      ultimo_backup: '2024-11-14T02:00:00',
-      proximo_backup: '2024-11-15T02:00:00'
-    };
-    setConfig(mockConfig);
+      ultimo_backup: null,
+      proximo_backup: null
+    });
   };
 
   const loadHistorico = () => {
-    // Mock data - substituir por chamada API real
-    const mockHistorico = [
-      {
-        id: 1,
-        data_backup: '2024-11-14T02:00:00',
-        tamanho_arquivo_bytes: 15728640, // 15 MB
-        local_arquivo: '/backups/cristalcar_2024-11-14_020000.sql',
-        status: 'SUCESSO',
-        tempo_execucao_segundos: 12
-      },
-      {
-        id: 2,
-        data_backup: '2024-11-13T02:00:00',
-        tamanho_arquivo_bytes: 15654321,
-        local_arquivo: '/backups/cristalcar_2024-11-13_020000.sql',
-        status: 'SUCESSO',
-        tempo_execucao_segundos: 11
-      },
-      {
-        id: 3,
-        data_backup: '2024-11-12T02:00:00',
-        tamanho_arquivo_bytes: 0,
-        local_arquivo: '',
-        status: 'ERRO',
-        mensagem_erro: 'Falha ao conectar com o servidor de backup',
-        tempo_execucao_segundos: 5
-      }
-    ];
-    setHistorico(mockHistorico);
+    // Banco de dados vazio - nenhum backup executado
+    setHistorico([]);
   };
 
   const handleInputChange = (e) => {

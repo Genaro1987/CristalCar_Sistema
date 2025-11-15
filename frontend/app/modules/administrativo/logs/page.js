@@ -43,58 +43,13 @@ export default function RegistroLogPage() {
   }, [searchTerm, moduloFilter, configs]);
 
   const loadConfigs = () => {
-    // Mock data - substituir por chamada API real
-    // Inicializar com configurações padrão para todas as telas
-    const mockConfigs = telasDisponiveis.map(tela => ({
-      id: Math.random(),
-      modulo: tela.modulo,
-      tela: tela.tela,
-      nome: tela.nome,
-      codigo: tela.codigo,
-      registrar_log: true,
-      registrar_visualizacao: false,
-      registrar_inclusao: true,
-      registrar_edicao: true,
-      registrar_exclusao: true
-    }));
-    setConfigs(mockConfigs);
+    // Banco de dados vazio - nenhuma configuração de log cadastrada
+    setConfigs([]);
   };
 
   const loadLogs = () => {
-    // Mock data - substituir por chamada API real
-    const mockLogs = [
-      {
-        id: 1,
-        usuario: 'Admin',
-        modulo: 'FINANCEIRO',
-        tela: 'FORMAS_PAGAMENTO',
-        acao: 'INCLUIR',
-        registro_id: 5,
-        ip_address: '192.168.1.100',
-        criado_em: '2024-11-14T14:30:00'
-      },
-      {
-        id: 2,
-        usuario: 'João Silva',
-        modulo: 'PARCEIROS',
-        tela: 'CADASTRO_PARCEIROS',
-        acao: 'EDITAR',
-        registro_id: 123,
-        ip_address: '192.168.1.101',
-        criado_em: '2024-11-14T13:15:00'
-      },
-      {
-        id: 3,
-        usuario: 'Admin',
-        modulo: 'ADMINISTRATIVO',
-        tela: 'FUNCIONARIOS',
-        acao: 'EXCLUIR',
-        registro_id: 42,
-        ip_address: '192.168.1.100',
-        criado_em: '2024-11-14T11:00:00'
-      }
-    ];
-    setLogs(mockLogs);
+    // Banco de dados vazio - nenhum log registrado
+    setLogs([]);
   };
 
   const filterConfigs = () => {

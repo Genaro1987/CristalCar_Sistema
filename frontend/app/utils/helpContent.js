@@ -91,10 +91,6 @@ export const helpContents = {
             description: 'Valor fixo cobrado por transação (ex: R$ 2,50 por boleto).'
           },
           {
-            label: 'Dias para Recebimento',
-            description: 'Prazo médio em dias para o valor estar disponível (ex: 30 dias para cartão de crédito).'
-          },
-          {
             label: 'Gera Movimento Bancário',
             description: 'Marque se esta forma de pagamento deve aparecer na conciliação bancária.'
           }
@@ -108,7 +104,7 @@ export const helpContents = {
             <li>Clique em "+ Nova Forma de Pagamento"</li>
             <li>Preencha o código e descrição</li>
             <li>Selecione o tipo de pagamento</li>
-            <li>Configure taxas e prazos se aplicável</li>
+            <li>Configure taxas se aplicável</li>
             <li>Marque se gera movimento bancário</li>
             <li>Salve a forma de pagamento</li>
           </ol>
@@ -370,6 +366,10 @@ export const helpContents = {
           {
             label: 'Status',
             description: 'Tabelas ativas aparecem nas vendas. Desative temporariamente sem excluir.'
+          },
+          {
+            label: 'Vínculos',
+            description: 'Vincule a tabela a clientes/fornecedores específicos. Clique no botão de vínculos para gerenciar quais parceiros usarão esta tabela.'
           }
         ]
       },
@@ -396,7 +396,8 @@ export const helpContents = {
           'Use nomes descritivos para identificar facilmente',
           'Configure períodos de vigência para promoções temporárias',
           'O preview mostra o impacto do ajuste em tempo real',
-          'Múltiplas tabelas podem estar ativas ao mesmo tempo'
+          'Múltiplas tabelas podem estar ativas ao mesmo tempo',
+          'Vincule tabelas a parceiros específicos para aplicação automática de preços diferenciados'
         ]
       }
     ]
@@ -547,6 +548,88 @@ export const helpContents = {
     ]
   },
 
+  'ADM-005': {
+    title: 'Registro de Log',
+    sections: [
+      {
+        heading: '📋 O que é o Registro de Log?',
+        icon: '📋',
+        content: 'Registro de todas as operações realizadas no sistema: quem fez, quando fez, em qual tela e qual ação. Essencial para auditoria e rastreamento de problemas.'
+      },
+      {
+        heading: '🔍 Informações Registradas',
+        icon: '🔍',
+        items: [
+          {
+            label: 'Usuário',
+            description: 'Quem realizou a operação (funcionário ou nome do usuário logado).'
+          },
+          {
+            label: 'Data e Hora',
+            description: 'Momento exato em que a ação foi executada.'
+          },
+          {
+            label: 'Ação',
+            description: 'Tipo de operação: Criação, Edição, Exclusão, Login, Logout, Exportação, Importação, etc.'
+          },
+          {
+            label: 'Módulo/Tela',
+            description: 'Qual parte do sistema foi acessada (ex: Cadastro de Clientes, Formas de Pagamento).'
+          },
+          {
+            label: 'Detalhes',
+            description: 'Informações específicas da ação, como ID do registro alterado, valores antigos e novos.'
+          },
+          {
+            label: 'IP',
+            description: 'Endereço IP de onde a ação foi realizada (útil para identificar acessos suspeitos).'
+          }
+        ]
+      },
+      {
+        heading: '🔎 Filtros Disponíveis',
+        icon: '🔎',
+        items: [
+          {
+            label: 'Período',
+            description: 'Filtre por data inicial e final para ver logs de um intervalo específico.'
+          },
+          {
+            label: 'Usuário',
+            description: 'Veja apenas ações de um funcionário específico.'
+          },
+          {
+            label: 'Tipo de Ação',
+            description: 'Filtre por tipo: apenas criações, apenas exclusões, etc.'
+          },
+          {
+            label: 'Módulo',
+            description: 'Veja logs de uma tela específica do sistema.'
+          }
+        ]
+      },
+      {
+        heading: '📥 Exportação',
+        icon: '📥',
+        content: 'Exporte os logs para Excel ou CSV para análise externa, auditorias ou backup. O arquivo conterá todas as colunas e filtros aplicados.'
+      },
+      {
+        heading: '⚠️ Importante',
+        icon: '⚠️',
+        content: 'Logs não podem ser editados ou excluídos para garantir integridade da auditoria. São mantidos por tempo indeterminado conforme legislação vigente.'
+      },
+      {
+        tips: [
+          'Use logs para identificar quem alterou informações importantes',
+          'Exporte logs periodicamente para backup externo',
+          'Monitore ações de exclusão e alterações em massa',
+          'Verifique logs de login para identificar acessos suspeitos',
+          'Use filtros para encontrar rapidamente a informação que precisa'
+        ]
+      }
+    ]
+  },
+
   'FIN-001': {
     title: 'Plano de Contas',
     sections: [
@@ -607,53 +690,81 @@ export const helpContents = {
       {
         heading: '📋 O que é a Estrutura DRE?',
         icon: '📋',
-        content: 'DRE (Demonstrativo de Resultados do Exercício) mostra se a empresa teve lucro ou prejuízo. Configure a estrutura e fórmulas de cálculo.'
+        content: 'DRE (Demonstrativo de Resultados do Exercício) mostra se a empresa teve lucro ou prejuízo. Nesta tela você cadastra a estrutura personalizada do seu DRE com linhas, cálculos e fórmulas.'
       },
       {
-        heading: '🔑 Componentes',
+        heading: '⚙️ Como Funciona o Cadastro',
+        icon: '⚙️',
+        content: 'Você cria linhas sequenciais que formam seu DRE. Cada linha pode ser um título, uma conta do plano de contas, uma fórmula de cálculo ou um total. O sistema calcula automaticamente os valores baseado nas fórmulas que você definir.'
+      },
+      {
+        heading: '🔑 Campos de Cadastro',
         icon: '🔑',
         items: [
           {
-            label: 'Linhas do DRE',
-            description: 'Cada linha representa uma seção: Receita Bruta, (-) Deduções, (=) Receita Líquida, etc.'
+            label: 'Ordem',
+            description: 'Número sequencial que define a posição da linha no DRE (1, 2, 3...). Controla a ordem de exibição.'
           },
           {
-            label: 'Tipo de Linha',
-            description: 'TÍTULO (cabeçalho de seção), CONTA (valor de uma conta), FÓRMULA (cálculo), TOTAL (soma de seção).'
+            label: 'Descrição',
+            description: 'Texto que aparece no DRE (ex: "Receita Bruta", "(-) Impostos", "(=) Lucro Líquido").'
           },
           {
-            label: 'Fórmulas',
-            description: 'Use referências a outras linhas para cálculos automáticos (ex: Lucro Bruto = Receita - Custos).'
+            label: 'Tipo',
+            description: 'TÍTULO: apenas texto de seção | CONTA: vincula a uma conta do plano | FÓRMULA: calcula baseado em outras linhas | TOTAL: soma várias linhas.'
+          },
+          {
+            label: 'Conta Vinculada',
+            description: 'Se tipo = CONTA, selecione qual conta do plano de contas usar. O valor virá automaticamente dessa conta.'
+          },
+          {
+            label: 'Fórmula',
+            description: 'Se tipo = FÓRMULA, defina o cálculo usando referências a outras linhas (ex: L1 - L2 + L3).'
           },
           {
             label: 'Nível/Indentação',
-            description: 'Organiza visualmente a hierarquia do relatório.'
+            description: 'Número de 0 a 5 que define o recuo visual da linha. Use para criar hierarquia visual (0=sem recuo, 1=recuo pequeno, etc).'
+          },
+          {
+            label: 'Negrito',
+            description: 'Marque para destacar linhas importantes como totais e resultados finais.'
+          },
+          {
+            label: 'Linha Divisória',
+            description: 'Marque para adicionar linha horizontal de separação após esta linha.'
           }
         ]
       },
       {
-        heading: '📊 Estrutura Padrão',
-        icon: '📊',
-        content: <div className="space-y-1 text-sm">
-          <div>1. Receita Bruta de Vendas</div>
-          <div className="ml-4">(-) Deduções e Abatimentos</div>
-          <div className="ml-4">(=) Receita Líquida</div>
-          <div className="ml-4">(-) Custos das Vendas</div>
-          <div className="ml-4">(=) Lucro Bruto</div>
-          <div className="ml-4">(-) Despesas Operacionais</div>
-          <div className="ml-4">(=) Lucro Operacional</div>
-          <div className="ml-4">(+/-) Receitas/Despesas Financeiras</div>
-          <div className="ml-4">(=) Lucro Antes dos Impostos</div>
-          <div className="ml-4">(-) Impostos</div>
-          <div className="ml-4">(=) Lucro Líquido</div>
+        heading: '📝 Passo a Passo para Cadastrar',
+        icon: '📝',
+        content: <div>
+          <ol className="list-decimal list-inside space-y-2">
+            <li>Clique em "+ Nova Linha DRE"</li>
+            <li>Defina a ordem (próximo número disponível)</li>
+            <li>Digite a descrição que aparecerá no relatório</li>
+            <li>Escolha o tipo (TÍTULO, CONTA, FÓRMULA ou TOTAL)</li>
+            <li>Se tipo CONTA: selecione a conta do plano</li>
+            <li>Se tipo FÓRMULA: defina a fórmula (ex: L1 - L2)</li>
+            <li>Configure indentação para hierarquia visual</li>
+            <li>Marque negrito e linha divisória se necessário</li>
+            <li>Salve a linha</li>
+          </ol>
         </div>
       },
       {
+        heading: '💡 Exemplo de Fórmula',
+        icon: '💡',
+        content: 'Se linha 1 é Receita (R$ 10.000) e linha 2 é Custos (R$ 4.000), crie linha 3 com fórmula "L1 - L2" para calcular Lucro Bruto (R$ 6.000) automaticamente.'
+      },
+      {
         tips: [
+          'Comece pelos títulos principais, depois adicione os detalhes',
+          'Use referências de linha (L1, L2...) nas fórmulas, não valores fixos',
+          'Teste sua estrutura com dados reais para validar cálculos',
           'Você pode ter múltiplas estruturas DRE para diferentes análises',
-          'Teste as fórmulas com dados reais',
-          'Mantenha uma estrutura padrão para comparações mensais',
-          'Documente a lógica de cálculo de cada linha'
+          'Use indentação para tornar o DRE mais legível',
+          'Linhas de TOTAL geralmente ficam em negrito'
         ]
       }
     ]

@@ -19,7 +19,6 @@ export async function PUT(request, { params }) {
             valor_ajuste = ?,
             data_inicio = ?,
             data_fim = ?,
-            prioridade = ?,
             observacoes = ?,
             ativo = ?,
             updated_at = CURRENT_TIMESTAMP
@@ -32,7 +31,6 @@ export async function PUT(request, { params }) {
         data.valor_ajuste,
         data.data_inicio || null,
         data.data_fim || null,
-        data.prioridade || 100,
         data.observacoes || null,
         data.ativo ? 1 : 0,
         id
