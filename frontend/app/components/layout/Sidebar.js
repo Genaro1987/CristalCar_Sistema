@@ -66,7 +66,7 @@ export default function Sidebar() {
       id: 'ajuda',
       name: 'Ajuda do Sistema',
       icon: '❓',
-      href: '/ajuda',
+      href: '/modules/ajuda',
       code: 'HELP-001',
       submenu: []
     },

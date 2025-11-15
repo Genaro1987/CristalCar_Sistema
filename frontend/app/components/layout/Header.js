@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import HelpButton from '@/app/components/ui/HelpButton';
+import FavoritosButton from '@/app/components/ui/FavoritosButton';
 import { helpContents } from '@/app/utils/helpContent';
 
 export default function Header({ screenCode = '', screenName = '', onShowHelp }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [showResults, setShowResults] = useState(false);
@@ -138,6 +140,13 @@ export default function Header({ screenCode = '', screenName = '', onShowHelp })
                 </div>
               )}
             </div>
+
+            {/* Botão de Favoritos */}
+            <FavoritosButton
+              screenCode={screenCode}
+              screenName={screenName}
+              screenPath={pathname}
+            />
 
             {/* Botão de Ajuda */}
             {screenCode && helpContents[screenCode] && (
