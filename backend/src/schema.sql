@@ -157,6 +157,23 @@ CREATE TABLE IF NOT EXISTS adm_permissoes_modulos (
     FOREIGN KEY (usuario_id) REFERENCES adm_usuarios(id) ON DELETE CASCADE
 );
 
+-- Tabela de Telas do Sistema
+CREATE TABLE IF NOT EXISTS adm_telas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    codigo_tela VARCHAR(50) UNIQUE NOT NULL,
+    nome_tela VARCHAR(200) NOT NULL,
+    descricao TEXT,
+    modulo VARCHAR(50) NOT NULL, -- ADMINISTRATIVO, FINANCEIRO, FATURAMENTO, COMPRAS, RELATORIOS, PARCEIROS, OBJETIVOS
+    caminho_tela VARCHAR(500) NOT NULL,
+    icone VARCHAR(100), -- Nome do ícone (ex: 'Building', 'Users', 'ChartBar')
+    ordem_exibicao INTEGER DEFAULT 0,
+    exibir_menu BOOLEAN DEFAULT 1,
+    exibir_favoritos BOOLEAN DEFAULT 1,
+    ativo BOOLEAN DEFAULT 1,
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Tabela de Log de Acessos
 CREATE TABLE IF NOT EXISTS adm_log_acessos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
