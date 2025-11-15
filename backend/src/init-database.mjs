@@ -72,27 +72,50 @@ async function initDatabase() {
     let errorCount = 0;
     const errors = [];
 
-    for (let i = 0; i < commands.length; i++) {
-      const command = commands[i];
+    // Executar comandos em lotes menores para evitar timeout
+    const batchSize = 10;
+    for (let i = 0; i < commands.length; i += batchSize) {
+      const batch = commands.slice(i, i + batchSize);
 
-      try {
-        // Extrair nome da tabela/índice/view/trigger para log
-        const match =
-          command.match(
-            /CREATE\s+(TABLE|INDEX|VIEW|TRIGGER)\s+IF\s+NOT\s+EXISTS\s+(\w+)/i
-          ) || command.match(/CREATE\s+(TABLE|INDEX|VIEW|TRIGGER)\s+(\w+)/i);
+      for (let j = 0; j < batch.length; j++) {
+        const command = batch[j];
+        const commandIndex = i + j;
 
-        const objectType = match ? match[1] : "OBJECT";
-        const objectName = match ? match[2] : `comando_${i + 1}`;
+        try {
+          // Extrair nome da tabela/índice/view/trigger para log
+          const match =
+            command.match(
+              /CREATE\s+(TABLE|INDEX|VIEW|TRIGGER)\s+IF\s+NOT\s+EXISTS\s+(\w+)/i
+            ) || command.match(/CREATE\s+(TABLE|INDEX|VIEW|TRIGGER)\s+(\w+)/i);
 
-        // Usar objeto com sql ao invés de string direta para evitar migrations API
-        await turso.execute({ sql: command, args: [] });
-        console.log(`✅ ${objectType}: ${objectName}`);
-        successCount++;
-      } catch (error) {
-        console.error(`❌ Erro no comando ${i + 1}:`, error.message);
-        errors.push({ command: i + 1, error: error.message, sql: command.substring(0, 100) });
-        errorCount++;
+          const objectType = match ? match[1] : "OBJECT";
+          const objectName = match ? match[2] : `comando_${commandIndex + 1}`;
+
+          // Executar comando SQL
+          // Nota: Se o banco já existe, IF NOT EXISTS evitará erros
+          if (typeof turso.executeMultiple === 'function') {
+            await turso.executeMultiple(command);
+          } else {
+            // Usar execute com string simples (não objeto) pode evitar migrations API em algumas versões
+            await turso.execute(command);
+          }
+
+          console.log(`✅ ${objectType}: ${objectName}`);
+          successCount++;
+        } catch (error) {
+          console.error(`❌ Erro no comando ${commandIndex + 1}:`, error.message);
+          errors.push({
+            command: commandIndex + 1,
+            error: error.message,
+            sql: command.substring(0, 100)
+          });
+          errorCount++;
+        }
+      }
+
+      // Pequeno delay entre batches
+      if (i + batchSize < commands.length) {
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
     }
 
@@ -111,32 +134,37 @@ async function initDatabase() {
       console.log();
     }
 
-    // Verificar tabelas criadas
-    const result = await turso.execute({
-      sql: `
-        SELECT name, type
-        FROM sqlite_master
-        WHERE type IN ('table', 'view')
-        AND name NOT LIKE 'sqlite_%'
-        ORDER BY type, name
-      `,
-      args: []
-    });
-
-    console.log("📊 Estrutura do banco criada:\n");
-    console.log("TABELAS:");
-    result.rows
-      .filter((row) => row.type === "table")
-      .forEach((row) => {
-        console.log(`  - ${row.name}`);
+    // Verificar tabelas criadas (opcional - não falhar se der erro)
+    try {
+      const result = await turso.execute({
+        sql: `
+          SELECT name, type
+          FROM sqlite_master
+          WHERE type IN ('table', 'view')
+          AND name NOT LIKE 'sqlite_%'
+          ORDER BY type, name
+        `,
+        args: []
       });
 
-    console.log("\nVIEWS:");
-    result.rows
-      .filter((row) => row.type === "view")
-      .forEach((row) => {
-        console.log(`  - ${row.name}`);
-      });
+      console.log("📊 Estrutura do banco criada:\n");
+      console.log("TABELAS:");
+      result.rows
+        .filter((row) => row.type === "table")
+        .forEach((row) => {
+          console.log(`  - ${row.name}`);
+        });
+
+      console.log("\nVIEWS:");
+      result.rows
+        .filter((row) => row.type === "view")
+        .forEach((row) => {
+          console.log(`  - ${row.name}`);
+        });
+    } catch (verifyError) {
+      console.log("⚠️  Não foi possível verificar estrutura do banco (mas os comandos foram executados)");
+      console.log("   Erro:", verifyError.message);
+    }
 
     console.log("\n✅ Banco de dados inicializado com sucesso!");
   } catch (error) {

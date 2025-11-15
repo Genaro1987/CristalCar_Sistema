@@ -7,10 +7,10 @@ const turso = createClient({
 
 export async function GET() {
   try {
-    const result = await turso.execute(`
-      SELECT * FROM par_parceiros
-      ORDER BY status DESC, nome_fantasia ASC
-    `);
+    const result = await turso.execute({
+      sql: `SELECT * FROM par_parceiros ORDER BY status DESC, nome_fantasia ASC`,
+      args: []
+    });
 
     return Response.json(result.rows);
   } catch (error) {
