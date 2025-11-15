@@ -17,13 +17,6 @@ export default function DashboardLayout({ children, title = 'Dashboard', pageCod
         {/* Page Content */}
         <main className="p-6">
           {children}
-
-          {/* Rodapé com código da tela (canto direito) */}
-          {pageCode && (
-            <div className="fixed bottom-4 right-4 text-xs text-gray-400 bg-white px-2 py-1 rounded border border-gray-200 shadow-sm">
-              {pageCode}
-            </div>
-          )}
         </main>
       </div>
     </div>

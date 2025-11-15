@@ -16,7 +16,7 @@ export default function Header({ title, pageCode = '' }) {
           {/* Título da Página */}
           <div>
             <h1 className="text-2xl font-bold text-primary-600">{title}</h1>
-            <div className="flex items-center space-x-2 mt-1">
+            <div className="flex items-center space-x-3 mt-1">
               <span className="text-sm text-secondary-500">
                 {new Date().toLocaleDateString('pt-BR', {
                   weekday: 'long',
@@ -25,6 +25,14 @@ export default function Header({ title, pageCode = '' }) {
                   day: 'numeric'
                 })}
               </span>
+              {pageCode && (
+                <>
+                  <span className="text-secondary-300">•</span>
+                  <span className="text-xs text-secondary-400 font-mono bg-secondary-50 px-2 py-0.5 rounded">
+                    {pageCode}
+                  </span>
+                </>
+              )}
             </div>
           </div>
 
@@ -57,13 +65,6 @@ export default function Header({ title, pageCode = '' }) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </button>
-
-            {/* Código da Tela (pequeno no canto) */}
-            {pageCode && (
-              <div className="text-xs text-gray-400 px-2">
-                {pageCode}
-              </div>
-            )}
           </div>
         </div>
       </div>
