@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/app/components/layout/DashboardLayout';
-import HelpButton from '@/app/components/ui/HelpButton';
-import { helpContents } from '@/app/utils/helpContent';
 
 export default function CondicoesPagamentoPage() {
   const [condicoes, setCondicoes] = useState([]);
@@ -179,16 +177,13 @@ export default function CondicoesPagamentoPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 🔍 Pesquisar
               </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={termoPesquisa}
-                  onChange={(e) => setTermoPesquisa(e.target.value)}
-                  placeholder="Buscar por nome ou descrição..."
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                />
-                <HelpButton helpContent={helpContents['FIN-011']} />
-              </div>
+              <input
+                type="text"
+                value={termoPesquisa}
+                onChange={(e) => setTermoPesquisa(e.target.value)}
+                placeholder="Buscar por nome ou descrição..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">

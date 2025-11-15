@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import HelpButton from '@/app/components/ui/HelpButton';
+import { helpContents } from '@/app/utils/helpContent';
 
 export default function Header({ screenCode = '', screenName = '', onShowHelp }) {
   const router = useRouter();
@@ -138,16 +140,8 @@ export default function Header({ screenCode = '', screenName = '', onShowHelp })
             </div>
 
             {/* Botão de Ajuda */}
-            {onShowHelp && (
-              <button
-                onClick={onShowHelp}
-                className="p-2 text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
-                title="Abrir ajuda desta tela"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </button>
+            {screenCode && helpContents[screenCode] && (
+              <HelpButton helpContent={helpContents[screenCode]} />
             )}
           </div>
         </div>
