@@ -82,9 +82,9 @@ export default function Sidebar() {
   const isActive = (href) => pathname === href;
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 bg-gradient-to-b from-secondary-800 to-secondary-900 text-white shadow-xl overflow-y-auto">
+    <aside className="fixed left-0 top-0 h-screen w-64 bg-gradient-to-b from-secondary-800 to-secondary-900 text-white shadow-xl flex flex-col">
       {/* Logo */}
-      <div className="p-6 border-b border-secondary-700">
+      <div className="flex-shrink-0 p-6 border-b border-secondary-700">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
             <span className="text-2xl font-bold text-white">C</span>
@@ -98,8 +98,8 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* Menu */}
-      <nav className="p-4">
+      {/* Menu - com rolagem */}
+      <nav className="flex-1 overflow-y-auto p-4">
         <ul className="space-y-2">
           {menuItems.map((item) => (
             <li key={item.id}>
@@ -190,8 +190,8 @@ export default function Sidebar() {
         </ul>
       </nav>
 
-      {/* Rodapé */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-secondary-700 bg-secondary-900">
+      {/* Rodapé - fixo no bottom */}
+      <div className="flex-shrink-0 p-4 border-t border-secondary-700 bg-secondary-900">
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center">
             <span className="text-sm font-bold">A</span>
