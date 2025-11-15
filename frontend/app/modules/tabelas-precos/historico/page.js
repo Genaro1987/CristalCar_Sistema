@@ -108,30 +108,6 @@ export default function HistoricoAlteracoesPage() {
   return (
     <DashboardLayout screenCode="TAB-002">
       <div className="space-y-6">
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Histórico de Alterações</h1>
-            <p className="text-gray-600 mt-1">
-              Acompanhe todas as alterações realizadas nas tabelas de preços
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setMostrarAjuda(true)}
-              className="px-4 py-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
-            >
-              ❓ Ajuda
-            </button>
-            <button
-              onClick={exportarHistorico}
-              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-              disabled={historicoFiltrado.length === 0}
-            >
-              📥 Exportar CSV
-            </button>
-          </div>
-        </div>
-
         {/* Estatísticas */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
@@ -160,7 +136,7 @@ export default function HistoricoAlteracoesPage() {
 
         {/* Filtros */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Tabela</label>
               <select
@@ -209,6 +185,16 @@ export default function HistoricoAlteracoesPage() {
                 onChange={(e) => setDataFim(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
               />
+            </div>
+
+            <div>
+              <button
+                onClick={exportarHistorico}
+                className="w-full px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                disabled={historicoFiltrado.length === 0}
+              >
+                📥 Exportar CSV
+              </button>
             </div>
           </div>
         </div>

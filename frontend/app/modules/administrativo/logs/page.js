@@ -172,7 +172,7 @@ export default function RegistroLogPage() {
   };
 
   return (
-    <DashboardLayout title="Registro de Log" pageCode="ADM-005">
+    <DashboardLayout screenCode="ADM-005">
       <div className="space-y-6">
         {/* Informação */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">

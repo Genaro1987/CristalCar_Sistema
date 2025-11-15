@@ -155,7 +155,7 @@ export default function CadastroEmpresaPage() {
   };
 
   return (
-    <DashboardLayout title="Cadastro da Empresa">
+    <DashboardLayout screenCode="ADM-001">
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Mensagem de Sucesso/Erro */}
         {message && (

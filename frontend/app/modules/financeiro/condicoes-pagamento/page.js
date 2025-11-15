@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/app/components/layout/DashboardLayout';
+import HelpButton from '@/app/components/ui/HelpButton';
+import { helpContents } from '@/app/utils/helpContent';
 
 export default function CondicoesPagamentoPage() {
   const [condicoes, setCondicoes] = useState([]);
@@ -170,44 +172,23 @@ export default function CondicoesPagamentoPage() {
   return (
     <DashboardLayout screenCode="FIN-011">
       <div className="space-y-6">
-        {/* Cabeçalho */}
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Condições de Pagamento</h1>
-            <p className="text-gray-600 mt-1">
-              Configure as condições de pagamento disponíveis para as vendas
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setMostrarAjuda(true)}
-              className="px-4 py-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
-            >
-              ❓ Ajuda
-            </button>
-            <button
-              onClick={handleNovo}
-              className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
-            >
-              ➕ Nova Condição
-            </button>
-          </div>
-        </div>
-
         {/* Barra de Pesquisa e Filtros */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 🔍 Pesquisar
               </label>
-              <input
-                type="text"
-                value={termoPesquisa}
-                onChange={(e) => setTermoPesquisa(e.target.value)}
-                placeholder="Buscar por nome ou descrição..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={termoPesquisa}
+                  onChange={(e) => setTermoPesquisa(e.target.value)}
+                  placeholder="Buscar por nome ou descrição..."
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                />
+                <HelpButton helpContent={helpContents['FIN-011']} />
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -239,6 +220,14 @@ export default function CondicoesPagamentoPage() {
                 <option value="ATIVO">✅ Ativos</option>
                 <option value="INATIVO">⛔ Inativos</option>
               </select>
+            </div>
+            <div>
+              <button
+                onClick={handleNovo}
+                className="w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+              >
+                ➕ Nova Condição
+              </button>
             </div>
           </div>
         </div>
