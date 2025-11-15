@@ -85,7 +85,8 @@ async function initDatabase() {
         const objectType = match ? match[1] : "OBJECT";
         const objectName = match ? match[2] : `comando_${i + 1}`;
 
-        await turso.execute(command);
+        // Usar objeto com sql ao invés de string direta para evitar migrations API
+        await turso.execute({ sql: command, args: [] });
         console.log(`✅ ${objectType}: ${objectName}`);
         successCount++;
       } catch (error) {
@@ -111,13 +112,16 @@ async function initDatabase() {
     }
 
     // Verificar tabelas criadas
-    const result = await turso.execute(`
-      SELECT name, type
-      FROM sqlite_master
-      WHERE type IN ('table', 'view')
-      AND name NOT LIKE 'sqlite_%'
-      ORDER BY type, name
-    `);
+    const result = await turso.execute({
+      sql: `
+        SELECT name, type
+        FROM sqlite_master
+        WHERE type IN ('table', 'view')
+        AND name NOT LIKE 'sqlite_%'
+        ORDER BY type, name
+      `,
+      args: []
+    });
 
     console.log("📊 Estrutura do banco criada:\n");
     console.log("TABELAS:");

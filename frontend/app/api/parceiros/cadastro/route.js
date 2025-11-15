@@ -24,33 +24,34 @@ export async function POST(request) {
     const data = await request.json();
 
     // Gerar código único se não fornecido
-    const codigo = data.codigo || `PAR${Date.now()}`;
+    const codigo_unico = data.codigo_unico || data.codigo || `PAR${Date.now()}`;
 
     const result = await turso.execute({
       sql: `
         INSERT INTO par_parceiros (
-          codigo, tipo_pessoa, tipo_parceiro, nome_fantasia, razao_social, nome,
-          cpf_cnpj, rg_inscricao_estadual, inscricao_municipal, email, telefone, celular, site,
-          cep, endereco, numero, complemento, bairro,
-          cidade, estado,
-          banco, agencia, conta, pix,
+          codigo_unico, tipo_pessoa, tipo_parceiro, nome_fantasia, razao_social, nome_completo,
+          cnpj, cpf, inscricao_estadual, inscricao_municipal, rg, email, telefone, celular, website,
+          cep, endereco, numero, complemento, bairro, cidade, estado,
+          banco, agencia, conta, tipo_conta, pix_chave, pix_tipo,
           limite_credito, observacoes, status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       args: [
-        codigo,
+        codigo_unico,
         data.tipo_pessoa || 'JURIDICA',
         data.tipo_parceiro || data.tipo || 'CLIENTE',
         data.nome_fantasia || null,
         data.razao_social || null,
-        data.nome || null,
-        data.cpf_cnpj,
-        data.rg_inscricao_estadual || data.ie_rg || null,
+        data.nome_completo || data.nome || null,
+        data.cnpj || (data.tipo_pessoa === 'JURIDICA' ? data.cpf_cnpj : null),
+        data.cpf || (data.tipo_pessoa === 'FISICA' ? data.cpf_cnpj : null),
+        data.inscricao_estadual || data.ie_rg || null,
         data.inscricao_municipal || null,
+        data.rg || null,
         data.email || null,
         data.telefone || null,
         data.celular || null,
-        data.site || null,
+        data.website || data.site || null,
         data.cep || null,
         data.endereco || null,
         data.numero || null,
@@ -61,7 +62,9 @@ export async function POST(request) {
         data.banco || null,
         data.agencia || null,
         data.conta || null,
-        data.pix || null,
+        data.tipo_conta || null,
+        data.pix_chave || data.pix || null,
+        data.pix_tipo || null,
         data.limite_credito || 0,
         data.observacoes || null,
         data.status || (data.ativo ? 'ATIVO' : 'INATIVO')

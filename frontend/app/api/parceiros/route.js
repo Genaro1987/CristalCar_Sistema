@@ -10,11 +10,11 @@ export async function GET() {
     const result = await turso.execute(`
       SELECT
         id,
-        codigo,
+        codigo_unico,
         tipo_pessoa,
         tipo_parceiro,
         cpf_cnpj,
-        COALESCE(razao_social, nome) as nome_razao_social,
+        COALESCE(razao_social, nome_completo) as nome_razao_social,
         nome_fantasia,
         telefone,
         celular,
@@ -25,7 +25,7 @@ export async function GET() {
         cep,
         status
       FROM par_parceiros
-      ORDER BY COALESCE(razao_social, nome) ASC
+      ORDER BY COALESCE(razao_social, nome_fantasia, nome_completo) ASC
     `);
 
     return Response.json(result.rows);
