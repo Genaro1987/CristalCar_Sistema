@@ -29,8 +29,10 @@ export default function DashboardPage() {
   const [telasFavoritas, setTelasFavoritas] = useState([
     { codigo: 'ADM-001', nome: 'Cadastro da Empresa', href: '/modules/administrativo/empresa', icon: '🏢' },
     { codigo: 'FIN-001', nome: 'Plano de Contas', href: '/modules/modelos-plano/plano-contas', icon: '📊' },
-    { codigo: 'PAR-001', nome: 'Cadastro de Parceiros', href: '/modules/parceiros/cadastro', icon: '👥' },
-    { codigo: 'FIN-002', nome: 'Movimentação Financeira', href: '/modules/financeiro/movimentacao', icon: '💰' },
+    { codigo: 'FIN-010', nome: 'Formas de Pagamento', href: '/modules/financeiro/formas-pagamento', icon: '💳' },
+    { codigo: 'ADM-002', nome: 'Funcionários', href: '/modules/administrativo/funcionarios', icon: '👥' },
+    { codigo: 'FIN-002', nome: 'Estrutura DRE', href: '/modules/modelos-plano/estrutura-dre', icon: '📈' },
+    { codigo: 'PAR-001', nome: 'Cadastro de Parceiros', href: '/modules/parceiros/cadastro', icon: '🤝' },
   ]);
 
   const getGreeting = () => {
@@ -83,7 +85,7 @@ export default function DashboardPage() {
             </Button>
           }
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {telasFavoritas.map((tela, index) => (
               <a
                 key={index}
