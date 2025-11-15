@@ -3,8 +3,9 @@ import { db } from "./db.mjs";
 
 async function main() {
   try {
-    console.log("📊 Criando tabela de teste (teste_ci)...");
+    console.log("📊 [init-db] Criando tabela de teste (teste_ci)...");
 
+    // 1) Cria a tabela (se ainda não existir)
     await db.execute(`
       CREATE TABLE IF NOT EXISTS teste_ci (
         id INTEGER PRIMARY KEY,
@@ -13,18 +14,25 @@ async function main() {
       );
     `);
 
-    console.log("✅ Tabela teste_ci criada (ou já existia).");
+    console.log("✅ [init-db] Tabela teste_ci criada (ou já existia).");
 
-    const descricao = "Registro criado via GitHub Actions";
+    // 2) Insere um registro fixo (para garantir visibilidade)
+    console.log("📝 [init-db] Inserindo registro de exemplo...");
 
-    await db.execute({
-      sql: "INSERT INTO teste_ci (descricao) VALUES (:descricao)",
-      args: { descricao },
-    });
+    const insertResult = await db.execute(
+      "INSERT INTO teste_ci (descricao) VALUES ('Registro criado via GitHub Actions');"
+    );
 
-    console.log("✅ Registro de exemplo inserido na tabela teste_ci.");
+    console.log("✅ [init-db] Insert executado. Resultado bruto:", insertResult);
+
+    // 3) Confere o que ficou na tabela
+    const check = await db.execute(
+      "SELECT id, descricao, criado_em FROM teste_ci ORDER BY id DESC LIMIT 5;"
+    );
+
+    console.log("📋 [init-db] Registros atuais na teste_ci:", check.rows);
   } catch (error) {
-    console.error("❌ Erro ao criar tabela/registro de teste:", error);
+    console.error("❌ [init-db] Erro ao criar tabela/registro de teste:", error);
     process.exit(1);
   }
 }
