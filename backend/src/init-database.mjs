@@ -134,29 +134,37 @@ async function initDatabase() {
       console.log();
     }
 
-    // Verificar tabelas criadas
-    const result = await turso.execute(`
-      SELECT name, type
-      FROM sqlite_master
-      WHERE type IN ('table', 'view')
-      AND name NOT LIKE 'sqlite_%'
-      ORDER BY type, name
-    `);
-
-    console.log("📊 Estrutura do banco criada:\n");
-    console.log("TABELAS:");
-    result.rows
-      .filter((row) => row.type === "table")
-      .forEach((row) => {
-        console.log(`  - ${row.name}`);
+    // Verificar tabelas criadas (opcional - não falhar se der erro)
+    try {
+      const result = await turso.execute({
+        sql: `
+          SELECT name, type
+          FROM sqlite_master
+          WHERE type IN ('table', 'view')
+          AND name NOT LIKE 'sqlite_%'
+          ORDER BY type, name
+        `,
+        args: []
       });
 
-    console.log("\nVIEWS:");
-    result.rows
-      .filter((row) => row.type === "view")
-      .forEach((row) => {
-        console.log(`  - ${row.name}`);
-      });
+      console.log("📊 Estrutura do banco criada:\n");
+      console.log("TABELAS:");
+      result.rows
+        .filter((row) => row.type === "table")
+        .forEach((row) => {
+          console.log(`  - ${row.name}`);
+        });
+
+      console.log("\nVIEWS:");
+      result.rows
+        .filter((row) => row.type === "view")
+        .forEach((row) => {
+          console.log(`  - ${row.name}`);
+        });
+    } catch (verifyError) {
+      console.log("⚠️  Não foi possível verificar estrutura do banco (mas os comandos foram executados)");
+      console.log("   Erro:", verifyError.message);
+    }
 
     console.log("\n✅ Banco de dados inicializado com sucesso!");
   } catch (error) {
