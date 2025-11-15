@@ -1,327 +1,235 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
+import DashboardLayout from '../components/layout/DashboardLayout';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import { useState, useEffect } from 'react';
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState({
-    saldoBancos: 0,
-    contasReceber: 0,
-    contasPagar: 0,
-    resultadoMes: 0,
-  });
+  const [empresaData, setEmpresaData] = useState(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
-    // TODO: Integrar com autenticação no futuro
-    // Carregar estatísticas do dashboard
-    carregarEstatisticas();
+    // Atualizar hora a cada minuto
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+
+    // Buscar dados da empresa (mock por enquanto)
+    setEmpresaData({
+      nome_fantasia: 'Cristal Car',
+      razao_social: 'Cristal Car Ltda',
+      logo_path: null
+    });
+
+    return () => clearInterval(timer);
   }, []);
 
-  const carregarEstatisticas = async () => {
-    try {
-      // TODO: Fazer chamadas para as APIs para buscar dados reais
-      // Por enquanto, usando dados de exemplo
-      setStats({
-        saldoBancos: 50000,
-        contasReceber: 25000,
-        contasPagar: 15000,
-        resultadoMes: 10000,
-      });
-    } catch (error) {
-      console.error("Erro ao carregar estatísticas:", error);
+  const stats = [
+    {
+      title: 'Contas a Receber',
+      value: 'R$ 25.430,00',
+      change: '+12.5%',
+      changeType: 'positive',
+      icon: '💰',
+      color: 'from-green-500 to-emerald-600'
+    },
+    {
+      title: 'Contas a Pagar',
+      value: 'R$ 18.250,00',
+      change: '-5.2%',
+      changeType: 'negative',
+      icon: '📊',
+      color: 'from-red-500 to-rose-600'
+    },
+    {
+      title: 'Saldo em Bancos',
+      value: 'R$ 42.180,00',
+      change: '+8.1%',
+      changeType: 'positive',
+      icon: '🏦',
+      color: 'from-blue-500 to-indigo-600'
+    },
+    {
+      title: 'Clientes Ativos',
+      value: '127',
+      change: '+3',
+      changeType: 'positive',
+      icon: '👥',
+      color: 'from-primary-500 to-orange-600'
     }
-  };
+  ];
 
-  const formatCurrency = (value) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
+  const quickActions = [
+    { title: 'Nova Movimentação', icon: '➕', href: '/modules/financeiro/movimentacao', color: 'bg-primary-500' },
+    { title: 'Cadastrar Parceiro', icon: '👤', href: '/modules/parceiros/cadastro', color: 'bg-blue-500' },
+    { title: 'Importar XML', icon: '📄', href: '/modules/importacao/xml', color: 'bg-green-500' },
+    { title: 'Relatórios', icon: '📈', href: '/modules/relatorios', color: 'bg-purple-500' },
+  ];
+
+  const recentActivities = [
+    { type: 'Recebimento', description: 'Cliente ABC - NF 12345', value: 'R$ 2.500,00', time: 'Há 2 horas', status: 'success' },
+    { type: 'Pagamento', description: 'Fornecedor XYZ - Boleto 67890', value: 'R$ 1.200,00', time: 'Há 4 horas', status: 'info' },
+    { type: 'Cadastro', description: 'Novo cliente: João Silva', value: '-', time: 'Há 6 horas', status: 'neutral' },
+  ];
+
+  const getGreeting = () => {
+    const hour = currentTime.getHours();
+    if (hour < 12) return 'Bom dia';
+    if (hour < 18) return 'Boa tarde';
+    return 'Boa noite';
   };
 
   return (
-    <div className="min-h-screen bg-secondary-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-secondary-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <DashboardLayout title="Painel de Controle">
+      <div className="space-y-6">
+        {/* Boas-vindas */}
+        <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-lg shadow-lg p-8 text-white">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="h-10 w-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
-                <svg
-                  className="h-6 w-6 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 10V3L4 14h7v7l9-11h-7z"
-                  />
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-secondary-900">
-                  CristalCar ERP
-                </h1>
-                <p className="text-sm text-secondary-600">
-                  Sistema de Gestão Automotiva
-                </p>
-              </div>
+            <div>
+              <h2 className="text-3xl font-bold mb-2">
+                {getGreeting()}, Administrador! 👋
+              </h2>
+              <p className="text-primary-100 text-lg">
+                Bem-vindo ao sistema {empresaData?.nome_fantasia || 'Cristal Car'}
+              </p>
+              <p className="text-primary-200 text-sm mt-2">
+                {currentTime.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} - {currentTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+              </p>
             </div>
-            <div className="flex items-center space-x-4">
-              {/* TODO: Adicionar menu de usuário quando implementar autenticação */}
+            {/* Logo da Empresa */}
+            <div className="hidden md:block">
+              <div className="w-32 h-32 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center border-2 border-white/20">
+                {empresaData?.logo_path ? (
+                  <img src={empresaData.logo_path} alt="Logo" className="w-full h-full object-contain p-4" />
+                ) : (
+                  <div className="text-center">
+                    <div className="text-5xl mb-2">🚗</div>
+                    <div className="text-xs text-primary-200">Cristal Car</div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Message */}
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-secondary-900">
-            Bem-vindo ao CristalCar ERP!
-          </h2>
-          <p className="mt-2 text-secondary-600">
-            Aqui está um resumo da sua empresa hoje
-          </p>
+        {/* Cards de Estatísticas */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {stats.map((stat, index) => (
+            <div
+              key={index}
+              className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-200"
+            >
+              <div className={`h-2 bg-gradient-to-r ${stat.color}`}></div>
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-4xl">{stat.icon}</span>
+                  <span className={`text-sm font-medium px-2 py-1 rounded-full ${
+                    stat.changeType === 'positive'
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-red-100 text-red-700'
+                  }`}>
+                    {stat.change}
+                  </span>
+                </div>
+                <h3 className="text-gray-600 text-sm font-medium mb-1">{stat.title}</h3>
+                <p className="text-2xl font-bold text-gray-800">{stat.value}</p>
+              </div>
+            </div>
+          ))}
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* Saldo em Bancos */}
-          <div className="card">
-            <div className="card-body">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-secondary-600">
-                    Saldo em Bancos
-                  </p>
-                  <p className="mt-2 text-3xl font-bold text-secondary-900">
-                    {formatCurrency(stats.saldoBancos)}
-                  </p>
-                </div>
-                <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <svg
-                    className="h-6 w-6 text-blue-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Ações Rápidas */}
+          <div className="lg:col-span-1">
+            <Card title="Ações Rápidas" className="h-full">
+              <div className="space-y-3">
+                {quickActions.map((action, index) => (
+                  <button
+                    key={index}
+                    className={`w-full flex items-center space-x-4 p-4 rounded-lg ${action.color} text-white hover:opacity-90 transition-opacity`}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-                    />
-                  </svg>
-                </div>
+                    <span className="text-2xl">{action.icon}</span>
+                    <span className="font-medium">{action.title}</span>
+                  </button>
+                ))}
               </div>
-            </div>
+            </Card>
           </div>
 
-          {/* Contas a Receber */}
-          <div className="card">
-            <div className="card-body">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-secondary-600">
-                    Contas a Receber
-                  </p>
-                  <p className="mt-2 text-3xl font-bold text-success">
-                    {formatCurrency(stats.contasReceber)}
-                  </p>
-                </div>
-                <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <svg
-                    className="h-6 w-6 text-green-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                </div>
+          {/* Atividades Recentes */}
+          <div className="lg:col-span-2">
+            <Card
+              title="Atividades Recentes"
+              subtitle="Últimas movimentações do sistema"
+              actions={
+                <Button variant="ghost" size="sm">
+                  Ver todas
+                </Button>
+              }
+            >
+              <div className="space-y-4">
+                {recentActivities.map((activity, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div className="flex items-center space-x-4">
+                      <div className={`w-2 h-2 rounded-full ${
+                        activity.status === 'success' ? 'bg-green-500' :
+                        activity.status === 'info' ? 'bg-blue-500' :
+                        'bg-gray-400'
+                      }`}></div>
+                      <div>
+                        <p className="font-medium text-gray-800">{activity.type}</p>
+                        <p className="text-sm text-gray-600">{activity.description}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-gray-800">{activity.value}</p>
+                      <p className="text-xs text-gray-500">{activity.time}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-          </div>
-
-          {/* Contas a Pagar */}
-          <div className="card">
-            <div className="card-body">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-secondary-600">
-                    Contas a Pagar
-                  </p>
-                  <p className="mt-2 text-3xl font-bold text-danger">
-                    {formatCurrency(stats.contasPagar)}
-                  </p>
-                </div>
-                <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center">
-                  <svg
-                    className="h-6 w-6 text-red-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Resultado do Mês */}
-          <div className="card">
-            <div className="card-body">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-secondary-600">
-                    Resultado do Mês
-                  </p>
-                  <p className="mt-2 text-3xl font-bold text-primary-600">
-                    {formatCurrency(stats.resultadoMes)}
-                  </p>
-                </div>
-                <div className="h-12 w-12 bg-primary-100 rounded-lg flex items-center justify-center">
-                  <svg
-                    className="h-6 w-6 text-primary-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </div>
+            </Card>
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="card mb-8">
-          <div className="card-header">
-            <h3 className="text-lg font-semibold text-secondary-900">
-              Ações Rápidas
-            </h3>
-          </div>
-          <div className="card-body">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <button className="btn-outline flex flex-col items-center justify-center p-6 space-y-2">
-                <svg
-                  className="h-8 w-8 text-primary-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                  />
-                </svg>
-                <span className="text-sm font-medium">Nova Movimentação</span>
-              </button>
-
-              <button className="btn-outline flex flex-col items-center justify-center p-6 space-y-2">
-                <svg
-                  className="h-8 w-8 text-success"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-                <span className="text-sm font-medium">Importar XML</span>
-              </button>
-
-              <button className="btn-outline flex flex-col items-center justify-center p-6 space-y-2">
-                <svg
-                  className="h-8 w-8 text-info"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                  />
-                </svg>
-                <span className="text-sm font-medium">Visualizar DRE</span>
-              </button>
-
-              <button className="btn-outline flex flex-col items-center justify-center p-6 space-y-2">
-                <svg
-                  className="h-8 w-8 text-warning"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                  />
-                </svg>
-                <span className="text-sm font-medium">Fluxo de Caixa</span>
-              </button>
+        {/* Avisos e Lembretes */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card title="⚠️ Contas Vencendo" className="border-l-4 border-l-warning">
+            <div className="space-y-3">
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-gray-700">Fornecedor ABC - Vence hoje</span>
+                <span className="font-semibold text-warning-dark">R$ 3.500,00</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-gray-700">Aluguel - Vence em 2 dias</span>
+                <span className="font-semibold text-warning-dark">R$ 2.800,00</span>
+              </div>
+              <div className="flex justify-between items-center py-2">
+                <span className="text-gray-700">IPTU - Vence em 5 dias</span>
+                <span className="font-semibold text-warning-dark">R$ 1.200,00</span>
+              </div>
             </div>
-          </div>
-        </div>
+          </Card>
 
-        {/* Recent Activities */}
-        <div className="card">
-          <div className="card-header">
-            <h3 className="text-lg font-semibold text-secondary-900">
-              Atividades Recentes
-            </h3>
-          </div>
-          <div className="card-body">
-            <div className="text-center py-8 text-secondary-500">
-              <svg
-                className="h-12 w-12 mx-auto mb-4 text-secondary-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                />
-              </svg>
-              <p>Nenhuma atividade recente</p>
+          <Card title="📢 Lembretes do Sistema" className="border-l-4 border-l-info">
+            <div className="space-y-3">
+              <div className="flex items-start space-x-3 py-2">
+                <span className="text-blue-500">•</span>
+                <p className="text-gray-700 text-sm">Backup automático configurado para hoje às 02:00</p>
+              </div>
+              <div className="flex items-start space-x-3 py-2">
+                <span className="text-blue-500">•</span>
+                <p className="text-gray-700 text-sm">15 clientes com aniversário este mês</p>
+              </div>
+              <div className="flex items-start space-x-3 py-2">
+                <span className="text-blue-500">•</span>
+                <p className="text-gray-700 text-sm">Conciliação bancária pendente para o mês atual</p>
+              </div>
             </div>
-          </div>
+          </Card>
         </div>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }
