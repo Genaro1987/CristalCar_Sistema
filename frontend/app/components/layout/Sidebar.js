@@ -167,17 +167,13 @@ export default function Sidebar() {
                                 <li key={idx}>
                                   <Link
                                     href={subsubitem.href}
-                                    className={`group flex items-center justify-between px-3 py-2 rounded-lg text-xs transition-all duration-200 ${
+                                    className={`block px-3 py-2 rounded-lg text-xs transition-all duration-200 ${
                                       isActive(subsubitem.href)
                                         ? 'bg-primary-500 text-white font-semibold shadow-md'
                                         : 'text-secondary-400 hover:bg-secondary-700 hover:text-white'
                                     }`}
-                                    title={`Código: ${subsubitem.code}`}
                                   >
-                                    <span className="flex-1">• {subsubitem.name}</span>
-                                    <span className="text-[10px] opacity-60 group-hover:opacity-100">
-                                      {subsubitem.code}
-                                    </span>
+                                    • {subsubitem.name}
                                   </Link>
                                 </li>
                               ))}
