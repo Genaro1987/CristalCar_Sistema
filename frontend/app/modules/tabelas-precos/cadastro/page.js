@@ -158,31 +158,8 @@ export default function TabelasPrecosPage() {
   return (
     <DashboardLayout screenCode="TAB-001">
       <div className="space-y-6">
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Tabelas de Preços</h1>
-            <p className="text-gray-600 mt-1">
-              Configure tabelas de preços para diferentes segmentos e períodos
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setMostrarAjuda(true)}
-              className="px-4 py-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
-            >
-              ❓ Ajuda
-            </button>
-            <button
-              onClick={handleNovo}
-              className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
-            >
-              ➕ Nova Tabela
-            </button>
-          </div>
-        </div>
-
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 🔍 Pesquisar
@@ -208,6 +185,14 @@ export default function TabelasPrecosPage() {
                 <option value="ATIVO">✅ Ativos</option>
                 <option value="INATIVO">⛔ Inativos</option>
               </select>
+            </div>
+            <div>
+              <button
+                onClick={handleNovo}
+                className="w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+              >
+                ➕ Nova Tabela
+              </button>
             </div>
           </div>
         </div>
