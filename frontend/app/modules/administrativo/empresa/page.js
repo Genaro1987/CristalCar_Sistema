@@ -40,8 +40,35 @@ export default function CadastroEmpresaPage() {
 
   const carregarDadosEmpresa = async () => {
     try {
-      // Banco de dados vazio - nenhuma empresa cadastrada
-      // Mantém os valores padrão do formData inicial
+      const response = await fetch('/api/administrativo/empresa');
+      if (response.ok) {
+        const data = await response.json();
+        if (data) {
+          setFormData({
+            id: data.id,
+            razao_social: data.razao_social || '',
+            nome_fantasia: data.nome_fantasia || '',
+            cnpj: data.cpf_cnpj || '',
+            inscricao_estadual: data.inscricao_estadual || '',
+            inscricao_municipal: data.inscricao_municipal || '',
+            telefone: data.telefone || '',
+            celular: data.celular || '',
+            email: data.email || '',
+            website: data.site || '',
+            endereco: data.endereco || '',
+            numero: data.numero || '',
+            complemento: data.complemento || '',
+            bairro: data.bairro || '',
+            cidade: data.cidade || '',
+            estado: data.estado || '',
+            cep: data.cep || '',
+            regime_tributario: data.regime_tributario || 'SIMPLES_NACIONAL',
+            data_abertura: data.data_abertura || '',
+            logo_path: data.logo_path || '',
+            observacoes: data.observacoes || ''
+          });
+        }
+      }
     } catch (error) {
       console.error('Erro ao carregar dados da empresa:', error);
       setMessage({ type: 'error', text: 'Erro ao carregar dados da empresa' });
@@ -76,20 +103,28 @@ export default function CadastroEmpresaPage() {
     setMessage(null);
 
     try {
-      // TODO: Fazer chamada à API
-      // const response = await fetch('/api/empresa', {
-      //   method: formData.id ? 'PUT' : 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formData)
-      // });
-
-      // Mock de salvamento
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      setMessage({
-        type: 'success',
-        text: 'Dados da empresa salvos com sucesso!'
+      const response = await fetch('/api/administrativo/empresa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
       });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setMessage({
+          type: 'success',
+          text: 'Dados da empresa salvos com sucesso!'
+        });
+
+        // Recarregar dados
+        await carregarDadosEmpresa();
+      } else {
+        setMessage({
+          type: 'error',
+          text: result.error || 'Erro ao salvar dados da empresa'
+        });
+      }
     } catch (error) {
       console.error('Erro ao salvar dados:', error);
       setMessage({
