@@ -1,4 +1,4 @@
-// backend/criar-tabela-teste.mjs
+// backend/src/criar-tabela-teste.mjs
 import { db } from "./db.mjs";
 
 async function main() {
@@ -25,8 +25,8 @@ async function main() {
     });
 
     console.log("✅ Registro de exemplo inserido na tabela teste_ci.");
-  } catch (err) {
-    console.error("❌ Erro ao criar tabela/registro de teste:", err);
+  } catch (error) {
+    console.error("❌ Erro ao criar tabela/registro de teste:", error);
     process.exit(1);
   }
 }
