@@ -64,36 +64,8 @@ export default function LayoutsImportacaoPage() {
   }, [searchTerm, tipoFilter, layouts]);
 
   const loadLayouts = () => {
-    // Mock data - substituir por chamada API real
-    const mockData = [
-      {
-        id: 1,
-        nome_layout: 'Extrato Itaú - CSV',
-        tipo_arquivo: 'EXTRATO_CSV',
-        descricao: 'Layout padrão para importação de extratos do Banco Itaú em formato CSV',
-        delimitador: ';',
-        encoding: 'UTF-8',
-        tem_cabecalho: true,
-        linha_inicio_dados: 2,
-        mapeamento_campos: [
-          { origem: 'coluna_1', destino: 'data', nome_origem: 'Data' },
-          { origem: 'coluna_2', destino: 'descricao', nome_origem: 'Histórico' },
-          { origem: 'coluna_3', destino: 'valor', nome_origem: 'Valor' },
-          { origem: 'coluna_4', destino: 'documento', nome_origem: 'Documento' }
-        ],
-        status: 'ATIVO'
-      },
-      {
-        id: 2,
-        nome_layout: 'NFe - XML Padrão',
-        tipo_arquivo: 'XML_NF',
-        descricao: 'Layout para importação de Notas Fiscais Eletrônicas em formato XML',
-        encoding: 'UTF-8',
-        mapeamento_campos: [],
-        status: 'ATIVO'
-      }
-    ];
-    setLayouts(mockData);
+    // Banco de dados vazio - nenhum layout cadastrado
+    setLayouts([]);
   };
 
   const filterLayouts = () => {
@@ -218,7 +190,7 @@ export default function LayoutsImportacaoPage() {
   };
 
   return (
-    <DashboardLayout title="Layouts de Importação" pageCode="ADM-003">
+    <DashboardLayout screenCode="ADM-003">
       <div className="space-y-6">
         {!showForm ? (
           <>

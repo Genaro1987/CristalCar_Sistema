@@ -40,36 +40,8 @@ export default function CadastroEmpresaPage() {
 
   const carregarDadosEmpresa = async () => {
     try {
-      // TODO: Fazer chamada à API
-      // const response = await fetch('/api/empresa');
-      // const data = await response.json();
-      // setFormData(data);
-
-      // Mock de dados
-      const mockData = {
-        id: 1,
-        razao_social: 'CRISTAL CAR LTDA',
-        nome_fantasia: 'Cristal Car',
-        cnpj: '00.000.000/0001-00',
-        inscricao_estadual: '123456789',
-        inscricao_municipal: '',
-        telefone: '(51) 3000-0000',
-        celular: '(51) 99999-9999',
-        email: 'contato@cristalcar.com.br',
-        website: 'www.cristalcar.com.br',
-        endereco: 'Av. Principal',
-        numero: '1000',
-        complemento: 'Sala 101',
-        bairro: 'Centro',
-        cidade: 'Porto Alegre',
-        estado: 'RS',
-        cep: '90000-000',
-        regime_tributario: 'SIMPLES_NACIONAL',
-        data_abertura: '2020-01-15',
-        logo_path: '',
-        observacoes: ''
-      };
-      setFormData(mockData);
+      // Banco de dados vazio - nenhuma empresa cadastrada
+      // Mantém os valores padrão do formData inicial
     } catch (error) {
       console.error('Erro ao carregar dados da empresa:', error);
       setMessage({ type: 'error', text: 'Erro ao carregar dados da empresa' });
@@ -155,7 +127,7 @@ export default function CadastroEmpresaPage() {
   };
 
   return (
-    <DashboardLayout title="Cadastro da Empresa">
+    <DashboardLayout screenCode="ADM-001">
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Mensagem de Sucesso/Erro */}
         {message && (

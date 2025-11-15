@@ -68,36 +68,21 @@ export default function FuncionariosPage() {
     filterFuncionarios();
   }, [searchTerm, statusFilter, funcionarios]);
 
-  const loadFuncionarios = () => {
-    // Mock data - substituir por chamada API real
-    const mockData = [
-      {
-        id: 1,
-        codigo_unico: 'FUNC-001',
-        nome_completo: 'João Silva Santos',
-        cpf: '123.456.789-00',
-        cargo: 'Gerente Financeiro',
-        departamento: 'Financeiro',
-        data_admissao: '2020-01-15',
-        celular: '(11) 98765-4321',
-        email: 'joao.silva@cristalcar.com.br',
-        status: 'ATIVO'
-      },
-      {
-        id: 2,
-        codigo_unico: 'FUNC-002',
-        nome_completo: 'Maria Oliveira Costa',
-        cpf: '987.654.321-00',
-        cargo: 'Assistente Administrativo',
-        departamento: 'Administrativo',
-        data_admissao: '2021-03-10',
-        data_demissao: '2024-10-31',
-        celular: '(11) 97654-3210',
-        email: 'maria.costa@cristalcar.com.br',
-        status: 'DEMITIDO'
+  const loadFuncionarios = async () => {
+    try {
+      const response = await fetch('/api/administrativo/funcionarios');
+      if (response.ok) {
+        const data = await response.json();
+        // Converte dias_trabalho de string para array
+        const funcionariosFormatados = data.map(func => ({
+          ...func,
+          dias_trabalho: func.dias_trabalho ? func.dias_trabalho.split(',') : []
+        }));
+        setFuncionarios(funcionariosFormatados);
       }
-    ];
-    setFuncionarios(mockData);
+    } catch (error) {
+      console.error('Erro ao carregar funcionários:', error);
+    }
   };
 
   const filterFuncionarios = () => {
@@ -182,7 +167,7 @@ export default function FuncionariosPage() {
     return amount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Validações
@@ -191,19 +176,34 @@ export default function FuncionariosPage() {
       return;
     }
 
-    if (editingId) {
-      // Atualizar
-      setFuncionarios(prev =>
-        prev.map(func => func.id === editingId ? { ...formData, id: editingId } : func)
-      );
-    } else {
-      // Criar novo
-      const newId = Math.max(...funcionarios.map(f => f.id), 0) + 1;
-      const codigo = `FUNC-${String(newId).padStart(3, '0')}`;
-      setFuncionarios(prev => [...prev, { ...formData, id: newId, codigo_unico: codigo }]);
+    // Gera código único automaticamente se for novo
+    const dataToSave = { ...formData };
+    if (!editingId && !formData.codigo_unico) {
+      const nextNum = funcionarios.length + 1;
+      dataToSave.codigo_unico = `FUNC-${String(nextNum).padStart(3, '0')}`;
     }
 
-    resetForm();
+    try {
+      const url = editingId
+        ? `/api/administrativo/funcionarios/${editingId}`
+        : '/api/administrativo/funcionarios';
+
+      const response = await fetch(url, {
+        method: editingId ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dataToSave)
+      });
+
+      if (response.ok) {
+        await loadFuncionarios();
+        resetForm();
+      } else {
+        alert('Erro ao salvar funcionário');
+      }
+    } catch (error) {
+      console.error('Erro ao salvar funcionário:', error);
+      alert('Erro ao salvar funcionário');
+    }
   };
 
   const handleEdit = (funcionario) => {
@@ -215,9 +215,22 @@ export default function FuncionariosPage() {
     setShowForm(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (confirm('Tem certeza que deseja excluir este funcionário?')) {
-      setFuncionarios(prev => prev.filter(func => func.id !== id));
+      try {
+        const response = await fetch(`/api/administrativo/funcionarios/${id}`, {
+          method: 'DELETE'
+        });
+
+        if (response.ok) {
+          await loadFuncionarios();
+        } else {
+          alert('Erro ao excluir funcionário');
+        }
+      } catch (error) {
+        console.error('Erro ao excluir funcionário:', error);
+        alert('Erro ao excluir funcionário');
+      }
     }
   };
 
@@ -262,7 +275,7 @@ export default function FuncionariosPage() {
   };
 
   return (
-    <DashboardLayout title="Funcionários" pageCode="ADM-002">
+    <DashboardLayout screenCode="ADM-002">
       <div className="space-y-6">
         {!showForm ? (
           <>

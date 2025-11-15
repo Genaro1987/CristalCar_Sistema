@@ -8,6 +8,99 @@
 -- MÓDULO ADMINISTRATIVO (Prefixo: adm_)
 -- ============================================================================
 
+-- Tabela de Dados da Empresa
+CREATE TABLE IF NOT EXISTS adm_empresa (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    razao_social VARCHAR(200) NOT NULL,
+    nome_fantasia VARCHAR(200),
+    cpf_cnpj VARCHAR(18) UNIQUE NOT NULL,
+    inscricao_estadual VARCHAR(20),
+    inscricao_municipal VARCHAR(20),
+    regime_tributario VARCHAR(50), -- SIMPLES_NACIONAL, LUCRO_PRESUMIDO, LUCRO_REAL
+    telefone VARCHAR(20),
+    celular VARCHAR(20),
+    email VARCHAR(100),
+    site VARCHAR(200),
+    endereco VARCHAR(200),
+    numero VARCHAR(20),
+    complemento VARCHAR(100),
+    bairro VARCHAR(100),
+    cidade VARCHAR(100),
+    estado VARCHAR(2),
+    cep VARCHAR(10),
+    logo_url VARCHAR(500),
+    observacoes TEXT,
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabela de Layouts de Importação
+CREATE TABLE IF NOT EXISTS adm_layouts_importacao (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    codigo VARCHAR(20) UNIQUE NOT NULL,
+    nome VARCHAR(200) NOT NULL,
+    tipo_arquivo VARCHAR(30) NOT NULL, -- CSV, TXT, EXCEL, XML, OFX
+    separador VARCHAR(5), -- Para CSV/TXT
+    encoding VARCHAR(20) DEFAULT 'UTF-8',
+    linha_inicial INTEGER DEFAULT 1,
+    possui_cabecalho BOOLEAN DEFAULT 1,
+    mapeamento_colunas TEXT, -- JSON com mapeamento
+    regras_validacao TEXT, -- JSON com regras
+    tratamento_erro VARCHAR(50), -- IGNORAR, PARAR, REGISTRAR
+    status VARCHAR(20) DEFAULT 'ATIVO',
+    observacoes TEXT,
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabela de Configuração de Backup
+CREATE TABLE IF NOT EXISTS adm_configuracao_backup (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tipo_backup VARCHAR(30) NOT NULL, -- LOCAL, GOOGLE_DRIVE, AMBOS
+    diretorio_local VARCHAR(500),
+    google_drive_folder_id VARCHAR(200),
+    google_drive_credentials TEXT,
+    frequencia VARCHAR(20) NOT NULL, -- DIARIA, SEMANAL, MENSAL
+    horario_execucao TIME,
+    dia_semana INTEGER, -- 0=Domingo, 1=Segunda, etc
+    dia_mes INTEGER, -- 1-31
+    quantidade_manter INTEGER DEFAULT 7, -- Quantos backups manter
+    backup_automatico BOOLEAN DEFAULT 1,
+    ultimo_backup DATETIME,
+    proximo_backup DATETIME,
+    status VARCHAR(20) DEFAULT 'ATIVO',
+    observacoes TEXT,
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabela de Histórico de Backups
+CREATE TABLE IF NOT EXISTS adm_historico_backup (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tipo_backup VARCHAR(30), -- LOCAL, GOOGLE_DRIVE
+    nome_arquivo VARCHAR(255) NOT NULL,
+    tamanho_bytes INTEGER,
+    caminho_completo VARCHAR(500),
+    data_backup DATETIME NOT NULL,
+    status VARCHAR(20), -- SUCESSO, ERRO, PARCIAL
+    tempo_execucao INTEGER, -- Em segundos
+    mensagem TEXT,
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabela de Favoritos do Usuário
+CREATE TABLE IF NOT EXISTS adm_favoritos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    usuario_id INTEGER NOT NULL,
+    codigo_tela VARCHAR(20) NOT NULL,
+    nome_tela VARCHAR(200) NOT NULL,
+    caminho_tela VARCHAR(500) NOT NULL,
+    ordem INTEGER DEFAULT 0,
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES adm_usuarios(id) ON DELETE CASCADE,
+    UNIQUE(usuario_id, codigo_tela)
+);
+
 -- Tabela de Funcionários
 CREATE TABLE IF NOT EXISTS adm_funcionarios (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -147,12 +240,74 @@ CREATE TABLE IF NOT EXISTS fin_bancos (
 -- Tabela de Formas de Pagamento
 CREATE TABLE IF NOT EXISTS fin_formas_pagamento (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    codigo VARCHAR(20) UNIQUE NOT NULL,
     descricao VARCHAR(100) NOT NULL,
-    tipo VARCHAR(30) NOT NULL, -- DINHEIRO, PIX, CARTAO_CREDITO, CARTAO_DEBITO, BOLETO, TRANSFERENCIA
+    tipo VARCHAR(30) NOT NULL, -- DINHEIRO, PIX, CARTAO_CREDITO, CARTAO_DEBITO, BOLETO, TRANSFERENCIA, CHEQUE, OUTROS
     taxa_percentual DECIMAL(5,2) DEFAULT 0,
-    dias_recebimento INTEGER DEFAULT 0, -- Prazo médio para recebimento
+    taxa_fixa DECIMAL(10,2) DEFAULT 0,
+    gera_movimento_bancario BOOLEAN DEFAULT 1,
     status VARCHAR(20) DEFAULT 'ATIVO',
-    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabela de Condições de Pagamento
+CREATE TABLE IF NOT EXISTS fin_condicoes_pagamento (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    codigo VARCHAR(20) UNIQUE NOT NULL,
+    nome VARCHAR(200) NOT NULL,
+    descricao TEXT,
+    tipo VARCHAR(20) NOT NULL, -- A_VISTA, A_PRAZO, PARCELADO
+    forma_pagamento_id INTEGER NOT NULL,
+    quantidade_parcelas INTEGER DEFAULT 1,
+    dias_primeira_parcela INTEGER DEFAULT 0,
+    dias_entre_parcelas INTEGER DEFAULT 30,
+    percentual_desconto DECIMAL(5,2) DEFAULT 0,
+    percentual_acrescimo DECIMAL(5,2) DEFAULT 0,
+    status VARCHAR(20) DEFAULT 'ATIVO',
+    observacoes TEXT,
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (forma_pagamento_id) REFERENCES fin_formas_pagamento(id)
+);
+
+-- Tabela de Configuração OFX por Banco
+CREATE TABLE IF NOT EXISTS fin_config_ofx_bancos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    banco_id INTEGER NOT NULL UNIQUE,
+    campo_data VARCHAR(50) DEFAULT 'DTPOSTED',
+    campo_valor VARCHAR(50) DEFAULT 'TRNAMT',
+    campo_documento VARCHAR(50) DEFAULT 'CHECKNUM',
+    campo_descricao VARCHAR(50) DEFAULT 'MEMO',
+    campo_tipo VARCHAR(50) DEFAULT 'TRNTYPE',
+    campo_id_transacao VARCHAR(50) DEFAULT 'FITID',
+    usar_dtuser BOOLEAN DEFAULT 0,
+    separador_decimal VARCHAR(5) DEFAULT ',',
+    formato_data VARCHAR(20) DEFAULT 'YYYYMMDD',
+    ignorar_duplicatas BOOLEAN DEFAULT 1,
+    dias_retroativos INTEGER DEFAULT 90,
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (banco_id) REFERENCES fin_bancos(id) ON DELETE CASCADE
+);
+
+-- Tabela de Regras de Conciliação Bancária
+CREATE TABLE IF NOT EXISTS fin_regras_conciliacao (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome VARCHAR(200) NOT NULL,
+    descricao TEXT,
+    tipo_operacao VARCHAR(20) NOT NULL, -- CREDITO, DEBITO, AMBOS
+    padrao_busca VARCHAR(200) NOT NULL, -- Texto ou regex para buscar na descrição
+    tipo_correspondencia VARCHAR(20) DEFAULT 'CONTEM', -- CONTEM, IGUAL, INICIA, TERMINA, REGEX
+    plano_contas_id INTEGER NOT NULL,
+    centro_custo_id INTEGER,
+    prioridade INTEGER DEFAULT 100, -- Maior = mais prioridade
+    ativo BOOLEAN DEFAULT 1,
+    observacoes TEXT,
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (plano_contas_id) REFERENCES fin_plano_contas(id),
+    FOREIGN KEY (centro_custo_id) REFERENCES fin_centro_custo(id)
 );
 
 -- Tabela de Centro de Custo
@@ -438,6 +593,100 @@ CREATE TABLE IF NOT EXISTS com_baixas_pagamento (
     FOREIGN KEY (mov_financeiro_id) REFERENCES mov_financeiro(id),
     FOREIGN KEY (forma_pagamento_id) REFERENCES fin_formas_pagamento(id),
     FOREIGN KEY (banco_id) REFERENCES fin_bancos(id),
+    FOREIGN KEY (usuario_id) REFERENCES adm_usuarios(id)
+);
+
+-- ============================================================================
+-- MÓDULO DE PARCEIROS (Prefixo: par_) - Cadastro Unificado
+-- ============================================================================
+
+-- Tabela de Parceiros (Unifica Clientes, Fornecedores, etc)
+CREATE TABLE IF NOT EXISTS par_parceiros (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    codigo VARCHAR(20) UNIQUE NOT NULL,
+    tipo_pessoa VARCHAR(20) NOT NULL, -- FISICA, JURIDICA
+    tipo_parceiro VARCHAR(100) NOT NULL, -- CLIENTE, FORNECEDOR, TRANSPORTADORA, PRESTADOR_SERVICO, FUNCIONARIO, OUTRO (pode ter múltiplos separados por vírgula)
+    cpf_cnpj VARCHAR(18) UNIQUE NOT NULL,
+    rg_inscricao_estadual VARCHAR(20),
+    inscricao_municipal VARCHAR(20),
+    nome VARCHAR(200), -- Para pessoa física
+    razao_social VARCHAR(200), -- Para pessoa jurídica
+    nome_fantasia VARCHAR(200),
+    telefone VARCHAR(20),
+    celular VARCHAR(20),
+    email VARCHAR(100),
+    site VARCHAR(200),
+    -- Endereço
+    endereco VARCHAR(200),
+    numero VARCHAR(20),
+    complemento VARCHAR(100),
+    bairro VARCHAR(100),
+    cidade VARCHAR(100),
+    estado VARCHAR(2),
+    cep VARCHAR(10),
+    -- Informações Comerciais
+    limite_credito DECIMAL(15,2) DEFAULT 0,
+    tabela_preco_id INTEGER, -- Tabela de preços padrão
+    condicao_pagamento_id INTEGER, -- Condição de pagamento padrão
+    dia_vencimento_padrao INTEGER, -- Dia do mês padrão para vencimento
+    -- Informações Bancárias
+    banco VARCHAR(100),
+    agencia VARCHAR(20),
+    conta VARCHAR(30),
+    pix VARCHAR(200),
+    -- Controle
+    status VARCHAR(20) DEFAULT 'ATIVO',
+    observacoes TEXT,
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (condicao_pagamento_id) REFERENCES fin_condicoes_pagamento(id)
+);
+
+-- ============================================================================
+-- MÓDULO DE TABELAS DE PREÇOS (Prefixo: tab_)
+-- ============================================================================
+
+-- Tabela de Tabelas de Preços
+CREATE TABLE IF NOT EXISTS tab_tabelas_precos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    codigo VARCHAR(20) UNIQUE NOT NULL,
+    nome VARCHAR(200) NOT NULL,
+    descricao TEXT,
+    tipo_ajuste VARCHAR(20) NOT NULL, -- PERCENTUAL, FIXO, SUBSTITUIR
+    valor_ajuste DECIMAL(15,2) NOT NULL, -- Valor do ajuste (% ou R$)
+    data_inicio DATE,
+    data_fim DATE,
+    ativo BOOLEAN DEFAULT 1,
+    observacoes TEXT,
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabela de Vinculação de Tabelas de Preços com Parceiros
+CREATE TABLE IF NOT EXISTS tab_tabelas_precos_parceiros (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tabela_preco_id INTEGER NOT NULL,
+    parceiro_id INTEGER NOT NULL,
+    data_inicio DATE,
+    data_fim DATE,
+    ativo BOOLEAN DEFAULT 1,
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (tabela_preco_id) REFERENCES tab_tabelas_precos(id) ON DELETE CASCADE,
+    FOREIGN KEY (parceiro_id) REFERENCES par_parceiros(id) ON DELETE CASCADE,
+    UNIQUE(tabela_preco_id, parceiro_id)
+);
+
+-- Tabela de Histórico de Alterações de Tabelas de Preços
+CREATE TABLE IF NOT EXISTS tab_historico_alteracoes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tabela_preco_id INTEGER NOT NULL,
+    usuario_id INTEGER,
+    tipo_alteracao VARCHAR(20) NOT NULL, -- CRIACAO, EDICAO, EXCLUSAO, ATIVACAO, DESATIVACAO
+    campo_alterado VARCHAR(100),
+    valor_anterior TEXT,
+    valor_novo TEXT,
+    data_alteracao DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (tabela_preco_id) REFERENCES tab_tabelas_precos(id) ON DELETE CASCADE,
     FOREIGN KEY (usuario_id) REFERENCES adm_usuarios(id)
 );
 

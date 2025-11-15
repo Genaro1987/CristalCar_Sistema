@@ -32,116 +32,9 @@ export default function PlanoContasPage() {
   }, []);
 
   const loadContas = () => {
-    // Mock data - substituir por chamada API real
-    const mockData = [
-      {
-        id: 1,
-        codigo_conta: '1',
-        descricao: 'RECEITAS',
-        tipo: 'RECEITA',
-        nivel: 1,
-        conta_pai_id: null,
-        compoe_dre: true,
-        aceita_lancamento: false,
-        status: 'ATIVO',
-        filhos: [
-          {
-            id: 2,
-            codigo_conta: '1.1',
-            descricao: 'Receitas Operacionais',
-            tipo: 'RECEITA',
-            nivel: 2,
-            conta_pai_id: 1,
-            compoe_dre: true,
-            aceita_lancamento: false,
-            status: 'ATIVO',
-            filhos: [
-              {
-                id: 3,
-                codigo_conta: '1.1.1',
-                descricao: 'Vendas de Serviços',
-                tipo: 'RECEITA',
-                nivel: 3,
-                conta_pai_id: 2,
-                compoe_dre: true,
-                aceita_lancamento: true,
-                status: 'ATIVO',
-                filhos: []
-              },
-              {
-                id: 4,
-                codigo_conta: '1.1.2',
-                descricao: 'Vendas de Produtos',
-                tipo: 'RECEITA',
-                nivel: 3,
-                conta_pai_id: 2,
-                compoe_dre: true,
-                aceita_lancamento: true,
-                status: 'ATIVO',
-                filhos: []
-              }
-            ]
-          }
-        ]
-      },
-      {
-        id: 5,
-        codigo_conta: '2',
-        descricao: 'DESPESAS',
-        tipo: 'DESPESA',
-        nivel: 1,
-        conta_pai_id: null,
-        compoe_dre: true,
-        aceita_lancamento: false,
-        status: 'ATIVO',
-        filhos: [
-          {
-            id: 6,
-            codigo_conta: '2.1',
-            descricao: 'Despesas Operacionais',
-            tipo: 'DESPESA',
-            nivel: 2,
-            conta_pai_id: 5,
-            compoe_dre: true,
-            aceita_lancamento: false,
-            status: 'ATIVO',
-            tipo_gasto: 'FIXO',
-            filhos: [
-              {
-                id: 7,
-                codigo_conta: '2.1.1',
-                descricao: 'Pessoal',
-                tipo: 'DESPESA',
-                nivel: 3,
-                conta_pai_id: 6,
-                compoe_dre: true,
-                aceita_lancamento: false,
-                tipo_gasto: 'FIXO',
-                status: 'ATIVO',
-                filhos: [
-                  {
-                    id: 8,
-                    codigo_conta: '2.1.1.01',
-                    descricao: 'Salários',
-                    tipo: 'DESPESA',
-                    nivel: 4,
-                    conta_pai_id: 7,
-                    compoe_dre: true,
-                    aceita_lancamento: true,
-                    tipo_gasto: 'FIXO',
-                    status: 'ATIVO',
-                    filhos: []
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    ];
-    setContas(mockData);
-    // Expandir nível 1 por padrão
-    setExpandedNodes(new Set([1, 5]));
+    // Banco de dados vazio - nenhuma conta cadastrada
+    setContas([]);
+    setExpandedNodes(new Set());
   };
 
   const toggleNode = (id) => {
@@ -361,7 +254,7 @@ export default function PlanoContasPage() {
   };
 
   return (
-    <DashboardLayout title="Plano de Contas" pageCode="FIN-001">
+    <DashboardLayout screenCode="FIN-001">
       <div className="space-y-6">
         {!showForm ? (
           <>

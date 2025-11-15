@@ -54,58 +54,44 @@ export default function ConfiguracaoBackupPage() {
     loadHistorico();
   }, []);
 
-  const loadConfig = () => {
-    // Mock data - substituir por chamada API real
-    // Na prática, carregar a configuração do banco (deve ter apenas 1 registro)
-    const mockConfig = {
-      id: 1,
-      ativo: true,
-      tipo_backup: 'LOCAL',
-      google_drive_folder_id: '',
-      frequencia: 'DIARIA',
-      hora_execucao: '02:00',
-      dia_semana: 0,
-      dia_mes: 1,
-      manter_ultimos: 30,
-      email_notificacao: 'admin@cristalcar.com.br',
-      notificar_sucesso: false,
-      notificar_erro: true,
-      ultimo_backup: '2024-11-14T02:00:00',
-      proximo_backup: '2024-11-15T02:00:00'
-    };
-    setConfig(mockConfig);
+  const loadConfig = async () => {
+    try {
+      const response = await fetch('/api/backup/config');
+      if (response.ok) {
+        const data = await response.json();
+        setConfig({
+          id: data.id,
+          ativo: data.backup_automatico === 1,
+          tipo_backup: data.tipo_backup || 'LOCAL',
+          diretorio_local: data.diretorio_local || '',
+          google_drive_folder_id: data.google_drive_folder_id || '',
+          frequencia: data.frequencia || 'DIARIA',
+          hora_execucao: data.horario_execucao || '02:00',
+          dia_semana: data.dia_semana || 0,
+          dia_mes: data.dia_mes || 1,
+          manter_ultimos: data.quantidade_manter || 30,
+          email_notificacao: '',
+          notificar_sucesso: false,
+          notificar_erro: true,
+          ultimo_backup: data.ultimo_backup,
+          proximo_backup: data.proximo_backup
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao carregar configuração:', error);
+    }
   };
 
-  const loadHistorico = () => {
-    // Mock data - substituir por chamada API real
-    const mockHistorico = [
-      {
-        id: 1,
-        data_backup: '2024-11-14T02:00:00',
-        tamanho_arquivo_bytes: 15728640, // 15 MB
-        local_arquivo: '/backups/cristalcar_2024-11-14_020000.sql',
-        status: 'SUCESSO',
-        tempo_execucao_segundos: 12
-      },
-      {
-        id: 2,
-        data_backup: '2024-11-13T02:00:00',
-        tamanho_arquivo_bytes: 15654321,
-        local_arquivo: '/backups/cristalcar_2024-11-13_020000.sql',
-        status: 'SUCESSO',
-        tempo_execucao_segundos: 11
-      },
-      {
-        id: 3,
-        data_backup: '2024-11-12T02:00:00',
-        tamanho_arquivo_bytes: 0,
-        local_arquivo: '',
-        status: 'ERRO',
-        mensagem_erro: 'Falha ao conectar com o servidor de backup',
-        tempo_execucao_segundos: 5
+  const loadHistorico = async () => {
+    try {
+      const response = await fetch('/api/backup/historico');
+      if (response.ok) {
+        const data = await response.json();
+        setHistorico(data);
       }
-    ];
-    setHistorico(mockHistorico);
+    } catch (error) {
+      console.error('Erro ao carregar histórico:', error);
+    }
   };
 
   const handleInputChange = (e) => {
@@ -122,8 +108,8 @@ export default function ConfiguracaoBackupPage() {
 
     // Validações
     if (config.ativo) {
-      if (!config.email_notificacao) {
-        alert('Informe um e-mail para notificações');
+      if (config.tipo_backup === 'LOCAL' && !config.diretorio_local) {
+        alert('Informe o diretório local para backup');
         setIsSaving(false);
         return;
       }
@@ -135,12 +121,36 @@ export default function ConfiguracaoBackupPage() {
       }
     }
 
-    // Simular salvamento
-    setTimeout(() => {
+    try {
+      const response = await fetch('/api/backup/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tipo_backup: config.tipo_backup,
+          diretorio_local: config.diretorio_local,
+          google_drive_folder_id: config.google_drive_folder_id,
+          frequencia: config.frequencia,
+          horario_execucao: config.hora_execucao,
+          dia_semana: config.dia_semana,
+          dia_mes: config.dia_mes,
+          quantidade_manter: config.manter_ultimos,
+          backup_automatico: config.ativo
+        })
+      });
+
+      if (response.ok) {
+        await loadConfig();
+        setIsEditing(false);
+        alert('Configuração salva com sucesso!');
+      } else {
+        alert('Erro ao salvar configuração');
+      }
+    } catch (error) {
+      console.error('Erro ao salvar:', error);
+      alert('Erro ao salvar configuração');
+    } finally {
       setIsSaving(false);
-      setIsEditing(false);
-      alert('Configuração salva com sucesso!');
-    }, 500);
+    }
   };
 
   const handleExecutarBackup = () => {
@@ -176,7 +186,7 @@ export default function ConfiguracaoBackupPage() {
   };
 
   return (
-    <DashboardLayout title="Configuração de Backup" pageCode="ADM-004">
+    <DashboardLayout screenCode="ADM-004">
       <div className="space-y-6">
         {/* Informação sobre Google Drive */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
