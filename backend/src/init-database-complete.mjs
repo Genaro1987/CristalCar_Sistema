@@ -30,11 +30,54 @@ async function main() {
     const schemaPath = join(__dirname, 'schema-complete.sql');
     const schemaSQL = readFileSync(schemaPath, 'utf8');
 
-    // Dividir em statements individuais (separados por ponto-e-vírgula)
-    const statements = schemaSQL
-      .split(';')
-      .map(s => s.trim())
-      .filter(s => s.length > 0 && !s.startsWith('--'));
+    // Processar SQL: remover comentários e dividir em statements
+    const processedSQL = schemaSQL
+      // Remover comentários de linha (-- até o final da linha)
+      .split('\n')
+      .map(line => {
+        const commentIndex = line.indexOf('--');
+        return commentIndex >= 0 ? line.substring(0, commentIndex) : line;
+      })
+      .join('\n')
+      // Remover linhas vazias
+      .replace(/^\s*[\r\n]/gm, '\n')
+      .trim();
+
+    // Dividir statements SQL respeitando blocos BEGIN...END
+    const statements = [];
+    let currentStatement = '';
+    let insideBeginEnd = 0;
+
+    const lines = processedSQL.split('\n');
+    for (const line of lines) {
+      const trimmedLine = line.trim().toUpperCase();
+
+      // Detectar BEGIN (incrementa contador)
+      if (trimmedLine === 'BEGIN') {
+        insideBeginEnd++;
+      }
+
+      // Detectar END (decrementa contador)
+      if (trimmedLine === 'END;' || trimmedLine === 'END') {
+        insideBeginEnd--;
+      }
+
+      currentStatement += line + '\n';
+
+      // Se a linha termina com ; E não estamos dentro de BEGIN...END
+      if (line.trim().endsWith(';') && insideBeginEnd === 0) {
+        const stmt = currentStatement.trim();
+        if (stmt) {
+          statements.push(stmt);
+        }
+        currentStatement = '';
+      }
+    }
+
+    // Adicionar último statement se houver
+    if (currentStatement.trim()) {
+      statements.push(currentStatement.trim());
+    }
 
     console.log(`📋 Encontrados ${statements.length} statements SQL\n`);
 
