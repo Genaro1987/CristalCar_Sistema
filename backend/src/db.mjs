@@ -15,6 +15,9 @@ if (!authToken) {
 // Cliente compartilhado para todo o backend
 export const db = createClient({ url, authToken });
 
+// Alias para compatibilidade
+export const turso = db;
+
 // Função usada no teste de conexão (pingTurso)
 export async function pingTurso() {
   console.log("🔌 Testando conexão com Turso...");
