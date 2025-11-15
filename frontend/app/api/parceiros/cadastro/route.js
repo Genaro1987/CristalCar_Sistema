@@ -1,4 +1,5 @@
 import { createClient } from '@libsql/client';
+import { normalizarDadosParceiro } from '@/lib/text-utils';
 
 const turso = createClient({
   url: process.env.TURSO_DATABASE_URL,
@@ -23,8 +24,11 @@ export async function POST(request) {
   try {
     const data = await request.json();
 
+    // Normalizar dados: MAIÚSCULO sem acentos
+    const normalizedData = normalizarDadosParceiro(data);
+
     // Gerar código único se não fornecido
-    const codigo_unico = data.codigo_unico || data.codigo || `PAR${Date.now()}`;
+    const codigo_unico = normalizedData.codigo_unico || normalizedData.codigo || `PAR${Date.now()}`;
 
     const result = await turso.execute({
       sql: `
@@ -38,36 +42,36 @@ export async function POST(request) {
       `,
       args: [
         codigo_unico,
-        data.tipo_pessoa || 'JURIDICA',
-        data.tipo_parceiro || data.tipo || 'CLIENTE',
-        data.nome_fantasia || null,
-        data.razao_social || null,
-        data.nome_completo || data.nome || null,
-        data.cnpj || (data.tipo_pessoa === 'JURIDICA' ? data.cpf_cnpj : null),
-        data.cpf || (data.tipo_pessoa === 'FISICA' ? data.cpf_cnpj : null),
-        data.inscricao_estadual || data.ie_rg || null,
-        data.inscricao_municipal || null,
-        data.rg || null,
-        data.email || null,
-        data.telefone || null,
-        data.celular || null,
-        data.website || data.site || null,
-        data.cep || null,
-        data.endereco || null,
-        data.numero || null,
-        data.complemento || null,
-        data.bairro || null,
-        data.cidade || null,
-        data.estado || null,
-        data.banco || null,
-        data.agencia || null,
-        data.conta || null,
-        data.tipo_conta || null,
-        data.pix_chave || data.pix || null,
-        data.pix_tipo || null,
-        data.limite_credito || 0,
-        data.observacoes || null,
-        data.status || (data.ativo ? 'ATIVO' : 'INATIVO')
+        normalizedData.tipo_pessoa || 'JURIDICA',
+        normalizedData.tipo_parceiro || normalizedData.tipo || 'CLIENTE',
+        normalizedData.nome_fantasia || null,
+        normalizedData.razao_social || null,
+        normalizedData.nome_completo || normalizedData.nome || null,
+        normalizedData.cnpj || (normalizedData.tipo_pessoa === 'JURIDICA' ? normalizedData.cpf_cnpj : null),
+        normalizedData.cpf || (normalizedData.tipo_pessoa === 'FISICA' ? normalizedData.cpf_cnpj : null),
+        normalizedData.inscricao_estadual || normalizedData.ie_rg || null,
+        normalizedData.inscricao_municipal || null,
+        normalizedData.rg || null,
+        normalizedData.email || null,
+        normalizedData.telefone || null,
+        normalizedData.celular || null,
+        normalizedData.website || normalizedData.site || null,
+        normalizedData.cep || null,
+        normalizedData.endereco || null,
+        normalizedData.numero || null,
+        normalizedData.complemento || null,
+        normalizedData.bairro || null,
+        normalizedData.cidade || null,
+        normalizedData.estado || null,
+        normalizedData.banco || null,
+        normalizedData.agencia || null,
+        normalizedData.conta || null,
+        normalizedData.tipo_conta || null,
+        normalizedData.pix_chave || normalizedData.pix || null,
+        normalizedData.pix_tipo || null,
+        normalizedData.limite_credito || 0,
+        normalizedData.observacoes || null,
+        normalizedData.status || (normalizedData.ativo ? 'ATIVO' : 'INATIVO')
       ]
     });
 
