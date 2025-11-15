@@ -153,15 +153,45 @@ export default function ConfiguracaoBackupPage() {
     }
   };
 
-  const handleExecutarBackup = () => {
-    if (!config.ativo) {
-      alert('O backup está desativado. Ative-o primeiro antes de executar manualmente.');
+  const handleExecutarBackup = async () => {
+    if (!confirm('Deseja executar o backup agora? O arquivo será baixado para o seu computador.')) {
       return;
     }
 
-    if (confirm('Deseja executar o backup agora?')) {
-      alert('Backup iniciado! Você será notificado quando concluir.');
-      // Aqui chamaria a API para executar o backup
+    setIsSaving(true);
+
+    try {
+      const response = await fetch('/api/backup/executar', {
+        method: 'POST'
+      });
+
+      if (response.ok) {
+        // Obter o blob do arquivo
+        const blob = await response.blob();
+        const fileName = response.headers.get('Content-Disposition')?.split('filename=')[1]?.replace(/"/g, '') || 'backup.json';
+
+        // Criar link de download
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        alert('Backup realizado com sucesso! O arquivo foi baixado.');
+        await loadHistorico(); // Recarregar histórico
+        await loadConfig(); // Atualizar data do último backup
+      } else {
+        const error = await response.json();
+        alert('Erro ao executar backup: ' + (error.error || 'Erro desconhecido'));
+      }
+    } catch (error) {
+      console.error('Erro ao executar backup:', error);
+      alert('Erro ao executar backup: ' + error.message);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -188,19 +218,20 @@ export default function ConfiguracaoBackupPage() {
   return (
     <DashboardLayout screenCode="ADM-004">
       <div className="space-y-6">
-        {/* Informação sobre Google Drive */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        {/* Informação sobre Backup */}
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <div className="flex items-start">
-            <svg className="w-5 h-5 text-blue-600 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg className="w-5 h-5 text-green-600 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <div>
-              <h4 className="text-sm font-semibold text-blue-900 mb-1">
-                Integração com Google Drive
+              <h4 className="text-sm font-semibold text-green-900 mb-1">
+                Backup para Pasta Local
               </h4>
-              <p className="text-sm text-blue-800">
-                A integração com Google Drive está em desenvolvimento. Por enquanto, utilize o backup local.
-                Quando disponível, você poderá configurar o backup automático para sua conta do Google Drive.
+              <p className="text-sm text-green-800">
+                Clique em "Executar Backup Agora" para gerar um arquivo JSON com todos os dados do sistema.
+                O arquivo será baixado automaticamente e você poderá salvá-lo na pasta de sua preferência.
+                O backup inclui todas as tabelas do sistema: empresa, funcionários, parceiros, plano de contas, etc.
               </p>
             </div>
           </div>

@@ -7,30 +7,30 @@ const turso = createClient({
 
 export async function GET() {
   try {
-    const result = await turso.execute('SELECT * FROM adm_configuracao_backup LIMIT 1');
+    const result = await turso.execute({
+      sql: `SELECT * FROM adm_backup_config LIMIT 1`,
+      args: []
+    });
 
     if (result.rows.length > 0) {
       return Response.json(result.rows[0]);
-    } else {
-      // Retorna configuração padrão se não existir
-      return Response.json({
-        id: null,
-        tipo_backup: 'LOCAL',
-        diretorio_local: '',
-        google_drive_folder_id: '',
-        google_drive_credentials: '',
-        frequencia: 'DIARIA',
-        horario_execucao: '02:00',
-        dia_semana: 0,
-        dia_mes: 1,
-        quantidade_manter: 30,
-        backup_automatico: false,
-        ultimo_backup: null,
-        proximo_backup: null,
-        status: 'INATIVO',
-        observacoes: ''
-      });
     }
+
+    // Retornar configuração padrão se não existir
+    return Response.json({
+      id: null,
+      backup_automatico: 0,
+      tipo_backup: 'LOCAL',
+      diretorio_local: '',
+      google_drive_folder_id: '',
+      frequencia: 'DIARIA',
+      horario_execucao: '02:00',
+      dia_semana: 0,
+      dia_mes: 1,
+      quantidade_manter: 30,
+      ultimo_backup: null,
+      proximo_backup: null
+    });
   } catch (error) {
     console.error('Erro ao buscar configuração de backup:', error);
     return Response.json({ error: 'Erro ao buscar configuração' }, { status: 500 });
@@ -41,67 +41,64 @@ export async function POST(request) {
   try {
     const data = await request.json();
 
-    // Verifica se já existe configuração
-    const existing = await turso.execute('SELECT id FROM adm_configuracao_backup LIMIT 1');
+    // Verificar se já existe configuração
+    const existing = await turso.execute({
+      sql: `SELECT id FROM adm_backup_config LIMIT 1`,
+      args: []
+    });
 
     if (existing.rows.length > 0) {
-      // Atualiza configuração existente
+      // Atualizar configuração existente
       await turso.execute({
         sql: `
-          UPDATE adm_configuracao_backup SET
-            tipo_backup = ?,
-            diretorio_local = ?,
-            google_drive_folder_id = ?,
-            frequencia = ?,
-            horario_execucao = ?,
-            dia_semana = ?,
-            dia_mes = ?,
-            quantidade_manter = ?,
-            backup_automatico = ?,
-            status = ?,
-            observacoes = ?,
-            atualizado_em = CURRENT_TIMESTAMP
+          UPDATE adm_backup_config
+          SET tipo_backup = ?,
+              diretorio_local = ?,
+              google_drive_folder_id = ?,
+              frequencia = ?,
+              horario_execucao = ?,
+              dia_semana = ?,
+              dia_mes = ?,
+              quantidade_manter = ?,
+              backup_automatico = ?,
+              atualizado_em = CURRENT_TIMESTAMP
           WHERE id = ?
         `,
         args: [
           data.tipo_backup || 'LOCAL',
-          data.diretorio_local || null,
-          data.google_drive_folder_id || null,
+          data.diretorio_local || '',
+          data.google_drive_folder_id || '',
           data.frequencia || 'DIARIA',
           data.horario_execucao || '02:00',
           data.dia_semana || 0,
           data.dia_mes || 1,
           data.quantidade_manter || 30,
           data.backup_automatico ? 1 : 0,
-          data.backup_automatico ? 'ATIVO' : 'INATIVO',
-          data.observacoes || null,
           existing.rows[0].id
         ]
       });
 
       return Response.json({ success: true, id: existing.rows[0].id });
     } else {
-      // Cria nova configuração
+      // Criar nova configuração
       const result = await turso.execute({
         sql: `
-          INSERT INTO adm_configuracao_backup (
+          INSERT INTO adm_backup_config (
             tipo_backup, diretorio_local, google_drive_folder_id,
             frequencia, horario_execucao, dia_semana, dia_mes,
-            quantidade_manter, backup_automatico, status, observacoes
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            quantidade_manter, backup_automatico
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
         args: [
           data.tipo_backup || 'LOCAL',
-          data.diretorio_local || null,
-          data.google_drive_folder_id || null,
+          data.diretorio_local || '',
+          data.google_drive_folder_id || '',
           data.frequencia || 'DIARIA',
           data.horario_execucao || '02:00',
           data.dia_semana || 0,
           data.dia_mes || 1,
           data.quantidade_manter || 30,
-          data.backup_automatico ? 1 : 0,
-          data.backup_automatico ? 'ATIVO' : 'INATIVO',
-          data.observacoes || null
+          data.backup_automatico ? 1 : 0
         ]
       });
 
@@ -109,6 +106,6 @@ export async function POST(request) {
     }
   } catch (error) {
     console.error('Erro ao salvar configuração de backup:', error);
-    return Response.json({ error: 'Erro ao salvar configuração' }, { status: 500 });
+    return Response.json({ error: 'Erro ao salvar configuração: ' + error.message }, { status: 500 });
   }
 }

@@ -1,6 +1,7 @@
 // frontend/app/api/plano-contas/route.js
 import { NextResponse } from "next/server";
 import { createClient } from "@libsql/client";
+import { normalizarTexto } from "@/lib/text-utils";
 
 const turso = createClient({
   url: process.env.TURSO_DATABASE_URL,
@@ -74,7 +75,7 @@ export async function POST(request) {
   try {
     const dados = await request.json();
 
-    const {
+    let {
       codigo_conta,
       descricao,
       tipo,
@@ -85,6 +86,11 @@ export async function POST(request) {
       utilizado_objetivo,
       aceita_lancamento,
     } = dados;
+
+    // Normalizar texto: MAIÚSCULO sem acentos
+    descricao = normalizarTexto(descricao);
+    tipo = normalizarTexto(tipo);
+    if (tipo_gasto) tipo_gasto = normalizarTexto(tipo_gasto);
 
     // Validações
     if (!codigo_conta || !descricao || !tipo || !nivel) {
@@ -107,6 +113,14 @@ export async function POST(request) {
       );
     }
 
+    console.log('Inserindo plano de contas:', {
+      codigo_conta,
+      descricao,
+      tipo,
+      nivel,
+      conta_pai_id: conta_pai_id || null
+    });
+
     const result = await turso.execute({
       sql: `INSERT INTO fin_plano_contas
             (codigo_conta, descricao, tipo, nivel, conta_pai_id, considera_resultado, tipo_gasto, utilizado_objetivo, aceita_lancamento, status)
@@ -124,6 +138,8 @@ export async function POST(request) {
       ],
     });
 
+    console.log('Conta criada com ID:', result.lastInsertRowid);
+
     return NextResponse.json({
       success: true,
       id: result.lastInsertRowid,
@@ -131,8 +147,9 @@ export async function POST(request) {
     });
   } catch (error) {
     console.error("Erro ao criar conta:", error);
+    console.error("Stack trace:", error.stack);
     return NextResponse.json(
-      { success: false, error: "Erro ao criar conta" },
+      { success: false, error: "Erro ao criar conta: " + error.message },
       { status: 500 }
     );
   }
