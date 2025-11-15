@@ -27,14 +27,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: "npm"
-          cache-dependency-path: "backend/package-lock.json"
 
       - name: Instalar dependências do backend
         run: npm install
 
       - name: Testar conexão com Turso
-        run: node test-db.mjs
+        run: npm run test:db
 
       - name: Criar tabela de teste no Turso
-        run: node criar-tabela-teste.mjs
+        run: npm run init:db
