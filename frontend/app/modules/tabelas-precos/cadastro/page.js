@@ -19,7 +19,6 @@ export default function TabelasPrecosPage() {
     valor_ajuste: 0,
     data_inicio: '',
     data_fim: '',
-    prioridade: 100,
     observacoes: '',
     ativo: true
   });
@@ -105,7 +104,6 @@ export default function TabelasPrecosPage() {
       valor_ajuste: 0,
       data_inicio: '',
       data_fim: '',
-      prioridade: 100,
       observacoes: '',
       ativo: true
     });
@@ -143,7 +141,7 @@ export default function TabelasPrecosPage() {
       (filtroStatus === 'INATIVO' && !tabela.ativo);
 
     return matchPesquisa && matchStatus;
-  }).sort((a, b) => b.prioridade - a.prioridade);
+  });
 
   const getTipoAjusteLabel = (tipo) => {
     return tiposAjuste.find(t => t.value === tipo)?.label || tipo;
@@ -202,7 +200,6 @@ export default function TabelasPrecosPage() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prioridade</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tabela</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ajuste</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vigência</th>
@@ -213,7 +210,7 @@ export default function TabelasPrecosPage() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {tabelasFiltradas.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                    <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
                       {termoPesquisa || filtroStatus !== 'TODOS'
                         ? '🔍 Nenhuma tabela encontrada'
                         : '📋 Nenhuma tabela cadastrada. Clique em "Nova Tabela" para começar.'}
@@ -222,11 +219,6 @@ export default function TabelasPrecosPage() {
                 ) : (
                   tabelasFiltradas.map((tabela) => (
                     <tr key={tabela.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-3 py-1 text-sm font-bold bg-orange-100 text-orange-800 rounded-full">
-                          {tabela.prioridade}
-                        </span>
-                      </td>
                       <td className="px-6 py-4">
                         <div className="text-sm font-medium text-gray-900">{tabela.nome}</div>
                         {tabela.descricao && (
@@ -464,7 +456,6 @@ export default function TabelasPrecosPage() {
                 <section className="bg-orange-50 border border-orange-200 rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-orange-900 mb-2">💡 Dicas</h3>
                   <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
-                    <li>Use prioridades para controlar qual tabela tem preferência</li>
                     <li>Defina período de vigência para promoções temporárias</li>
                     <li>O preview mostra o impacto do ajuste em tempo real</li>
                   </ul>
