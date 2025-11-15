@@ -366,6 +366,10 @@ export const helpContents = {
           {
             label: 'Status',
             description: 'Tabelas ativas aparecem nas vendas. Desative temporariamente sem excluir.'
+          },
+          {
+            label: 'Vínculos',
+            description: 'Vincule a tabela a clientes/fornecedores específicos. Clique no botão de vínculos para gerenciar quais parceiros usarão esta tabela.'
           }
         ]
       },
@@ -392,7 +396,8 @@ export const helpContents = {
           'Use nomes descritivos para identificar facilmente',
           'Configure períodos de vigência para promoções temporárias',
           'O preview mostra o impacto do ajuste em tempo real',
-          'Múltiplas tabelas podem estar ativas ao mesmo tempo'
+          'Múltiplas tabelas podem estar ativas ao mesmo tempo',
+          'Vincule tabelas a parceiros específicos para aplicação automática de preços diferenciados'
         ]
       }
     ]

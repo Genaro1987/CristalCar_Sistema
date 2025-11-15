@@ -5,11 +5,16 @@ import DashboardLayout from '@/app/components/layout/DashboardLayout';
 
 export default function TabelasPrecosPage() {
   const [tabelas, setTabelas] = useState([]);
+  const [parceiros, setParceiros] = useState([]);
   const [mostrarModal, setMostrarModal] = useState(false);
+  const [mostrarModalVinculos, setMostrarModalVinculos] = useState(false);
   const [mostrarAjuda, setMostrarAjuda] = useState(false);
   const [modoEdicao, setModoEdicao] = useState(false);
   const [termoPesquisa, setTermoPesquisa] = useState('');
   const [filtroStatus, setFiltroStatus] = useState('TODOS');
+  const [tabelaSelecionada, setTabelaSelecionada] = useState(null);
+  const [parceirosVinculados, setParceirosVinculados] = useState([]);
+  const [termoPesquisaParceiro, setTermoPesquisaParceiro] = useState('');
 
   const [formData, setFormData] = useState({
     id: null,
@@ -31,6 +36,7 @@ export default function TabelasPrecosPage() {
 
   useEffect(() => {
     carregarTabelas();
+    carregarParceiros();
   }, []);
 
   const carregarTabelas = async () => {
@@ -42,6 +48,63 @@ export default function TabelasPrecosPage() {
       }
     } catch (error) {
       console.error('Erro ao carregar tabelas:', error);
+    }
+  };
+
+  const carregarParceiros = async () => {
+    try {
+      const response = await fetch('/api/parceiros');
+      if (response.ok) {
+        const data = await response.json();
+        setParceiros(data);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar parceiros:', error);
+    }
+  };
+
+  const carregarVinculos = async (tabelaId) => {
+    try {
+      const response = await fetch(`/api/tabelas-precos/cadastro/${tabelaId}/vinculos`);
+      if (response.ok) {
+        const data = await response.json();
+        setParceirosVinculados(data.map(v => v.parceiro_id));
+      }
+    } catch (error) {
+      console.error('Erro ao carregar vínculos:', error);
+    }
+  };
+
+  const salvarVinculos = async () => {
+    try {
+      const response = await fetch(`/api/tabelas-precos/cadastro/${tabelaSelecionada.id}/vinculos`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ parceiros: parceirosVinculados })
+      });
+
+      if (response.ok) {
+        carregarTabelas();
+        setMostrarModalVinculos(false);
+        setTabelaSelecionada(null);
+        setParceirosVinculados([]);
+      }
+    } catch (error) {
+      console.error('Erro ao salvar vínculos:', error);
+    }
+  };
+
+  const handleGerenciarVinculos = async (tabela) => {
+    setTabelaSelecionada(tabela);
+    await carregarVinculos(tabela.id);
+    setMostrarModalVinculos(true);
+  };
+
+  const toggleParceiro = (parceiroId) => {
+    if (parceirosVinculados.includes(parceiroId)) {
+      setParceirosVinculados(parceirosVinculados.filter(id => id !== parceiroId));
+    } else {
+      setParceirosVinculados([...parceirosVinculados, parceiroId]);
     }
   };
 
@@ -203,6 +266,7 @@ export default function TabelasPrecosPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tabela</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ajuste</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vigência</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vínculos</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Ações</th>
                 </tr>
@@ -210,7 +274,7 @@ export default function TabelasPrecosPage() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {tabelasFiltradas.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
+                    <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
                       {termoPesquisa || filtroStatus !== 'TODOS'
                         ? '🔍 Nenhuma tabela encontrada'
                         : '📋 Nenhuma tabela cadastrada. Clique em "Nova Tabela" para começar.'}
@@ -247,6 +311,14 @@ export default function TabelasPrecosPage() {
                         {tabela.data_inicio && formatarData(tabela.data_inicio)}
                         {tabela.data_fim && ` até ${formatarData(tabela.data_fim)}`}
                         {!tabela.data_inicio && !tabela.data_fim && '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <button
+                          onClick={() => handleGerenciarVinculos(tabela)}
+                          className="inline-flex items-center px-3 py-1 text-sm font-medium text-blue-700 bg-blue-50 rounded-full hover:bg-blue-100"
+                        >
+                          🔗 {tabela.parceiros_count || 0} parceiro{(tabela.parceiros_count || 0) !== 1 ? 's' : ''}
+                        </button>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${
@@ -460,6 +532,125 @@ export default function TabelasPrecosPage() {
                     <li>O preview mostra o impacto do ajuste em tempo real</li>
                   </ul>
                 </section>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de Gerenciamento de Vínculos */}
+        {mostrarModalVinculos && tabelaSelecionada && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+              <div className="bg-white border-b border-gray-200 px-6 py-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">🔗 Vincular Parceiros</h2>
+                    <p className="text-sm text-gray-600 mt-1">Tabela: {tabelaSelecionada.nome}</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setMostrarModalVinculos(false);
+                      setTabelaSelecionada(null);
+                      setParceirosVinculados([]);
+                      setTermoPesquisaParceiro('');
+                    }}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-6 flex-1 overflow-hidden flex flex-col">
+                <div className="mb-4">
+                  <input
+                    type="text"
+                    value={termoPesquisaParceiro}
+                    onChange={(e) => setTermoPesquisaParceiro(e.target.value)}
+                    placeholder="🔍 Pesquisar parceiro..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="flex-1 overflow-y-auto border border-gray-200 rounded-lg">
+                  <div className="divide-y divide-gray-200">
+                    {parceiros
+                      .filter(parceiro => {
+                        if (!termoPesquisaParceiro) return true;
+                        const termo = termoPesquisaParceiro.toLowerCase();
+                        return (
+                          parceiro.nome_razao_social?.toLowerCase().includes(termo) ||
+                          parceiro.cpf_cnpj?.includes(termo) ||
+                          parceiro.tipo_parceiro?.toLowerCase().includes(termo)
+                        );
+                      })
+                      .map((parceiro) => (
+                        <label
+                          key={parceiro.id}
+                          className="flex items-center p-4 hover:bg-gray-50 cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={parceirosVinculados.includes(parceiro.id)}
+                            onChange={() => toggleParceiro(parceiro.id)}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-5 w-5"
+                          />
+                          <div className="ml-3 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-gray-900">{parceiro.nome_razao_social}</span>
+                              <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">
+                                {parceiro.tipo_parceiro}
+                              </span>
+                            </div>
+                            {parceiro.cpf_cnpj && (
+                              <div className="text-sm text-gray-500">{parceiro.cpf_cnpj}</div>
+                            )}
+                          </div>
+                        </label>
+                      ))}
+                    {parceiros.filter(p => {
+                      if (!termoPesquisaParceiro) return true;
+                      const termo = termoPesquisaParceiro.toLowerCase();
+                      return (
+                        p.nome_razao_social?.toLowerCase().includes(termo) ||
+                        p.cpf_cnpj?.includes(termo) ||
+                        p.tipo_parceiro?.toLowerCase().includes(termo)
+                      );
+                    }).length === 0 && (
+                      <div className="p-8 text-center text-gray-500">
+                        {termoPesquisaParceiro
+                          ? '🔍 Nenhum parceiro encontrado'
+                          : '📋 Nenhum parceiro cadastrado'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="text-sm text-blue-900">
+                    <strong>{parceirosVinculados.length}</strong> parceiro{parceirosVinculados.length !== 1 ? 's' : ''} selecionado{parceirosVinculados.length !== 1 ? 's' : ''}
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-gray-200 px-6 py-4 bg-gray-50 flex justify-end gap-3">
+                <button
+                  onClick={() => {
+                    setMostrarModalVinculos(false);
+                    setTabelaSelecionada(null);
+                    setParceirosVinculados([]);
+                    setTermoPesquisaParceiro('');
+                  }}
+                  className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={salvarVinculos}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  💾 Salvar Vínculos
+                </button>
               </div>
             </div>
           </div>
