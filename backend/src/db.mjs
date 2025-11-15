@@ -1,4 +1,4 @@
-// backend/db.mjs
+// backend/src/db.mjs
 import { createClient } from "@libsql/client";
 
 const url = process.env.TURSO_DATABASE_URL;
@@ -12,10 +12,13 @@ if (!authToken) {
   throw new Error("TURSO_AUTH_TOKEN não definido nos Secrets do GitHub.");
 }
 
+// Cliente compartilhado para todo o backend
 export const db = createClient({ url, authToken });
 
-export async function testConnection() {
+// Função usada no teste de conexão (pingTurso)
+export async function pingTurso() {
   console.log("🔌 Testando conexão com Turso...");
   const result = await db.execute("SELECT 1 AS result");
-  console.log("✅ Conexão OK. Resultado:", result.rows[0].result);
+  // Em geral vem algo como [{ result: 1 }]
+  console.log("✅ Conexão OK. Resultado:", result.rows?.[0]?.result ?? result.rows[0]);
 }
