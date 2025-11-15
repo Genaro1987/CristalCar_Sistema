@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/app/components/layout/DashboardLayout';
+import HelpButton from '@/app/components/ui/HelpButton';
+import { helpContents } from '@/app/utils/helpContent';
 
 export default function RegrasConciliacaoPage() {
   const [regras, setRegras] = useState([]);
@@ -219,13 +221,16 @@ export default function RegrasConciliacaoPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 🔍 Pesquisar
               </label>
-              <input
-                type="text"
-                value={termoPesquisa}
-                onChange={(e) => setTermoPesquisa(e.target.value)}
-                placeholder="Buscar por nome ou texto de busca..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={termoPesquisa}
+                  onChange={(e) => setTermoPesquisa(e.target.value)}
+                  placeholder="Buscar por nome ou texto de busca..."
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                />
+                <HelpButton helpContent={helpContents['FIN-013']} />
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">

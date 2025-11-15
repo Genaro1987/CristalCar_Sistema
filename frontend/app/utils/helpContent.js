@@ -400,5 +400,367 @@ export const helpContents = {
         ]
       }
     ]
+  },
+
+  'ADM-002': {
+    title: 'Funcionários',
+    sections: [
+      {
+        heading: '📋 O que é esta tela?',
+        icon: '📋',
+        content: 'Cadastre e gerencie os funcionários da sua empresa, incluindo dados pessoais, informações trabalhistas e de acesso ao sistema.'
+      },
+      {
+        heading: '🔑 Campos Principais',
+        icon: '🔑',
+        items: [
+          {
+            label: 'Nome Completo',
+            description: 'Nome completo do funcionário conforme documentos.'
+          },
+          {
+            label: 'CPF',
+            description: 'Cadastro de Pessoa Física. O sistema valida automaticamente.'
+          },
+          {
+            label: 'Cargo/Função',
+            description: 'Cargo que o funcionário ocupa na empresa.'
+          },
+          {
+            label: 'Data de Admissão',
+            description: 'Data em que o funcionário foi contratado.'
+          },
+          {
+            label: 'Salário',
+            description: 'Salário base do funcionário (informação confidencial).'
+          },
+          {
+            label: 'Status',
+            description: 'Ativo (trabalhando) ou Inativo (desligado).'
+          }
+        ]
+      },
+      {
+        tips: [
+          'Mantenha os dados sempre atualizados',
+          'Funcionários inativos são preservados para histórico',
+          'Use filtros para encontrar rapidamente',
+          'Configure permissões de acesso ao sistema se aplicável'
+        ]
+      }
+    ]
+  },
+
+  'ADM-003': {
+    title: 'Layouts de Importação',
+    sections: [
+      {
+        heading: '📋 O que são Layouts de Importação?',
+        icon: '📋',
+        content: 'Configure como o sistema deve interpretar arquivos importados (CSV, TXT, Excel). Defina qual coluna contém cada informação.'
+      },
+      {
+        heading: '🔑 Campos Principais',
+        icon: '🔑',
+        items: [
+          {
+            label: 'Nome do Layout',
+            description: 'Nome descritivo para identificar o layout (ex: "Importação Produtos - Fornecedor A").'
+          },
+          {
+            label: 'Tipo de Arquivo',
+            description: 'CSV, TXT, Excel (XLS/XLSX) ou outro formato suportado.'
+          },
+          {
+            label: 'Separador',
+            description: 'Para CSV/TXT: vírgula, ponto-e-vírgula, tab, etc.'
+          },
+          {
+            label: 'Mapeamento de Colunas',
+            description: 'Defina qual coluna do arquivo corresponde a cada campo do sistema.'
+          },
+          {
+            label: 'Linha Inicial',
+            description: 'Número da linha onde começam os dados (pule cabeçalhos se necessário).'
+          }
+        ]
+      },
+      {
+        tips: [
+          'Teste o layout com um arquivo pequeno primeiro',
+          'Salve layouts de fornecedores recorrentes',
+          'Verifique o separador correto do arquivo',
+          'Configure tratamento de erros (ignorar linha ou parar importação)'
+        ]
+      }
+    ]
+  },
+
+  'ADM-004': {
+    title: 'Configuração de Backup',
+    sections: [
+      {
+        heading: '📋 O que é esta tela?',
+        icon: '📋',
+        content: 'Configure backups automáticos do banco de dados para proteger suas informações. Escolha entre backup local ou Google Drive.'
+      },
+      {
+        heading: '🔑 Opções de Backup',
+        icon: '🔑',
+        items: [
+          {
+            label: 'Backup Local',
+            description: 'Salva cópias em um diretório do servidor. Configure a pasta de destino e frequência.'
+          },
+          {
+            label: 'Google Drive',
+            description: 'Armazena backups na nuvem do Google Drive. Requer autenticação e configuração de pasta.'
+          },
+          {
+            label: 'Frequência',
+            description: 'Diária, Semanal ou Mensal. Define quando o backup automático será executado.'
+          },
+          {
+            label: 'Retenção',
+            description: 'Quantos backups manter. Backups mais antigos são excluídos automaticamente.'
+          },
+          {
+            label: 'Horário',
+            description: 'Hora em que o backup deve ser executado (recomendado: madrugada).'
+          }
+        ]
+      },
+      {
+        heading: '⚠️ Importante',
+        icon: '⚠️',
+        content: 'Backups são essenciais para proteger seus dados. Configure ao menos um método de backup e teste a restauração periodicamente.'
+      },
+      {
+        tips: [
+          'Combine backup local E Google Drive para maior segurança',
+          'Execute backups em horários de baixo uso do sistema',
+          'Teste a restauração periodicamente',
+          'Mantenha ao menos 7 backups diários e 4 semanais',
+          'Verifique se há espaço suficiente no destino'
+        ]
+      }
+    ]
+  },
+
+  'FIN-001': {
+    title: 'Plano de Contas',
+    sections: [
+      {
+        heading: '📋 O que é o Plano de Contas?',
+        icon: '📋',
+        content: 'Estrutura hierárquica que organiza todas as receitas e despesas da empresa. É a base para relatórios financeiros e DRE.'
+      },
+      {
+        heading: '🔑 Campos Principais',
+        icon: '🔑',
+        items: [
+          {
+            label: 'Código da Conta',
+            description: 'Código hierárquico (ex: 1, 1.1, 1.1.1). Quanto mais dígitos, mais específica a conta.'
+          },
+          {
+            label: 'Descrição',
+            description: 'Nome da conta (ex: "Receitas", "Vendas de Produtos", "Custos Operacionais").'
+          },
+          {
+            label: 'Tipo',
+            description: 'Receita (dinheiro que entra) ou Despesa (dinheiro que sai).'
+          },
+          {
+            label: 'Aceita Lançamento',
+            description: 'Contas de nível mais alto (sintéticas) não aceitam lançamento, apenas as folhas (analíticas).'
+          },
+          {
+            label: 'Compõe DRE',
+            description: 'Se esta conta deve aparecer no Demonstrativo de Resultados.'
+          },
+          {
+            label: 'Tipo de Gasto',
+            description: 'Para despesas: Fixo (todo mês) ou Variável (depende do uso/vendas).'
+          }
+        ]
+      },
+      {
+        heading: '🌳 Estrutura Hierárquica',
+        icon: '🌳',
+        content: 'O plano de contas funciona como uma árvore. Contas de nível 1 (ex: "1") são gerais. Subcontas (ex: "1.1", "1.1.1") são cada vez mais específicas. Apenas as contas mais específicas (folhas) aceitam lançamentos.'
+      },
+      {
+        tips: [
+          'Não delete contas com movimentações, apenas desative',
+          'Contas sintéticas (pai) somam automaticamente as contas filhas',
+          'Use uma estrutura lógica e consistente',
+          'Documente o que cada conta representa'
+        ]
+      }
+    ]
+  },
+
+  'FIN-002': {
+    title: 'Estrutura DRE',
+    sections: [
+      {
+        heading: '📋 O que é a Estrutura DRE?',
+        icon: '📋',
+        content: 'DRE (Demonstrativo de Resultados do Exercício) mostra se a empresa teve lucro ou prejuízo. Configure a estrutura e fórmulas de cálculo.'
+      },
+      {
+        heading: '🔑 Componentes',
+        icon: '🔑',
+        items: [
+          {
+            label: 'Linhas do DRE',
+            description: 'Cada linha representa uma seção: Receita Bruta, (-) Deduções, (=) Receita Líquida, etc.'
+          },
+          {
+            label: 'Tipo de Linha',
+            description: 'TÍTULO (cabeçalho de seção), CONTA (valor de uma conta), FÓRMULA (cálculo), TOTAL (soma de seção).'
+          },
+          {
+            label: 'Fórmulas',
+            description: 'Use referências a outras linhas para cálculos automáticos (ex: Lucro Bruto = Receita - Custos).'
+          },
+          {
+            label: 'Nível/Indentação',
+            description: 'Organiza visualmente a hierarquia do relatório.'
+          }
+        ]
+      },
+      {
+        heading: '📊 Estrutura Padrão',
+        icon: '📊',
+        content: <div className="space-y-1 text-sm">
+          <div>1. Receita Bruta de Vendas</div>
+          <div className="ml-4">(-) Deduções e Abatimentos</div>
+          <div className="ml-4">(=) Receita Líquida</div>
+          <div className="ml-4">(-) Custos das Vendas</div>
+          <div className="ml-4">(=) Lucro Bruto</div>
+          <div className="ml-4">(-) Despesas Operacionais</div>
+          <div className="ml-4">(=) Lucro Operacional</div>
+          <div className="ml-4">(+/-) Receitas/Despesas Financeiras</div>
+          <div className="ml-4">(=) Lucro Antes dos Impostos</div>
+          <div className="ml-4">(-) Impostos</div>
+          <div className="ml-4">(=) Lucro Líquido</div>
+        </div>
+      },
+      {
+        tips: [
+          'Você pode ter múltiplas estruturas DRE para diferentes análises',
+          'Teste as fórmulas com dados reais',
+          'Mantenha uma estrutura padrão para comparações mensais',
+          'Documente a lógica de cálculo de cada linha'
+        ]
+      }
+    ]
+  },
+
+  'FIN-013': {
+    title: 'Regras de Conciliação',
+    sections: [
+      {
+        heading: '📋 O que são Regras de Conciliação?',
+        icon: '📋',
+        content: 'Automatize a classificação de transações bancárias. O sistema identifica padrões na descrição e classifica automaticamente.'
+      },
+      {
+        heading: '🔑 Campos Principais',
+        icon: '🔑',
+        items: [
+          {
+            label: 'Nome da Regra',
+            description: 'Descrição clara do que a regra identifica (ex: "Pagamentos de Cartão Visa").'
+          },
+          {
+            label: 'Tipo de Operação',
+            description: 'Crédito (entrada) ou Débito (saída). Define se é receita ou despesa.'
+          },
+          {
+            label: 'Padrão de Busca',
+            description: 'Palavra ou expressão que aparece na descrição da transação (ex: "PIX", "TED", "VISA").'
+          },
+          {
+            label: 'Conta Contábil',
+            description: 'Para qual conta do plano de contas a transação deve ser classificada.'
+          },
+          {
+            label: 'Prioridade',
+            description: 'Se múltiplas regras se aplicam, a de maior prioridade é usada.'
+          }
+        ]
+      },
+      {
+        heading: '💡 Exemplos Práticos',
+        icon: '💡',
+        items: [
+          {
+            label: 'Pagamentos PIX',
+            description: 'Padrão: "PIX" | Tipo: Débito | Conta: Despesas Diversas'
+          },
+          {
+            label: 'Recebimento de Vendas',
+            description: 'Padrão: "VENDA" ou "PGTO CLIENTE" | Tipo: Crédito | Conta: Receita de Vendas'
+          },
+          {
+            label: 'Taxas Bancárias',
+            description: 'Padrão: "TARIFA" ou "IOF" | Tipo: Débito | Conta: Despesas Bancárias'
+          }
+        ]
+      },
+      {
+        tips: [
+          'Comece com regras amplas e refine com o tempo',
+          'Use prioridades para resolver conflitos entre regras',
+          'Revise classificações automáticas periodicamente',
+          'Mantenha as regras atualizadas conforme mudam os padrões do banco'
+        ]
+      }
+    ]
+  },
+
+  'TAB-002': {
+    title: 'Histórico de Alterações',
+    sections: [
+      {
+        heading: '📋 O que é esta tela?',
+        icon: '📋',
+        content: 'Visualize todas as alterações feitas nas tabelas de preços: quem alterou, quando, valores antigos e novos.'
+      },
+      {
+        heading: '🔍 Filtros Disponíveis',
+        icon: '🔍',
+        items: [
+          {
+            label: 'Tabela de Preços',
+            description: 'Filtre por tabela específica para ver apenas suas alterações.'
+          },
+          {
+            label: 'Tipo de Alteração',
+            description: 'Criação, Edição ou Exclusão de tabelas.'
+          },
+          {
+            label: 'Período',
+            description: 'Data inicial e final para filtrar alterações em um período.'
+          }
+        ]
+      },
+      {
+        heading: '📥 Exportação',
+        icon: '📥',
+        content: 'Exporte o histórico para CSV para análise externa ou auditoria. O arquivo incluirá todas as colunas visíveis na tela.'
+      },
+      {
+        tips: [
+          'Use para auditoria de alterações de preços',
+          'Exporte periodicamente para backup',
+          'Identifique quem fez alterações não autorizadas',
+          'Análise tendências de mudanças de preços'
+        ]
+      }
+    ]
   }
 };
