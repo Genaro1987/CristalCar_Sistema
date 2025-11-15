@@ -3,7 +3,7 @@
 import DashboardLayout from '../components/layout/DashboardLayout';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import ConfigurarFavoritosModal from '../components/ui/ConfigurarFavoritosModal';
+import ConfigurarFavoritosModal from '@/components/ui/ConfigurarFavoritosModal';
 import { useState, useEffect } from 'react';
 
 export default function DashboardPage() {
