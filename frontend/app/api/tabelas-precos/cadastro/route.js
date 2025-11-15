@@ -8,8 +8,13 @@ const turso = createClient({
 export async function GET() {
   try {
     const result = await turso.execute(`
-      SELECT * FROM tab_tabelas_precos
-      ORDER BY prioridade DESC, nome ASC
+      SELECT
+        t.*,
+        COUNT(tp.parceiro_id) as parceiros_count
+      FROM tab_tabelas_precos t
+      LEFT JOIN tab_tabelas_precos_parceiros tp ON t.id = tp.tabela_preco_id
+      GROUP BY t.id
+      ORDER BY t.nome ASC
     `);
 
     return Response.json(result.rows);
@@ -27,9 +32,9 @@ export async function POST(request) {
       sql: `
         INSERT INTO tab_tabelas_precos (
           nome, descricao, tipo_ajuste, valor_ajuste,
-          data_inicio, data_fim, prioridade,
+          data_inicio, data_fim,
           observacoes, ativo
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `,
       args: [
         data.nome,
@@ -38,7 +43,6 @@ export async function POST(request) {
         data.valor_ajuste,
         data.data_inicio || null,
         data.data_fim || null,
-        data.prioridade || 100,
         data.observacoes || null,
         data.ativo ? 1 : 0
       ]
