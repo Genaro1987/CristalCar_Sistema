@@ -199,7 +199,7 @@ export default function FormasPagamentoPage() {
   };
 
   return (
-    <DashboardLayout title="Formas de Pagamento" pageCode="FIN-010">
+    <DashboardLayout screenCode="FIN-010">
       <div className="space-y-6">
         {!showForm ? (
           <>

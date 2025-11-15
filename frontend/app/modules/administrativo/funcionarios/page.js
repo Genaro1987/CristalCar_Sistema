@@ -262,7 +262,7 @@ export default function FuncionariosPage() {
   };
 
   return (
-    <DashboardLayout title="Funcionários" pageCode="ADM-002">
+    <DashboardLayout screenCode="ADM-002">
       <div className="space-y-6">
         {!showForm ? (
           <>

@@ -361,7 +361,7 @@ export default function PlanoContasPage() {
   };
 
   return (
-    <DashboardLayout title="Plano de Contas" pageCode="FIN-001">
+    <DashboardLayout screenCode="FIN-001">
       <div className="space-y-6">
         {!showForm ? (
           <>

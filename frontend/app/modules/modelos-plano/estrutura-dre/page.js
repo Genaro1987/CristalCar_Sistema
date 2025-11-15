@@ -254,7 +254,7 @@ export default function EstruturaDREPage() {
   };
 
   return (
-    <DashboardLayout title="Estrutura DRE" pageCode="FIN-002">
+    <DashboardLayout screenCode="FIN-002">
       <div className="space-y-6">
         {!showForm ? (
           <>

@@ -218,7 +218,7 @@ export default function LayoutsImportacaoPage() {
   };
 
   return (
-    <DashboardLayout title="Layouts de Importação" pageCode="ADM-003">
+    <DashboardLayout screenCode="ADM-003">
       <div className="space-y-6">
         {!showForm ? (
           <>

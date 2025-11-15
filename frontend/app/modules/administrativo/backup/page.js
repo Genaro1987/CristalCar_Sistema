@@ -176,7 +176,7 @@ export default function ConfiguracaoBackupPage() {
   };
 
   return (
-    <DashboardLayout title="Configuração de Backup" pageCode="ADM-004">
+    <DashboardLayout screenCode="ADM-004">
       <div className="space-y-6">
         {/* Informação sobre Google Drive */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
