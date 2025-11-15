@@ -34,7 +34,7 @@ CristalCar_Sistema/
 - ✅ Cadastro de Usuários
 - ✅ Controle de Permissões por Módulo
 - ✅ Log de Acessos
-- ✅ Sistema de Autenticação
+- 🔄 Sistema de Autenticação (estrutura pronta, desativado temporariamente)
 
 ### 2. **Módulo Financeiro** (Prefixo: `fin_`)
 - ✅ Plano de Contas (até 9 níveis)
@@ -145,12 +145,20 @@ npm run dev
 
 Acesse: `http://localhost:3000`
 
-## 🔑 Acesso Inicial
+## 🔑 Acesso ao Sistema
 
-Após executar o seed do banco de dados:
+**IMPORTANTE**: Nesta versão inicial, o sistema **não requer login**. A página inicial redireciona automaticamente para o dashboard.
 
-- **Usuário**: `admin`
-- **Senha**: `admin123`
+A estrutura completa de autenticação já está implementada no banco de dados e nas APIs, pronta para ser ativada no futuro:
+- Tabelas de usuários, permissões e logs
+- API de login com bcrypt
+- Controle de acesso por módulo
+- Sistema de tentativas de login
+
+Para ativar a autenticação futuramente:
+1. Descomentar a verificação de login em `/app/page.js`
+2. Descomentar a verificação de autenticação em `/app/dashboard/page.js`
+3. Executar o seed do banco: `npm run db:seed` (cria usuário admin/admin123)
 
 ## 📋 Estrutura do Banco de Dados
 
@@ -233,14 +241,16 @@ O DRE segue a estrutura clássica:
 - Log completo de importações
 - Validação de duplicidades (chave de acesso)
 
-### 🔐 Segurança
-- Autenticação com bcrypt
-- Controle de permissões por módulo
-- Log de todas as ações
-- Proteção contra força bruta (bloqueio após 5 tentativas)
+### 🔐 Segurança (Preparado para Implementação Futura)
+- ✅ Estrutura de autenticação com bcrypt
+- ✅ Controle de permissões por módulo
+- ✅ Log de todas as ações
+- ✅ Proteção contra força bruta (bloqueio após 5 tentativas)
+- 🔄 Login desativado temporariamente (acesso direto ao sistema)
 
 ## 📈 Próximas Funcionalidades
 
+- [ ] Ativar sistema de login e autenticação
 - [ ] Dashboard com gráficos interativos
 - [ ] Exportação de relatórios para Excel e PDF
 - [ ] Importação de XML via e-mail

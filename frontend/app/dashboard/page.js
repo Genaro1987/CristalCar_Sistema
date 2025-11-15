@@ -1,11 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 
 export default function DashboardPage() {
-  const router = useRouter();
-  const [user, setUser] = useState(null);
   const [stats, setStats] = useState({
     saldoBancos: 0,
     contasReceber: 0,
@@ -14,21 +11,14 @@ export default function DashboardPage() {
   });
 
   useEffect(() => {
-    // Verificar autenticação
-    const userData = localStorage.getItem("user");
-    if (!userData) {
-      router.push("/login");
-      return;
-    }
-    setUser(JSON.parse(userData));
-
+    // TODO: Integrar com autenticação no futuro
     // Carregar estatísticas do dashboard
     carregarEstatisticas();
-  }, [router]);
+  }, []);
 
   const carregarEstatisticas = async () => {
     try {
-      // Aqui você pode fazer chamadas para as APIs para buscar dados reais
+      // TODO: Fazer chamadas para as APIs para buscar dados reais
       // Por enquanto, usando dados de exemplo
       setStats({
         saldoBancos: 50000,
@@ -40,19 +30,6 @@ export default function DashboardPage() {
       console.error("Erro ao carregar estatísticas:", error);
     }
   };
-
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    router.push("/login");
-  };
-
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary-500"></div>
-      </div>
-    );
-  }
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -93,18 +70,7 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <p className="text-sm font-medium text-secondary-900">
-                  {user.nome_completo}
-                </p>
-                <p className="text-xs text-secondary-600">{user.perfil}</p>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="btn-outline text-sm"
-              >
-                Sair
-              </button>
+              {/* TODO: Adicionar menu de usuário quando implementar autenticação */}
             </div>
           </div>
         </div>
@@ -115,7 +81,7 @@ export default function DashboardPage() {
         {/* Welcome Message */}
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-secondary-900">
-            Bem-vindo, {user.nome_completo.split(" ")[0]}!
+            Bem-vindo ao CristalCar ERP!
           </h2>
           <p className="mt-2 text-secondary-600">
             Aqui está um resumo da sua empresa hoje
