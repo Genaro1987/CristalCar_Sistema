@@ -293,7 +293,7 @@ export default function TabelasPrecosPage() {
         {/* Modal de Cadastro/Edição */}
         {mostrarModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[85vh] overflow-y-auto">
               <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4">
                 <div className="flex justify-between items-center">
                   <h2 className="text-xl font-bold text-gray-900">
@@ -309,8 +309,8 @@ export default function TabelasPrecosPage() {
               </div>
 
               <form onSubmit={handleSubmit} className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="md:col-span-2">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="md:col-span-3">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Nome *</label>
                     <input
                       type="text"
@@ -322,13 +322,14 @@ export default function TabelasPrecosPage() {
                     />
                   </div>
 
-                  <div className="md:col-span-2">
+                  <div className="md:col-span-3">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
-                    <textarea
+                    <input
+                      type="text"
                       value={formData.descricao}
                       onChange={(e) => setFormData({...formData, descricao: e.target.value})}
-                      rows={2}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                      placeholder="Descrição opcional..."
                     />
                   </div>
 
@@ -348,10 +349,8 @@ export default function TabelasPrecosPage() {
                     </select>
                   </div>
 
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Valor do Ajuste *
-                    </label>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Valor *</label>
                     <input
                       type="number"
                       step="0.01"
@@ -382,29 +381,18 @@ export default function TabelasPrecosPage() {
                     />
                   </div>
 
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Prioridade</label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={formData.prioridade}
-                      onChange={(e) => setFormData({...formData, prioridade: parseInt(e.target.value) || 100})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Maior número = maior prioridade</p>
-                  </div>
-
-                  <div className="md:col-span-2">
+                  <div className="md:col-span-3">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Observações</label>
-                    <textarea
+                    <input
+                      type="text"
                       value={formData.observacoes}
                       onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
-                      rows={3}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                      placeholder="Informações adicionais..."
                     />
                   </div>
 
-                  <div className="md:col-span-2">
+                  <div className="md:col-span-3">
                     <label className="flex items-center">
                       <input
                         type="checkbox"
