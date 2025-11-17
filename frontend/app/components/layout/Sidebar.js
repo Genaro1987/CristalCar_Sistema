@@ -103,8 +103,8 @@ export default function Sidebar() {
           icon: '📊',
           submenu: [
             { name: 'Plano de Contas', href: '/modules/modelos-plano/plano-contas', code: 'FIN-001' },
-            { name: 'Tipos de DRE', href: '/modules/modelos-plano/planos-padroes', code: 'FIN-002' },
-            { name: 'Estrutura DRE', href: '/modules/modelos-plano/estrutura-dre', code: 'FIN-003' },
+            { name: 'Tipos de DRE', href: '/modules/modelos-plano/tipos-dre-lista', code: 'FIN-002' },
+            { name: 'Estrutura DRE', href: '/modules/modelos-plano/estrutura-dre-editor', code: 'FIN-003' },
           ]
         },
         {
@@ -151,6 +151,23 @@ export default function Sidebar() {
             { name: 'Metas Semanais', href: '/modules/objetivos/semanais', code: 'OBJ-002' },
           ]
         },
+      ]
+    },
+    {
+      id: 'importacao',
+      name: 'Importação',
+      icon: '📥',
+      submenu: [
+        { name: 'Importação de Extratos', href: '/modules/importacao/extratos', code: 'IMP-001' },
+        { name: 'Importação XML NF-e', href: '/modules/importacao/xml-nfe', code: 'IMP-002' },
+      ]
+    },
+    {
+      id: 'indicadores',
+      name: 'Indicadores',
+      icon: '📊',
+      submenu: [
+        { name: 'Indicadores Customizáveis', href: '/modules/indicadores/customizaveis', code: 'IND-001' },
       ]
     },
   ];
