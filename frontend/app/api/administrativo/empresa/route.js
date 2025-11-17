@@ -83,14 +83,14 @@ export async function POST(request) {
           UPDATE adm_empresa
           SET razao_social = ?,
               nome_fantasia = ?,
-              cpf_cnpj = ?,
+              cnpj = ?,
               inscricao_estadual = ?,
               inscricao_municipal = ?,
               regime_tributario = ?,
               telefone = ?,
               celular = ?,
               email = ?,
-              site = ?,
+              website = ?,
               endereco = ?,
               numero = ?,
               complemento = ?,
@@ -131,8 +131,8 @@ export async function POST(request) {
       const result = await turso.execute({
         sql: `
           INSERT INTO adm_empresa (
-            razao_social, nome_fantasia, cpf_cnpj, inscricao_estadual, inscricao_municipal,
-            regime_tributario, telefone, celular, email, site,
+            razao_social, nome_fantasia, cnpj, inscricao_estadual, inscricao_municipal,
+            regime_tributario, telefone, celular, email, website,
             endereco, numero, complemento, bairro, cidade, estado, cep,
             observacoes
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
