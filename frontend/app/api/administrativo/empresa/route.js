@@ -1,5 +1,6 @@
 import { createClient } from '@libsql/client';
 import { normalizarTexto } from '@/lib/text-utils';
+import { serializeRow } from '@/lib/db-utils';
 
 const turso = createClient({
   url: process.env.TURSO_DATABASE_URL,
@@ -33,8 +34,8 @@ function normalizarDadosEmpresa(data) {
   if (normalized.email) {
     normalized.email = normalized.email.toLowerCase().trim();
   }
-  if (normalized.website) {
-    normalized.website = normalized.website.toLowerCase().trim();
+  if (normalized.website || normalized.site) {
+    normalized.website = (normalized.website || normalized.site).toLowerCase().trim();
   }
 
   // Remover espaços extras
@@ -50,12 +51,17 @@ function normalizarDadosEmpresa(data) {
 export async function GET() {
   try {
     const result = await turso.execute({
-      sql: `SELECT * FROM adm_empresa LIMIT 1`,
+      sql: `SELECT *, COALESCE(logo_url, logo_path) AS logo_path_resolved FROM adm_empresa LIMIT 1`,
       args: []
     });
 
     if (result.rows.length > 0) {
-      return Response.json(result.rows[0]);
+      const empresa = serializeRow(result.rows[0]);
+      return Response.json({
+        ...empresa,
+        logo_path: empresa.logo_path_resolved || empresa.logo_path || empresa.logo_url || null,
+        site: empresa.site || empresa.website || null,
+      });
     }
 
     return Response.json(null);
@@ -98,6 +104,7 @@ export async function POST(request) {
               cidade = ?,
               estado = ?,
               cep = ?,
+              logo_url = ?,
               observacoes = ?,
               atualizado_em = CURRENT_TIMESTAMP
           WHERE id = ?
@@ -120,6 +127,7 @@ export async function POST(request) {
           normalizedData.cidade || null,
           normalizedData.estado || null,
           normalizedData.cep || null,
+          normalizedData.logo_path || normalizedData.logo_url || null,
           normalizedData.observacoes || null,
           existente.rows[0].id
         ]
@@ -134,8 +142,9 @@ export async function POST(request) {
             razao_social, nome_fantasia, cnpj, inscricao_estadual, inscricao_municipal,
             regime_tributario, telefone, celular, email, website,
             endereco, numero, complemento, bairro, cidade, estado, cep,
+            logo_url,
             observacoes
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
         args: [
           normalizedData.razao_social,
@@ -155,6 +164,7 @@ export async function POST(request) {
           normalizedData.cidade || null,
           normalizedData.estado || null,
           normalizedData.cep || null,
+          normalizedData.logo_path || normalizedData.logo_url || null,
           normalizedData.observacoes || null
         ]
       });

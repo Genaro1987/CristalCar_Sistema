@@ -67,6 +67,9 @@ export default function CadastroEmpresaPage() {
             logo_path: data.logo_path || '',
             observacoes: data.observacoes || ''
           });
+          if (data.logo_path) {
+            setLogoPreview(data.logo_path);
+          }
         }
       }
     } catch (error) {
@@ -89,11 +92,9 @@ export default function CadastroEmpresaPage() {
       const reader = new FileReader();
       reader.onloadend = () => {
         setLogoPreview(reader.result);
+        setFormData(prev => ({ ...prev, logo_path: reader.result }));
       };
       reader.readAsDataURL(file);
-
-      // TODO: Implementar upload do arquivo
-      // setFormData(prev => ({ ...prev, logo_path: file.name }));
     }
   };
 

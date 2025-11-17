@@ -167,6 +167,11 @@ export default function BancosPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!formData.agencia || !formData.conta) {
+      alert('Informe agência e conta antes de salvar.');
+      return;
+    }
+
     try {
       const dadosParaSalvar = {
         ...formData,

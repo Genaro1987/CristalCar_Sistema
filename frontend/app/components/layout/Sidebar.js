@@ -8,6 +8,7 @@ export default function Sidebar() {
   const pathname = usePathname();
   const [expandedModule, setExpandedModule] = useState(null);
   const [expandedSubmodules, setExpandedSubmodules] = useState(new Set());
+  const [empresa, setEmpresa] = useState(null);
 
   useEffect(() => {
     // Carregar estado do menu do localStorage
@@ -24,6 +25,14 @@ export default function Sidebar() {
         // Ignorar erro de parse
       }
     }
+
+    // Carregar dados da empresa para exibir logo/nome
+    fetch('/api/administrativo/empresa')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data) setEmpresa(data);
+      })
+      .catch(() => {});
   }, []);
 
   // Manter menu expandido baseado na rota atual
@@ -166,14 +175,24 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="flex-shrink-0 p-6 border-b border-secondary-700">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
-            <span className="text-2xl font-bold text-white">C</span>
+          <div className="w-12 h-12 bg-secondary-800 rounded-lg flex items-center justify-center overflow-hidden border border-secondary-600">
+            {empresa?.logo_path ? (
+              <img
+                src={empresa.logo_path}
+                alt={`Logo ${empresa.nome_fantasia || 'empresa'}`}
+                className="w-full h-full object-contain"
+              />
+            ) : (
+              <span className="text-lg font-bold text-white">
+                {(empresa?.nome_fantasia || 'CristalCar').substring(0, 2).toUpperCase()}
+              </span>
+            )}
           </div>
           <div>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-primary-400 to-primary-500 bg-clip-text text-transparent">
-              Cristal Car
+            <h1 className="text-xl font-bold text-white leading-tight">
+              {empresa?.nome_fantasia || 'CristalCar'}
             </h1>
-            <p className="text-xs text-secondary-400">Sistema ERP</p>
+            <p className="text-xs text-secondary-300">Sistema ERP</p>
           </div>
         </div>
       </div>

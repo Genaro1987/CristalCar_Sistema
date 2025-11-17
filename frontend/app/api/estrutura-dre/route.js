@@ -2,26 +2,45 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@libsql/client";
 import { normalizarTexto } from "@/lib/text-utils";
+import { serializeRows, serializeValue } from "@/lib/db-utils";
 
 const turso = createClient({
   url: process.env.TURSO_DATABASE_URL,
   authToken: process.env.TURSO_AUTH_TOKEN,
 });
 
+async function garantirColunaModelo() {
+  try {
+    await turso.execute(`ALTER TABLE fin_estrutura_dre ADD COLUMN modelo_dre_id INTEGER`);
+  } catch (error) {
+    if (!error.message.includes("duplicate column name")) {
+      throw error;
+    }
+  }
+}
+
 // GET - Listar estrutura do DRE
 export async function GET(request) {
   try {
+    await garantirColunaModelo();
+
+    const { searchParams } = new URL(request.url);
+    const modeloId = searchParams.get("modelo_id");
+
     const sql = `
       SELECT * FROM fin_estrutura_dre
+      ${modeloId ? "WHERE IFNULL(modelo_dre_id, 0) = ?" : ""}
       ORDER BY ordem_exibicao
     `;
 
-    const result = await turso.execute({ sql, args: [] });
+    const result = await turso.execute({ sql, args: modeloId ? [modeloId] : [] });
+
+    const dados = serializeRows(result.rows);
 
     return NextResponse.json({
       success: true,
-      data: result.rows,
-      total: result.rows.length,
+      data: dados,
+      total: dados.length,
     });
   } catch (error) {
     console.error("Erro ao buscar estrutura DRE:", error);
@@ -35,6 +54,7 @@ export async function GET(request) {
 // POST - Criar novo item da estrutura DRE
 export async function POST(request) {
   try {
+    await garantirColunaModelo();
     const dados = await request.json();
 
     let {
@@ -84,8 +104,9 @@ export async function POST(request) {
 
     const result = await turso.execute({
       sql: `INSERT INTO fin_estrutura_dre
-            (codigo, descricao, nivel, tipo, ordem_exibicao, formula, exibir_negativo, negrito)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            (codigo, descricao, nivel, tipo, ordem_exibicao, formula, exibir_negativo, negrito, modelo_dre_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      ,
       args: [
         codigo,
         descricao,
@@ -95,6 +116,7 @@ export async function POST(request) {
         formula || null,
         exibir_negativo ? 1 : 0,
         negrito ? 1 : 0,
+        dados.modelo_dre_id || null,
       ],
     });
 
@@ -102,7 +124,7 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
-      id: Number(result.lastInsertRowid),
+      id: serializeValue(result.lastInsertRowid),
       message: "Estrutura DRE criada com sucesso",
     });
   } catch (error) {
@@ -118,6 +140,7 @@ export async function POST(request) {
 // PUT - Atualizar estrutura DRE
 export async function PUT(request) {
   try {
+    await garantirColunaModelo();
     const dados = await request.json();
     const { id, ...campos } = dados;
 
@@ -145,6 +168,7 @@ export async function PUT(request) {
           "formula",
           "exibir_negativo",
           "negrito",
+          "modelo_dre_id",
         ].includes(key)
       ) {
         updates.push(`${key} = ?`);

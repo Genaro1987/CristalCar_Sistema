@@ -7,6 +7,8 @@ import Button from '@/app/components/ui/Button';
 
 export default function EstruturaDREPage() {
   const [itens, setItens] = useState([]);
+  const [modelos, setModelos] = useState([]);
+  const [modeloSelecionado, setModeloSelecionado] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
@@ -56,11 +58,40 @@ export default function EstruturaDREPage() {
 
   useEffect(() => {
     loadItens();
+    carregarModelos();
   }, []);
 
-  const loadItens = async () => {
+  useEffect(() => {
+    if (modeloSelecionado) {
+      loadItens(modeloSelecionado);
+    }
+  }, [modeloSelecionado]);
+
+  const carregarModelos = async () => {
     try {
-      const response = await fetch('/api/estrutura-dre');
+      const resp = await fetch('/api/modelos-dre');
+      if (resp.ok) {
+        const data = await resp.json();
+        const normalizados = (data || []).map((m) => ({
+          ...m,
+          id: Number(m.id),
+        }));
+        setModelos(normalizados);
+
+        if (!modeloSelecionado && normalizados.length > 0) {
+          const padrao = normalizados.find((m) => m.padrao === 1 || m.padrao === true);
+          setModeloSelecionado(padrao?.id || normalizados[0].id);
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao carregar modelos DRE:', error);
+    }
+  };
+
+  const loadItens = async (modeloId = modeloSelecionado) => {
+    try {
+      const query = modeloId ? `?modelo_id=${modeloId}` : '';
+      const response = await fetch(`/api/estrutura-dre${query}`);
       const data = await response.json();
 
       if (data.success) {
@@ -117,6 +148,7 @@ export default function EstruturaDREPage() {
         formula: formData.eh_totalizadora ? formData.formula : null,
         exibir_negativo: formData.exibir_negativo,
         negrito: formData.negrito,
+        modelo_dre_id: modeloSelecionado || null,
       };
 
       if (editingId) {
@@ -219,6 +251,9 @@ export default function EstruturaDREPage() {
       cor_texto: item.cor_texto || '',
       status: item.status
     });
+    if (item.modelo_dre_id) {
+      setModeloSelecionado(Number(item.modelo_dre_id));
+    }
     setEditingId(item.id);
     setShowForm(true);
   };
@@ -337,7 +372,7 @@ export default function EstruturaDREPage() {
           <>
             {/* Ações */}
             <Card>
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">
                     Demonstração do Resultado do Exercício (DRE)
@@ -346,9 +381,26 @@ export default function EstruturaDREPage() {
                     Configure a estrutura e formatação do relatório DRE
                   </p>
                 </div>
-                <Button variant="primary" onClick={() => setShowForm(true)}>
-                  + Novo Item
-                </Button>
+                <div className="flex flex-col md:flex-row md:items-center gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Modelo de DRE</label>
+                    <select
+                      value={modeloSelecionado || ''}
+                      onChange={(e) => setModeloSelecionado(e.target.value ? Number(e.target.value) : null)}
+                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    >
+                      <option value="">Sem filtro</option>
+                      {modelos.map((modelo) => (
+                        <option key={modelo.id} value={modelo.id}>
+                          {modelo.nome_modelo} {modelo.padrao ? '• Padrão' : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <Button variant="primary" onClick={() => setShowForm(true)}>
+                    + Novo Item
+                  </Button>
+                </div>
               </div>
             </Card>
 

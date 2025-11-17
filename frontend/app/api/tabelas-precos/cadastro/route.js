@@ -1,4 +1,5 @@
 import { createClient } from '@libsql/client';
+import { serializeRows, serializeValue } from '@/lib/db-utils';
 
 const turso = createClient({
   url: process.env.TURSO_DATABASE_URL,
@@ -17,7 +18,7 @@ export async function GET() {
       ORDER BY t.nome ASC
     `);
 
-    return Response.json(result.rows);
+    return Response.json(serializeRows(result.rows));
   } catch (error) {
     console.error('Erro ao buscar tabelas:', error);
     return Response.json({ error: 'Erro ao buscar tabelas' }, { status: 500 });
@@ -52,7 +53,7 @@ export async function POST(request) {
       ]
     });
 
-    return Response.json({ success: true, id: result.lastInsertRowid });
+    return Response.json({ success: true, id: serializeValue(result.lastInsertRowid) });
   } catch (error) {
     console.error('Erro ao criar tabela:', error);
     return Response.json({ error: 'Erro ao criar tabela' }, { status: 500 });
