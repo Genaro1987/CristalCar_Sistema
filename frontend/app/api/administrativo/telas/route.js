@@ -12,13 +12,15 @@ async function garantirTabelaTelas() {
   await turso.execute(`
     CREATE TABLE IF NOT EXISTS adm_telas (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      codigo VARCHAR(20) UNIQUE NOT NULL,
-      modulo VARCHAR(50) NOT NULL,
-      nome VARCHAR(200) NOT NULL,
+      codigo_tela VARCHAR(50) UNIQUE NOT NULL,
+      nome_tela VARCHAR(200) NOT NULL,
       descricao TEXT,
-      rota VARCHAR(500),
+      modulo VARCHAR(50) NOT NULL,
+      caminho_tela VARCHAR(500),
       icone VARCHAR(50),
-      ordem INTEGER DEFAULT 999,
+      ordem_exibicao INTEGER DEFAULT 999,
+      exibir_menu BOOLEAN DEFAULT 1,
+      exibir_favoritos BOOLEAN DEFAULT 1,
       ativo BOOLEAN DEFAULT 1,
       criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
       atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -30,72 +32,66 @@ async function garantirTabelaTelas() {
     const tableInfo = await turso.execute('PRAGMA table_info(adm_telas)');
     const colunas = tableInfo.rows?.map(row => row.name) || [];
 
-    // Migração 1: adicionar coluna nome se não existir
-    if (!colunas.includes('nome')) {
-      await turso.execute('ALTER TABLE adm_telas ADD COLUMN nome VARCHAR(200)');
-    }
+    // Migração 1: adicionar coluna codigo_tela se não existir
+    if (!colunas.includes('codigo_tela')) {
+      await turso.execute('ALTER TABLE adm_telas ADD COLUMN codigo_tela VARCHAR(50)');
 
-    // Migração 2: adicionar coluna codigo se não existir
-    if (!colunas.includes('codigo')) {
-      await turso.execute('ALTER TABLE adm_telas ADD COLUMN codigo VARCHAR(20)');
-
-      // Preencher com valores temporários únicos
-      const registros = await turso.execute('SELECT id FROM adm_telas');
-      for (const reg of registros.rows) {
-        await turso.execute({
-          sql: 'UPDATE adm_telas SET codigo = ? WHERE id = ?',
-          args: [`TEMP-${reg.id}`, reg.id]
-        });
+      if (colunas.includes('codigo')) {
+        await turso.execute('UPDATE adm_telas SET codigo_tela = codigo WHERE codigo_tela IS NULL');
       }
 
-      // Criar índice único
-      await turso.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_adm_telas_codigo ON adm_telas(codigo)');
+      await turso.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_adm_telas_codigo ON adm_telas(codigo_tela)');
+    }
+
+    // Migração 2: adicionar coluna nome_tela se não existir
+    if (!colunas.includes('nome_tela')) {
+      await turso.execute('ALTER TABLE adm_telas ADD COLUMN nome_tela VARCHAR(200)');
+
+      if (colunas.includes('nome')) {
+        await turso.execute('UPDATE adm_telas SET nome_tela = nome WHERE nome_tela IS NULL');
+      }
     }
 
     // Migração 3: adicionar outras colunas se não existirem
-    if (!colunas.includes('modulo')) {
-      await turso.execute('ALTER TABLE adm_telas ADD COLUMN modulo VARCHAR(50)');
+    if (!colunas.includes('modulo')) await turso.execute('ALTER TABLE adm_telas ADD COLUMN modulo VARCHAR(50)');
+    if (!colunas.includes('descricao')) await turso.execute('ALTER TABLE adm_telas ADD COLUMN descricao TEXT');
+    if (!colunas.includes('caminho_tela')) {
+      await turso.execute('ALTER TABLE adm_telas ADD COLUMN caminho_tela VARCHAR(500)');
+
+      if (colunas.includes('rota')) {
+        await turso.execute('UPDATE adm_telas SET caminho_tela = rota WHERE caminho_tela IS NULL');
+      }
     }
-    if (!colunas.includes('descricao')) {
-      await turso.execute('ALTER TABLE adm_telas ADD COLUMN descricao TEXT');
+    if (!colunas.includes('icone')) await turso.execute('ALTER TABLE adm_telas ADD COLUMN icone VARCHAR(50)');
+    if (!colunas.includes('ordem_exibicao')) {
+      await turso.execute('ALTER TABLE adm_telas ADD COLUMN ordem_exibicao INTEGER DEFAULT 999');
+
+      if (colunas.includes('ordem')) {
+        await turso.execute('UPDATE adm_telas SET ordem_exibicao = ordem WHERE ordem_exibicao IS NULL');
+      }
     }
-    if (!colunas.includes('rota')) {
-      await turso.execute('ALTER TABLE adm_telas ADD COLUMN rota VARCHAR(500)');
-    }
-    if (!colunas.includes('icone')) {
-      await turso.execute('ALTER TABLE adm_telas ADD COLUMN icone VARCHAR(50)');
-    }
-    if (!colunas.includes('ordem')) {
-      await turso.execute('ALTER TABLE adm_telas ADD COLUMN ordem INTEGER DEFAULT 999');
-    }
-    if (!colunas.includes('ativo')) {
-      await turso.execute('ALTER TABLE adm_telas ADD COLUMN ativo BOOLEAN DEFAULT 1');
-    }
+    if (!colunas.includes('exibir_menu')) await turso.execute('ALTER TABLE adm_telas ADD COLUMN exibir_menu BOOLEAN DEFAULT 1');
+    if (!colunas.includes('exibir_favoritos')) await turso.execute('ALTER TABLE adm_telas ADD COLUMN exibir_favoritos BOOLEAN DEFAULT 1');
+    if (!colunas.includes('ativo')) await turso.execute('ALTER TABLE adm_telas ADD COLUMN ativo BOOLEAN DEFAULT 1');
   } catch (error) {
     // Migração já foi aplicada ou erro recuperável
     console.log('Migração colunas adm_telas:', error.message);
   }
 
   const telasPadroes = [
-    { codigo: 'ADM-001', modulo: 'ADMINISTRATIVO', nome: 'CADASTRO DA EMPRESA', rota: '/modules/administrativo/empresa', icone: '🏢', ordem: 1 },
-    { codigo: 'ADM-002', modulo: 'ADMINISTRATIVO', nome: 'FUNCIONARIOS', rota: '/modules/administrativo/funcionarios', icone: '👥', ordem: 2 },
-    { codigo: 'ADM-003', modulo: 'ADMINISTRATIVO', nome: 'LAYOUTS DE IMPORTACAO', rota: '/modules/administrativo/layouts', icone: '📋', ordem: 3 },
-    { codigo: 'ADM-006', modulo: 'ADMINISTRATIVO', nome: 'DEPARTAMENTOS', rota: '/modules/administrativo/departamentos', icone: '🏛️', ordem: 6 },
-    { codigo: 'ADM-007', modulo: 'ADMINISTRATIVO', nome: 'PRODUTOS', rota: '/modules/administrativo/produtos', icone: '📦', ordem: 7 },
-    { codigo: 'FIN-001', modulo: 'FINANCEIRO', nome: 'PLANO DE CONTAS', rota: '/modules/modelos-plano/plano-contas', icone: '📊', ordem: 1 },
-    { codigo: 'FIN-002', modulo: 'FINANCEIRO', nome: 'TIPOS DE DRE', rota: '/modules/modelos-plano/tipos-dre-lista', icone: '📈', ordem: 2 },
-    { codigo: 'FIN-003', modulo: 'FINANCEIRO', nome: 'ESTRUTURA DRE', rota: '/modules/modelos-plano/estrutura-dre-editor', icone: '🎯', ordem: 3 },
-    { codigo: 'CAD-001', modulo: 'CADASTROS', nome: 'ITENS POR TABELA DE PRECO', rota: '/modules/cadastros/tabelas-precos-itens', icone: '💰', ordem: 1 },
-    { codigo: 'CAD-002', modulo: 'CADASTROS', nome: 'FORMAS DE PAGAMENTO', rota: '/modules/cadastros/formas-pagamento', icone: '💳', ordem: 2 },
-    { codigo: 'CAD-003', modulo: 'CADASTROS', nome: 'CONDICOES DE PAGAMENTO', rota: '/modules/cadastros/condicoes-pagamento', icone: '📝', ordem: 3 },
-    { codigo: 'PAR-001', modulo: 'PARCEIROS', nome: 'CADASTRO DE PARCEIROS', rota: '/modules/parceiros/cadastro', icone: '🤝', ordem: 1 },
-    { codigo: 'OBJ-001', modulo: 'OBJETIVOS', nome: 'OBJETIVOS TRIMESTRAIS', rota: '/modules/objetivos/trimestrais', icone: '🎯', ordem: 1 },
-    { codigo: 'OBJ-002', modulo: 'OBJETIVOS', nome: 'METAS SEMANAIS', rota: '/modules/objetivos/semanais', icone: '📅', ordem: 2 },
-    { codigo: 'OBJ-003', modulo: 'OBJETIVOS', nome: 'METAS MENSAIS', rota: '/modules/objetivos/mensais', icone: '📆', ordem: 3 },
-    { codigo: 'IMP-001', modulo: 'IMPORTACAO', nome: 'IMPORTACAO DE EXTRATOS', rota: '/modules/importacao/extratos', icone: '📥', ordem: 1 },
-    { codigo: 'IMP-002', modulo: 'IMPORTACAO', nome: 'IMPORTACAO XML NF-E', rota: '/modules/importacao/xml-nfe', icone: '📄', ordem: 2 },
-    { codigo: 'IND-001', modulo: 'INDICADORES', nome: 'INDICADORES CUSTOMIZAVEIS', rota: '/modules/indicadores/customizaveis', icone: '📊', ordem: 1 },
-    { codigo: 'HOME-001', modulo: 'GERAL', nome: 'PAGINA INICIAL', rota: '/dashboard', icone: '🏠', ordem: 0 },
+    { codigo_tela: 'ADM-001', modulo: 'ADMINISTRATIVO', nome_tela: 'CADASTRO DA EMPRESA', caminho_tela: '/modules/administrativo/empresa', icone: '🏢', ordem_exibicao: 1 },
+    { codigo_tela: 'ADM-002', modulo: 'ADMINISTRATIVO', nome_tela: 'FUNCIONARIOS', caminho_tela: '/modules/administrativo/funcionarios', icone: '👥', ordem_exibicao: 2 },
+    { codigo_tela: 'ADM-006', modulo: 'ADMINISTRATIVO', nome_tela: 'DEPARTAMENTOS', caminho_tela: '/modules/administrativo/departamentos', icone: '🏛️', ordem_exibicao: 6 },
+    { codigo_tela: 'FIN-001', modulo: 'FINANCEIRO', nome_tela: 'PLANO DE CONTAS', caminho_tela: '/modules/modelos-plano/plano-contas', icone: '📊', ordem_exibicao: 1 },
+    { codigo_tela: 'FIN-002', modulo: 'FINANCEIRO', nome_tela: 'TIPOS DE DRE', caminho_tela: '/modules/modelos-plano/tipos-dre-lista', icone: '📈', ordem_exibicao: 2 },
+    { codigo_tela: 'FIN-003', modulo: 'FINANCEIRO', nome_tela: 'ESTRUTURA DRE', caminho_tela: '/modules/modelos-plano/estrutura-dre-editor', icone: '🎯', ordem_exibicao: 3 },
+    { codigo_tela: 'PAR-001', modulo: 'PARCEIROS', nome_tela: 'CADASTRO DE PARCEIROS', caminho_tela: '/modules/parceiros/cadastro', icone: '🤝', ordem_exibicao: 1 },
+    { codigo_tela: 'OBJ-001', modulo: 'OBJETIVOS', nome_tela: 'OBJETIVOS TRIMESTRAIS', caminho_tela: '/modules/objetivos/trimestrais', icone: '🎯', ordem_exibicao: 1 },
+    { codigo_tela: 'OBJ-002', modulo: 'OBJETIVOS', nome_tela: 'METAS SEMANAIS', caminho_tela: '/modules/objetivos/semanais', icone: '📅', ordem_exibicao: 2 },
+    { codigo_tela: 'IMP-001', modulo: 'IMPORTACAO', nome_tela: 'IMPORTACAO DE EXTRATOS', caminho_tela: '/modules/importacao/extratos', icone: '📥', ordem_exibicao: 1 },
+    { codigo_tela: 'IMP-002', modulo: 'IMPORTACAO', nome_tela: 'IMPORTACAO XML NF-E', caminho_tela: '/modules/importacao/xml-nfe', icone: '📄', ordem_exibicao: 2 },
+    { codigo_tela: 'IND-001', modulo: 'INDICADORES', nome_tela: 'INDICADORES CUSTOMIZAVEIS', caminho_tela: '/modules/indicadores/customizaveis', icone: '📊', ordem_exibicao: 1 },
+    { codigo_tela: 'HOME-001', modulo: 'GERAL', nome_tela: 'PAGINA INICIAL', caminho_tela: '/dashboard', icone: '🏠', ordem_exibicao: 0 },
   ];
 
   // Limpar registros inválidos ou duplicados
@@ -113,18 +109,20 @@ async function garantirTabelaTelas() {
 
   let codigosExistentes = [];
   try {
-    const existentes = await turso.execute('SELECT codigo FROM adm_telas WHERE codigo IS NOT NULL');
-    codigosExistentes = existentes.rows?.map(row => row.codigo) || [];
+    const existentes = await turso.execute('SELECT codigo_tela FROM adm_telas WHERE codigo_tela IS NOT NULL');
+    codigosExistentes = existentes.rows?.map(row => row.codigo_tela) || [];
   } catch (error) {
     // Se falhar, array vazio - inserirá todas
     codigosExistentes = [];
   }
 
   for (const tela of telasPadroes) {
-    if (!codigosExistentes.includes(tela.codigo)) {
+    if (!codigosExistentes.includes(tela.codigo_tela)) {
       await turso.execute({
-        sql: 'INSERT INTO adm_telas (codigo, modulo, nome, rota, icone, ordem, ativo) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        args: [tela.codigo, tela.modulo, tela.nome, tela.rota, tela.icone, tela.ordem, 1]
+        sql: `INSERT INTO adm_telas (
+          codigo_tela, modulo, nome_tela, caminho_tela, icone, ordem_exibicao, exibir_menu, exibir_favoritos, ativo
+        ) VALUES (?, ?, ?, ?, ?, ?, 1, 1, 1)`,
+        args: [tela.codigo_tela, tela.modulo, tela.nome_tela, tela.caminho_tela, tela.icone, tela.ordem_exibicao]
       });
     } else {
       // Atualizar tela existente para garantir dados corretos
@@ -144,14 +142,33 @@ export async function GET(request) {
 
     if (codigo) {
       const result = await turso.execute({
-        sql: 'SELECT * FROM adm_telas WHERE codigo = ? AND ativo = 1',
+        sql: 'SELECT * FROM adm_telas WHERE codigo_tela = ? AND ativo = 1',
         args: [codigo]
       });
-      return Response.json(result.rows[0] || null);
+      const tela = result.rows[0];
+      return Response.json(
+        tela
+          ? {
+              ...tela,
+              codigo: tela.codigo_tela ?? tela.codigo,
+              nome: tela.nome_tela ?? tela.nome,
+              rota: tela.caminho_tela ?? tela.rota,
+              ordem: tela.ordem_exibicao ?? tela.ordem,
+            }
+          : null
+      );
     }
 
-    const result = await turso.execute('SELECT * FROM adm_telas WHERE ativo = 1 ORDER BY ordem ASC');
-    return Response.json(serializeRows(result.rows));
+    const result = await turso.execute('SELECT * FROM adm_telas WHERE ativo = 1 ORDER BY ordem_exibicao ASC');
+    const telas = serializeRows(result.rows).map((tela) => ({
+      ...tela,
+      codigo: tela.codigo_tela ?? tela.codigo,
+      nome: tela.nome_tela ?? tela.nome,
+      rota: tela.caminho_tela ?? tela.rota,
+      ordem: tela.ordem_exibicao ?? tela.ordem,
+    }));
+
+    return Response.json(telas);
   } catch (error) {
     console.error('Erro ao buscar telas:', error);
     return Response.json({ error: 'Erro ao buscar telas' }, { status: 500 });
