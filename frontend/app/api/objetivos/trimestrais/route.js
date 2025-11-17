@@ -36,7 +36,26 @@ async function garantirTabelasObjetivos() {
       await turso.execute('ALTER TABLE obj_objetivos_trimestrais ADD COLUMN empresa_id INTEGER');
     }
 
-    // Migração 2: adicionar coluna codigo se não existir
+    // Migração 2: adicionar coluna plano_conta_id se não existir
+    if (!colunas.includes('plano_conta_id')) {
+      await turso.execute('ALTER TABLE obj_objetivos_trimestrais ADD COLUMN plano_conta_id INTEGER');
+    }
+
+    // Migração 3: adicionar outras colunas essenciais
+    if (!colunas.includes('ano')) {
+      await turso.execute('ALTER TABLE obj_objetivos_trimestrais ADD COLUMN ano INTEGER');
+    }
+    if (!colunas.includes('trimestre')) {
+      await turso.execute('ALTER TABLE obj_objetivos_trimestrais ADD COLUMN trimestre INTEGER');
+    }
+    if (!colunas.includes('tipo_conta')) {
+      await turso.execute('ALTER TABLE obj_objetivos_trimestrais ADD COLUMN tipo_conta VARCHAR(20)');
+    }
+    if (!colunas.includes('valor_objetivo')) {
+      await turso.execute('ALTER TABLE obj_objetivos_trimestrais ADD COLUMN valor_objetivo DECIMAL(15,2)');
+    }
+
+    // Migração 4: adicionar coluna codigo se não existir
     if (!colunas.includes('codigo')) {
       await turso.execute('ALTER TABLE obj_objetivos_trimestrais ADD COLUMN codigo VARCHAR(20)');
 

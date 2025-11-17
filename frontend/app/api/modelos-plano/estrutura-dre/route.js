@@ -28,6 +28,27 @@ async function garantirTabelasEstruturaDRE() {
     )
   `);
 
+  // Migrações: garantir que colunas essenciais existem
+  try {
+    const tableInfo = await turso.execute('PRAGMA table_info(fin_estrutura_dre)');
+    const colunas = tableInfo.rows?.map(row => row.name) || [];
+
+    if (!colunas.includes('nome')) {
+      await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN nome VARCHAR(200)');
+    }
+    if (!colunas.includes('codigo')) {
+      await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN codigo VARCHAR(20)');
+    }
+    if (!colunas.includes('nivel')) {
+      await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN nivel INTEGER DEFAULT 1');
+    }
+    if (!colunas.includes('tipo_linha')) {
+      await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN tipo_linha VARCHAR(20) DEFAULT "CONTA"');
+    }
+  } catch (error) {
+    console.log('Migração estrutura DRE:', error.message);
+  }
+
   // Criar tabela de vínculos com plano de contas
   await turso.execute(`
     CREATE TABLE IF NOT EXISTS fin_estrutura_dre_vinculos (
