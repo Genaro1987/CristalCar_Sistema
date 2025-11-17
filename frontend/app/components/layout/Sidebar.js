@@ -191,9 +191,9 @@ export default function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 h-screen w-80 bg-gradient-to-b from-secondary-800 to-secondary-900 text-white shadow-xl flex flex-col">
       {/* Logo */}
-      <div className="flex-shrink-0 p-4 border-b border-secondary-700">
-        <div className="flex flex-col items-center space-y-2 text-center">
-          <div className="w-48 h-48 flex items-center justify-center">
+      <div className="flex-shrink-0 pt-2 pb-4 border-b border-secondary-700">
+        <div className="flex flex-col items-center">
+          <div className="w-56 h-56 flex items-center justify-center">
             {empresa?.logo_path ? (
               <img
                 src={empresa.logo_path}
@@ -202,18 +202,17 @@ export default function Sidebar() {
                 style={{ margin: 0, padding: 0 }}
               />
             ) : (
-              <span className="text-5xl font-bold text-white">
+              <span className="text-6xl font-bold text-white">
                 {(empresa?.nome_fantasia || 'ERP').substring(0, 2).toUpperCase()}
               </span>
             )}
           </div>
-          <p className="text-base font-semibold text-white">Sistema ERP</p>
         </div>
       </div>
 
-        {/* Menu - com rolagem */}
-        <nav className="flex-1 overflow-y-auto p-4">
-          <ul className="space-y-2">
+        {/* Menu - com rolagem e espaçamento aumentado */}
+        <nav className="flex-1 overflow-y-auto p-4" style={{ marginTop: '1cm' }}>
+          <ul className="space-y-3">
             {menuItems.map((item) => (
               <li key={item.id}>
                 {/* Item Principal - Nível 1 */}
