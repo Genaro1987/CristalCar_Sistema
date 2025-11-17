@@ -34,13 +34,17 @@ function EditorContent() {
 
   const carregarTipoDRE = async () => {
     try {
-      const response = await fetch(`/api/modelos-plano/tipos-dre?codigo=${tipoId}`);
+      const response = await fetch(`/api/modelos-plano/tipos-dre?id=${tipoId}`);
       if (response.ok) {
         const data = await response.json();
-        setTipoDRE(data);
+        setTipoDRE(data || null);
+      } else {
+        console.error('Erro ao carregar tipo DRE: resposta não OK');
+        setTipoDRE(null);
       }
     } catch (error) {
       console.error('Erro ao carregar tipo DRE:', error);
+      setTipoDRE(null);
     }
   };
 
@@ -51,10 +55,14 @@ function EditorContent() {
       );
       if (response.ok) {
         const data = await response.json();
-        setEstrutura(data);
+        setEstrutura(Array.isArray(data) ? data : []);
+      } else {
+        console.error('Erro ao carregar estrutura: resposta não OK');
+        setEstrutura([]);
       }
     } catch (error) {
       console.error('Erro ao carregar estrutura:', error);
+      setEstrutura([]);
     }
   };
 
@@ -63,10 +71,13 @@ function EditorContent() {
       const response = await fetch('/api/financeiro/plano-contas');
       if (response.ok) {
         const data = await response.json();
-        setPlanoContas(data);
+        setPlanoContas(Array.isArray(data) ? data : []);
+      } else {
+        setPlanoContas([]);
       }
     } catch (error) {
       console.error('Erro ao carregar plano de contas:', error);
+      setPlanoContas([]);
     }
   };
 

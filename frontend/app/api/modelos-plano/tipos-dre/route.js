@@ -71,13 +71,17 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const empresaId = searchParams.get('empresa_id');
     const codigo = searchParams.get('codigo');
+    const id = searchParams.get('id');
 
-    if (codigo) {
-      const result = await turso.execute({
-        sql: 'SELECT * FROM fin_tipos_dre WHERE codigo = ?',
-        args: [codigo]
-      });
-      return Response.json(result.rows[0] || null);
+    // Buscar por código ou ID
+    if (codigo || id) {
+      const sql = codigo
+        ? 'SELECT * FROM fin_tipos_dre WHERE codigo = ?'
+        : 'SELECT * FROM fin_tipos_dre WHERE id = ?';
+      const args = codigo ? [codigo] : [Number(id)];
+
+      const result = await turso.execute({ sql, args });
+      return Response.json(serializeRows(result.rows)[0] || null);
     }
 
     let sql = 'SELECT * FROM fin_tipos_dre WHERE 1=1';
