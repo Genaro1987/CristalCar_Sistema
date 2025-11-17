@@ -99,7 +99,6 @@ export default function InitSystemPage() {
                         <p className="font-semibold mb-2">Próximos passos:</p>
                         <ul className="space-y-1">
                           <li>→ As telas estão registradas em adm_telas</li>
-                          <li>→ Você pode configurar favoritos no dashboard</li>
                           <li>→ <a href="/dashboard" className="text-green-700 underline">Ir para o Dashboard</a></li>
                         </ul>
                       </div>

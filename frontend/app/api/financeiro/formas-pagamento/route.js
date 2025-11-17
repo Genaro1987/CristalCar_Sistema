@@ -7,8 +7,26 @@ const turso = createClient({
   authToken: process.env.TURSO_AUTH_TOKEN,
 });
 
+async function garantirTabelaFormasPagamento() {
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS fin_formas_pagamento (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      codigo VARCHAR(20) UNIQUE NOT NULL,
+      descricao VARCHAR(200) NOT NULL,
+      tipo VARCHAR(50) NOT NULL,
+      taxa_percentual DECIMAL(10,2) DEFAULT 0,
+      taxa_fixa DECIMAL(10,2) DEFAULT 0,
+      gera_movimento_bancario BOOLEAN DEFAULT 0,
+      status VARCHAR(20) DEFAULT 'ATIVO',
+      criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+      atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+}
+
 export async function GET() {
   try {
+    await garantirTabelaFormasPagamento();
     const result = await turso.execute(`
       SELECT * FROM fin_formas_pagamento
       ORDER BY status DESC, descricao ASC
@@ -23,6 +41,7 @@ export async function GET() {
 
 export async function POST(request) {
   try {
+    await garantirTabelaFormasPagamento();
     const data = await request.json();
 
     // Normalizar campos de texto (MAIÚSCULO sem acentos)

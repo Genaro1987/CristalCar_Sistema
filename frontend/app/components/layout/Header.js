@@ -1,17 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import HelpButton from '@/app/components/ui/HelpButton';
-import FavoritosButton from '@/app/components/ui/FavoritosButton';
 import { helpContents } from '@/app/utils/helpContent';
 
 export default function Header({ screenCode = '', screenName = '', onShowHelp }) {
   const router = useRouter();
-  const pathname = usePathname();
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [showResults, setShowResults] = useState(false);
+  const [empresas, setEmpresas] = useState([]);
+  const [empresaSelecionada, setEmpresaSelecionada] = useState(null);
 
   // Todas as telas do sistema
   const allScreens = [
@@ -24,7 +24,8 @@ export default function Header({ screenCode = '', screenName = '', onShowHelp })
 
     // Modelos de Plano
     { code: 'FIN-001', name: 'Plano de Contas', path: '/modules/modelos-plano/plano-contas', module: 'Modelos de Plano' },
-    { code: 'FIN-002', name: 'Estrutura DRE', path: '/modules/modelos-plano/estrutura-dre', module: 'Modelos de Plano' },
+    { code: 'FIN-002', name: 'Tipos de DRE', path: '/modules/modelos-plano/planos-padroes', module: 'Modelos de Plano' },
+    { code: 'FIN-003', name: 'Estrutura DRE', path: '/modules/modelos-plano/estrutura-dre', module: 'Modelos de Plano' },
 
     // Financeiro
     { code: 'FIN-010', name: 'Formas de Pagamento', path: '/modules/financeiro/formas-pagamento', module: 'Financeiro' },
@@ -56,6 +57,45 @@ export default function Header({ screenCode = '', screenName = '', onShowHelp })
     }
   }, [searchTerm]);
 
+  useEffect(() => {
+    carregarEmpresas();
+  }, []);
+
+  useEffect(() => {
+    const salva = localStorage.getItem('empresaSelecionadaId');
+    if (salva && empresas.length > 0) {
+      const existe = empresas.find(emp => `${emp.id}` === `${salva}`);
+      if (existe) {
+        setEmpresaSelecionada(existe.id);
+      }
+    } else if (empresas.length > 0 && !empresaSelecionada) {
+      const padrao = empresas.find(emp => emp.padrao);
+      setEmpresaSelecionada(padrao?.id || empresas[0].id);
+    }
+  }, [empresas]);
+
+  const carregarEmpresas = async () => {
+    try {
+      const response = await fetch('/api/administrativo/empresa?all=true');
+      if (response.ok) {
+        const data = await response.json();
+        setEmpresas(data || []);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar empresas:', error);
+    }
+  };
+
+  const handleSelecionarEmpresa = (id) => {
+    const valor = id ? Number(id) : null;
+    setEmpresaSelecionada(valor);
+    if (valor) {
+      localStorage.setItem('empresaSelecionadaId', valor);
+    } else {
+      localStorage.removeItem('empresaSelecionadaId');
+    }
+  };
+
   const handleNavigate = (path) => {
     setSearchTerm('');
     setShowResults(false);
@@ -65,7 +105,7 @@ export default function Header({ screenCode = '', screenName = '', onShowHelp })
   return (
     <header className="bg-white shadow-sm border-b border-gray-200">
       <div className="px-6 py-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           {/* Título da Tela */}
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{screenName || 'Dashboard'}</h1>
@@ -90,7 +130,32 @@ export default function Header({ screenCode = '', screenName = '', onShowHelp })
           </div>
 
           {/* Ações do Header */}
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:space-x-4 gap-3 lg:gap-0">
+            {/* Seleção de Empresa */}
+            {empresas.length > 0 && (
+              <div className="flex flex-col items-center lg:flex-row lg:items-center lg:space-x-3">
+                <div className="text-center lg:text-right lg:min-w-[220px]">
+                  <p className="text-xs text-gray-500">Empresa ativa</p>
+                  <p className="text-sm font-semibold text-gray-800 truncate max-w-xs">
+                    {empresas.find(emp => Number(emp.id) === Number(empresaSelecionada))?.nome_fantasia || 'Selecione'}
+                  </p>
+                </div>
+                <select
+                  value={empresaSelecionada || ''}
+                  onChange={(e) => handleSelecionarEmpresa(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 text-sm min-w-[240px]"
+                  title="Selecione a empresa ativa"
+                >
+                  <option value="">Selecione...</option>
+                  {empresas.map(emp => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.nome_fantasia || emp.razao_social} {emp.padrao ? '• Padrão' : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             {/* Pesquisa Global de Telas */}
             <div className="relative">
               <input
@@ -140,13 +205,6 @@ export default function Header({ screenCode = '', screenName = '', onShowHelp })
                 </div>
               )}
             </div>
-
-            {/* Botão de Favoritos */}
-            <FavoritosButton
-              screenCode={screenCode}
-              screenName={screenName}
-              screenPath={pathname}
-            />
 
             {/* Botão de Ajuda */}
             {screenCode && helpContents[screenCode] && (

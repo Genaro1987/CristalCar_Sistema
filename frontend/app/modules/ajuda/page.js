@@ -247,8 +247,6 @@ export default function AjudaSistemaPage() {
           </h2>
           <div className="space-y-4">
             <div className="border-l-4 border-orange-500 pl-4">
-              <h4 className="font-semibold text-gray-900 mb-1">Como adicionar uma tela aos favoritos?</h4>
-              <p className="text-sm text-gray-600">Clique no ícone de estrela no canto superior direito de qualquer tela para adicioná-la aos favoritos.</p>
             </div>
             <div className="border-l-4 border-orange-500 pl-4">
               <h4 className="font-semibold text-gray-900 mb-1">Como configurar backup automático?</h4>

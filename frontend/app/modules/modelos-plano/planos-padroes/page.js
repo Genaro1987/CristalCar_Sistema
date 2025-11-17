@@ -25,6 +25,8 @@ export default function PlanosPadroesPage() {
   const [editingId, setEditingId] = useState(null);
   const [busca, setBusca] = useState('');
   const [filtroStatus, setFiltroStatus] = useState('TODOS');
+  const [mostrarAjuda, setMostrarAjuda] = useState(false);
+  const [mensagem, setMensagem] = useState(null);
   const [formData, setFormData] = useState({
     nome_modelo: '',
     tipo_modelo: 'OFICIAL',
@@ -83,13 +85,14 @@ export default function PlanosPadroesPage() {
         carregarModelos();
         resetForm();
         setShowForm(false);
+        setMensagem({ type: 'success', texto: 'Modelo de DRE salvo com sucesso.' });
       } else {
         const erro = await response.json();
-        alert(erro.error || 'Não foi possível salvar o modelo.');
+        setMensagem({ type: 'error', texto: erro.error || 'Não foi possível salvar o modelo.' });
       }
     } catch (error) {
       console.error('Erro ao salvar modelo:', error);
-      alert('Erro ao salvar modelo padrão.');
+      setMensagem({ type: 'error', texto: 'Erro ao salvar modelo padrão.' });
     }
   };
 
@@ -113,9 +116,11 @@ export default function PlanosPadroesPage() {
       const response = await fetch(`/api/modelos-dre?id=${id}`, { method: 'DELETE' });
       if (response.ok) {
         carregarModelos();
+        setMensagem({ type: 'success', texto: 'Modelo removido com sucesso.' });
       }
     } catch (error) {
       console.error('Erro ao excluir modelo:', error);
+      setMensagem({ type: 'error', texto: 'Erro ao excluir modelo.' });
     }
   };
 
@@ -148,8 +153,14 @@ export default function PlanosPadroesPage() {
   }, [modelos, busca, filtroStatus]);
 
   return (
-    <DashboardLayout screenCode="FIN-013">
+    <DashboardLayout screenCode="FIN-002">
       <div className="space-y-6">
+        {mensagem && (
+          <div className={`p-4 rounded-lg ${mensagem.type === 'success' ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-red-50 border border-red-200 text-red-800'}`}>
+            {mensagem.texto}
+          </div>
+        )}
+
         <Card>
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -176,13 +187,32 @@ export default function PlanosPadroesPage() {
                 </select>
               </div>
             </div>
-            <Button variant="primary" onClick={() => setShowForm(true)}>
-              + Novo Modelo Padrão
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={() => setMostrarAjuda(!mostrarAjuda)}>
+                {mostrarAjuda ? 'Fechar ajuda' : 'Ajuda'}
+              </Button>
+              <Button variant="primary" onClick={() => setShowForm(true)}>
+                + Novo Tipo de DRE
+              </Button>
+            </div>
           </div>
         </Card>
 
-        <Card title="Modelos padrão para estrutura do DRE" subtitle="Cadastre visões oficiais e gerenciais">
+        {mostrarAjuda && (
+          <Card title="Como usar a tela de Tipos de DRE" subtitle="Modelos de referência para estruturar relatórios">
+            <div className="space-y-2 text-sm text-gray-700">
+              <p>Cadastre aqui as variações oficiais ou gerenciais do Demonstrativo de Resultado (DRE). Cada tipo funciona como um modelo para a estrutura do relatório.</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>Use o campo <strong>Tipo</strong> para indicar se o modelo é oficial, gerencial ou de custeio.</li>
+                <li>Marque a opção <strong>Padrão</strong> para destacar qual estrutura deve aparecer primeiro nas demais telas.</li>
+                <li>Ative ou desative modelos sem perder o histórico; apenas os ativos aparecerão para seleção.</li>
+              </ul>
+              <p className="text-gray-500">Dica: mantenha um modelo oficial e um gerencial para cenários de análise diferentes.</p>
+            </div>
+          </Card>
+        )}
+
+        <Card title="Tipos de DRE" subtitle="Cadastre visões oficiais e gerenciais para estruturar o relatório">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">

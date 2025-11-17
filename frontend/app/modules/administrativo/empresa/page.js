@@ -27,20 +27,44 @@ export default function CadastroEmpresaPage() {
     regime_tributario: 'SIMPLES_NACIONAL',
     data_abertura: '',
     logo_path: '',
-    observacoes: ''
+    observacoes: '',
+    padrao: false
   });
 
   const [logoPreview, setLogoPreview] = useState(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
+  const [empresas, setEmpresas] = useState([]);
+  const [empresaSelecionada, setEmpresaSelecionada] = useState(null);
 
   useEffect(() => {
     carregarDadosEmpresa();
+    carregarListaEmpresas();
   }, []);
 
-  const carregarDadosEmpresa = async () => {
+  const carregarListaEmpresas = async () => {
     try {
-      const response = await fetch('/api/administrativo/empresa');
+      const response = await fetch('/api/administrativo/empresa?all=true');
+      if (response.ok) {
+        const lista = await response.json();
+        setEmpresas(lista);
+
+        if (!empresaSelecionada && lista.length > 0) {
+          const padrao = lista.find(emp => emp.padrao);
+          const idSelecionado = padrao?.id || lista[0].id;
+          setEmpresaSelecionada(idSelecionado);
+          await carregarDadosEmpresa(idSelecionado, false);
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao listar empresas:', error);
+    }
+  };
+
+  const carregarDadosEmpresa = async (id = null, atualizarSelecao = true) => {
+    try {
+      const url = id ? `/api/administrativo/empresa?id=${id}` : '/api/administrativo/empresa';
+      const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
         if (data) {
@@ -65,10 +89,14 @@ export default function CadastroEmpresaPage() {
             regime_tributario: data.regime_tributario || 'SIMPLES_NACIONAL',
             data_abertura: data.data_abertura || '',
             logo_path: data.logo_path || '',
-            observacoes: data.observacoes || ''
+            observacoes: data.observacoes || '',
+            padrao: data.padrao || false
           });
           if (data.logo_path) {
             setLogoPreview(data.logo_path);
+          }
+          if (atualizarSelecao && data.id) {
+            setEmpresaSelecionada(data.id);
           }
         }
       }
@@ -79,11 +107,47 @@ export default function CadastroEmpresaPage() {
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }));
+  };
+
+  const handleSelecionarEmpresa = async (id) => {
+    const selecionada = id ? Number(id) : null;
+    setEmpresaSelecionada(selecionada);
+    await carregarDadosEmpresa(selecionada);
+  };
+
+  const iniciarNovaEmpresa = () => {
+    setEmpresaSelecionada(null);
+    setFormData({
+      id: null,
+      razao_social: '',
+      nome_fantasia: '',
+      cnpj: '',
+      inscricao_estadual: '',
+      inscricao_municipal: '',
+      telefone: '',
+      celular: '',
+      email: '',
+      website: '',
+      endereco: '',
+      numero: '',
+      complemento: '',
+      bairro: '',
+      cidade: '',
+      estado: '',
+      cep: '',
+      regime_tributario: 'SIMPLES_NACIONAL',
+      data_abertura: '',
+      logo_path: '',
+      observacoes: '',
+      padrao: empresas.length === 0
+    });
+    setLogoPreview(null);
+    setMessage(null);
   };
 
   const handleLogoChange = (e) => {
@@ -119,7 +183,11 @@ export default function CadastroEmpresaPage() {
         });
 
         // Recarregar dados
-        await carregarDadosEmpresa();
+        if (result?.id) {
+          setEmpresaSelecionada(result.id);
+        }
+        await carregarListaEmpresas();
+        await carregarDadosEmpresa(result?.id || formData.id);
       } else {
         setMessage({
           type: 'error',
@@ -175,6 +243,32 @@ export default function CadastroEmpresaPage() {
             {message.text}
           </div>
         )}
+
+        {/* Seleção de Empresa */}
+        <Card title="Empresas cadastradas" subtitle="Escolha qual empresa deseja visualizar ou editar">
+          <div className="flex flex-col md:flex-row md:items-end gap-4">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Selecione uma empresa</label>
+              <select
+                value={empresaSelecionada || ''}
+                onChange={(e) => handleSelecionarEmpresa(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="">Nova empresa</option>
+                {empresas.map((emp) => (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.nome_fantasia || emp.razao_social} {emp.padrao ? '• Padrão' : ''}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-1">Caso tenha mais de uma empresa, defina a padrão para ser carregada automaticamente.</p>
+            </div>
+
+            <Button type="button" variant="outline" onClick={iniciarNovaEmpresa} className="md:self-end">
+              + Nova empresa
+            </Button>
+          </div>
+        </Card>
 
         {/* Logo da Empresa */}
         <Card title="Logo da Empresa" subtitle="Imagem que será exibida em documentos e no sistema">
@@ -315,6 +409,20 @@ export default function CadastroEmpresaPage() {
                 onChange={handleInputChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="inline-flex items-center space-x-2 text-sm font-medium text-gray-700">
+                <input
+                  type="checkbox"
+                  name="padrao"
+                  checked={formData.padrao}
+                  onChange={handleInputChange}
+                  className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                />
+                <span>Definir esta empresa como padrão</span>
+              </label>
+              <p className="text-xs text-gray-500 mt-1">A empresa padrão será carregada automaticamente nas telas.</p>
             </div>
           </div>
         </Card>

@@ -560,10 +560,11 @@ export default function BancosPage() {
                   {/* Agência */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Agência
+                      Agência *
                     </label>
                     <input
                       type="text"
+                      required
                       value={formData.agencia}
                       onChange={(e) => setFormData({...formData, agencia: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
@@ -574,10 +575,11 @@ export default function BancosPage() {
                   {/* Conta */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Conta
+                      Conta *
                     </label>
                     <input
                       type="text"
+                      required
                       value={formData.conta}
                       onChange={(e) => setFormData({...formData, conta: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"

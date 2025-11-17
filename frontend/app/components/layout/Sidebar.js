@@ -102,7 +102,8 @@ export default function Sidebar() {
           icon: '📊',
           submenu: [
             { name: 'Plano de Contas', href: '/modules/modelos-plano/plano-contas', code: 'FIN-001' },
-            { name: 'Estrutura DRE', href: '/modules/modelos-plano/estrutura-dre', code: 'FIN-002' },
+            { name: 'Tipos de DRE', href: '/modules/modelos-plano/planos-padroes', code: 'FIN-002' },
+            { name: 'Estrutura DRE', href: '/modules/modelos-plano/estrutura-dre', code: 'FIN-003' },
           ]
         },
         {
@@ -174,8 +175,8 @@ export default function Sidebar() {
     <aside className="fixed left-0 top-0 h-screen w-80 bg-gradient-to-b from-secondary-800 to-secondary-900 text-white shadow-xl flex flex-col">
       {/* Logo */}
       <div className="flex-shrink-0 p-6 border-b border-secondary-700">
-        <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 bg-secondary-800 rounded-lg flex items-center justify-center overflow-hidden border border-secondary-600">
+        <div className="flex flex-col items-center space-y-2 text-center">
+          <div className="w-20 h-20 rounded-full flex items-center justify-center overflow-hidden bg-secondary-800">
             {empresa?.logo_path ? (
               <img
                 src={empresa.logo_path}
@@ -183,7 +184,7 @@ export default function Sidebar() {
                 className="w-full h-full object-contain"
               />
             ) : (
-              <span className="text-lg font-bold text-white">
+              <span className="text-2xl font-bold text-white">
                 {(empresa?.nome_fantasia || 'CristalCar').substring(0, 2).toUpperCase()}
               </span>
             )}

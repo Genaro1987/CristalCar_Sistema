@@ -8,13 +8,24 @@ const turso = createClient({
   authToken: process.env.TURSO_AUTH_TOKEN,
 });
 
+async function garantirColunaEmpresa() {
+  const info = await turso.execute('PRAGMA table_info(fin_plano_contas)');
+  const possuiEmpresa = info.rows?.some((c) => c.name === 'empresa_id');
+  if (!possuiEmpresa) {
+    await turso.execute('ALTER TABLE fin_plano_contas ADD COLUMN empresa_id INTEGER');
+    await turso.execute('CREATE INDEX IF NOT EXISTS idx_plano_contas_empresa ON fin_plano_contas(empresa_id)');
+  }
+}
+
 // GET - Listar plano de contas
 export async function GET(request) {
   try {
+    await garantirColunaEmpresa();
     const { searchParams } = new URL(request.url);
     const tipo = searchParams.get("tipo"); // RECEITA ou DESPESA
     const apenasLancaveis = searchParams.get("lancaveis") === "true";
     const status = searchParams.get("status") || "ATIVO";
+    const empresaId = searchParams.get('empresa_id');
 
     let sql = `
       SELECT
@@ -30,6 +41,7 @@ export async function GET(request) {
         pc.utilizado_objetivo,
         pc.aceita_lancamento,
         pc.status,
+        pc.empresa_id,
         pai.codigo_conta as codigo_pai,
         pai.descricao as descricao_pai
       FROM fin_plano_contas pc
@@ -53,6 +65,11 @@ export async function GET(request) {
       args.push(status);
     }
 
+    if (empresaId) {
+      sql += " AND IFNULL(pc.empresa_id, 0) = ?";
+      args.push(Number(empresaId));
+    }
+
     sql += " ORDER BY pc.codigo_conta";
 
     const result = await turso.execute({ sql, args });
@@ -74,6 +91,7 @@ export async function GET(request) {
 // POST - Criar nova conta
 export async function POST(request) {
   try {
+    await garantirColunaEmpresa();
     const dados = await request.json();
 
     let {
@@ -105,8 +123,8 @@ export async function POST(request) {
 
     // Verificar se código já existe
     const existe = await turso.execute({
-      sql: "SELECT id FROM fin_plano_contas WHERE codigo_conta = ?",
-      args: [codigo_conta],
+      sql: "SELECT id FROM fin_plano_contas WHERE codigo_conta = ? AND IFNULL(empresa_id, 0) = IFNULL(?, 0)",
+      args: [codigo_conta, dados.empresa_id || null],
     });
 
     if (existe.rows.length > 0) {
@@ -126,8 +144,8 @@ export async function POST(request) {
 
     const result = await turso.execute({
       sql: `INSERT INTO fin_plano_contas
-            (codigo_conta, descricao, tipo, nivel, conta_pai_id, compoe_dre, tipo_gasto, utilizado_objetivo, aceita_lancamento, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'ATIVO')`,
+            (codigo_conta, descricao, tipo, nivel, conta_pai_id, compoe_dre, tipo_gasto, utilizado_objetivo, aceita_lancamento, status, empresa_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'ATIVO', ?)` ,
       args: [
         codigo_conta,
         descricao,
@@ -138,6 +156,7 @@ export async function POST(request) {
         tipo_gasto || null,
         utilizado_objetivo ? 1 : 0,
         aceita_lancamento ? 1 : 0,
+        dados.empresa_id || null,
       ],
     });
 
@@ -161,6 +180,7 @@ export async function POST(request) {
 // PUT - Atualizar conta
 export async function PUT(request) {
   try {
+    await garantirColunaEmpresa();
     const dados = await request.json();
     const { id, ...campos } = dados;
 
@@ -182,6 +202,7 @@ export async function PUT(request) {
       utilizado_objetivo: "utilizado_objetivo",
       aceita_lancamento: "aceita_lancamento",
       status: "status",
+      empresa_id: "empresa_id",
     };
 
     Object.entries(campos).forEach(([key, value]) => {

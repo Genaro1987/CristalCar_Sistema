@@ -11,6 +11,7 @@ export default function TabelasPrecosPage() {
   const [mostrarAjuda, setMostrarAjuda] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [modoEdicao, setModoEdicao] = useState(false);
+  const [mensagem, setMensagem] = useState(null);
   const [termoPesquisa, setTermoPesquisa] = useState('');
   const [filtroStatus, setFiltroStatus] = useState('TODOS');
   const [tabelaSelecionada, setTabelaSelecionada] = useState(null);
@@ -128,13 +129,14 @@ export default function TabelasPrecosPage() {
         carregarTabelas();
         setMostrarModal(false);
         resetForm();
+        setMensagem({ tipo: 'success', texto: 'Tabela de preços salva com sucesso.' });
       } else {
         const erro = await response.json();
-        alert(erro.error || 'Não foi possível salvar a tabela.');
+        setMensagem({ tipo: 'error', texto: erro.error || 'Não foi possível salvar a tabela.' });
       }
     } catch (error) {
       console.error('Erro ao salvar tabela:', error);
-      alert('Erro ao salvar tabela de preços.');
+      setMensagem({ tipo: 'error', texto: 'Erro ao salvar tabela de preços.' });
     } finally {
       setSalvando(false);
     }
@@ -160,9 +162,11 @@ export default function TabelasPrecosPage() {
 
       if (response.ok) {
         carregarTabelas();
+        setMensagem({ tipo: 'success', texto: 'Tabela de preços removida.' });
       }
     } catch (error) {
       console.error('Erro ao excluir tabela:', error);
+      setMensagem({ tipo: 'error', texto: 'Erro ao excluir tabela de preços.' });
     }
   };
 
@@ -227,6 +231,12 @@ export default function TabelasPrecosPage() {
   return (
     <DashboardLayout screenCode="TAB-001">
       <div className="space-y-6">
+        {mensagem && (
+          <div className={`p-4 rounded-lg ${mensagem.tipo === 'success' ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-red-50 border border-red-200 text-red-800'}`}>
+            {mensagem.texto}
+          </div>
+        )}
+
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div className="md:col-span-2">
