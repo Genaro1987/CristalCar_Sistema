@@ -36,6 +36,8 @@ async function garantirTabelasPrecos() {
       { nome: 'valor_ajuste', ddl: 'ALTER TABLE tab_tabelas_precos ADD COLUMN valor_ajuste DECIMAL(15,2) NOT NULL DEFAULT 0' },
       { nome: 'tipo_tabela', ddl: 'ALTER TABLE tab_tabelas_precos ADD COLUMN tipo_tabela VARCHAR(20) DEFAULT "VENDA"' },
       { nome: 'empresa_id', ddl: 'ALTER TABLE tab_tabelas_precos ADD COLUMN empresa_id INTEGER' },
+      { nome: 'data_inicio', ddl: 'ALTER TABLE tab_tabelas_precos ADD COLUMN data_inicio DATE' },
+      { nome: 'data_fim', ddl: 'ALTER TABLE tab_tabelas_precos ADD COLUMN data_fim DATE' },
     ];
 
     for (const coluna of colunasObrigatorias) {

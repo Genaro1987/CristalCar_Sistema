@@ -8,24 +8,24 @@ const turso = createClient({
 });
 
 const tiposPadrao = [
-  { codigo: 'RECEITA_BRUTA', nome: 'Receita Bruta' },
-  { codigo: 'DEDUCOES', nome: 'Deduções' },
-  { codigo: 'RECEITA_LIQUIDA', nome: 'Receita Líquida' },
-  { codigo: 'CPV', nome: 'Custo dos Produtos Vendidos (CPV)' },
-  { codigo: 'LUCRO_BRUTO', nome: 'Lucro Bruto' },
-  { codigo: 'DESPESAS_OPERACIONAIS', nome: 'Despesas Operacionais' },
-  { codigo: 'DESPESAS_VENDAS', nome: 'Despesas com Vendas' },
-  { codigo: 'DESPESAS_ADMIN', nome: 'Despesas Administrativas' },
-  { codigo: 'DESPESAS_FINANCEIRAS', nome: 'Despesas Financeiras' },
-  { codigo: 'RECEITAS_FINANCEIRAS', nome: 'Receitas Financeiras' },
-  { codigo: 'RESULTADO_FINANCEIRO', nome: 'Resultado Financeiro' },
-  { codigo: 'OUTRAS_RECEITAS', nome: 'Outras Receitas' },
-  { codigo: 'OUTRAS_DESPESAS', nome: 'Outras Despesas' },
-  { codigo: 'EBITDA', nome: 'EBITDA' },
-  { codigo: 'LUCRO_OPERACIONAL', nome: 'Lucro Operacional' },
-  { codigo: 'RESULTADO_ANTES_IR', nome: 'Resultado Antes do IR' },
-  { codigo: 'IR_CSLL', nome: 'IR e CSLL' },
-  { codigo: 'LUCRO_LIQUIDO', nome: 'Lucro Líquido' },
+  { codigo: 'RECEITA_BRUTA', nome: 'Receita Bruta', ordem: 1 },
+  { codigo: 'DEDUCOES', nome: 'Deduções', ordem: 2 },
+  { codigo: 'RECEITA_LIQUIDA', nome: 'Receita Líquida', ordem: 3 },
+  { codigo: 'CPV', nome: 'Custo dos Produtos Vendidos (CPV)', ordem: 4 },
+  { codigo: 'LUCRO_BRUTO', nome: 'Lucro Bruto', ordem: 5 },
+  { codigo: 'DESPESAS_OPERACIONAIS', nome: 'Despesas Operacionais', ordem: 6 },
+  { codigo: 'DESPESAS_FINANCEIRAS', nome: 'Despesas Financeiras', ordem: 7 },
+  { codigo: 'RECEITAS_FINANCEIRAS', nome: 'Receitas Financeiras', ordem: 8 },
+  { codigo: 'OUTRAS_RECEITAS', nome: 'Outras Receitas', ordem: 9 },
+  { codigo: 'RESULTADO_ANTES_IR', nome: 'Resultado Antes do IR', ordem: 10 },
+  { codigo: 'IR_CSLL', nome: 'IR e CSLL', ordem: 11 },
+  { codigo: 'LUCRO_LIQUIDO', nome: 'Lucro Líquido', ordem: 12 },
+  { codigo: 'EBITDA', nome: 'EBITDA', ordem: 13 },
+  { codigo: 'DESPESAS_VENDAS', nome: 'Despesas com Vendas', ordem: 14 },
+  { codigo: 'DESPESAS_ADMIN', nome: 'Despesas Administrativas', ordem: 15 },
+  { codigo: 'RESULTADO_FINANCEIRO', nome: 'Resultado Financeiro', ordem: 16 },
+  { codigo: 'OUTRAS_DESPESAS', nome: 'Outras Despesas', ordem: 17 },
+  { codigo: 'LUCRO_OPERACIONAL', nome: 'Lucro Operacional', ordem: 18 },
 ];
 
 async function garantirTabela() {
@@ -35,11 +35,19 @@ async function garantirTabela() {
       codigo VARCHAR(50) UNIQUE NOT NULL,
       nome VARCHAR(200) NOT NULL,
       descricao TEXT,
+      ordem INTEGER DEFAULT 999,
       status VARCHAR(20) DEFAULT 'ATIVO',
       criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
       atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  // Adicionar coluna ordem se não existir
+  try {
+    await turso.execute(`ALTER TABLE fin_tipos_estrutura_dre ADD COLUMN ordem INTEGER DEFAULT 999`);
+  } catch (e) {
+    // Coluna já existe
+  }
 }
 
 async function garantirSeeds() {
@@ -50,8 +58,8 @@ async function garantirSeeds() {
   for (const tipo of tiposPadrao) {
     if (!codigos.includes(tipo.codigo)) {
       await turso.execute({
-        sql: 'INSERT INTO fin_tipos_estrutura_dre (codigo, nome, status) VALUES (?, ?, ?)',
-        args: [tipo.codigo, tipo.nome, 'ATIVO'],
+        sql: 'INSERT INTO fin_tipos_estrutura_dre (codigo, nome, ordem, status) VALUES (?, ?, ?, ?)',
+        args: [tipo.codigo, tipo.nome, tipo.ordem, 'ATIVO'],
       });
     }
   }
@@ -60,7 +68,7 @@ async function garantirSeeds() {
 export async function GET() {
   try {
     await garantirSeeds();
-    const result = await turso.execute('SELECT * FROM fin_tipos_estrutura_dre WHERE status != "INATIVO" ORDER BY nome');
+    const result = await turso.execute('SELECT * FROM fin_tipos_estrutura_dre WHERE status != "INATIVO" ORDER BY ordem ASC, nome ASC');
     return NextResponse.json(result.rows);
   } catch (error) {
     console.error('Erro ao listar tipos de estrutura do DRE:', error);

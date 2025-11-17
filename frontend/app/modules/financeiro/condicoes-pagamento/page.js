@@ -107,10 +107,16 @@ export default function CondicoesPagamentoPage() {
         setMostrarModal(false);
         resetForm();
         setMensagem({ tipo: 'success', texto: 'Condição salva com sucesso.' });
+        setTimeout(() => setMensagem(null), 5000);
+      } else {
+        const erro = await response.json();
+        setMensagem({ tipo: 'error', texto: erro.error || 'Não foi possível salvar a condição de pagamento.' });
+        setTimeout(() => setMensagem(null), 5000);
       }
     } catch (error) {
       console.error('Erro ao salvar condição:', error);
       setMensagem({ tipo: 'error', texto: 'Não foi possível salvar a condição de pagamento.' });
+      setTimeout(() => setMensagem(null), 5000);
     }
   };
 
@@ -138,6 +144,11 @@ export default function CondicoesPagamentoPage() {
 
       if (response.ok) {
         carregarCondicoes();
+        setMensagem({ tipo: 'success', texto: 'Condição de pagamento removida com sucesso.' });
+        setTimeout(() => setMensagem(null), 5000);
+      } else {
+        setMensagem({ tipo: 'error', texto: 'Não foi possível excluir a condição de pagamento.' });
+        setTimeout(() => setMensagem(null), 5000);
       }
     } catch (error) {
       console.error('Erro ao excluir condição:', error);

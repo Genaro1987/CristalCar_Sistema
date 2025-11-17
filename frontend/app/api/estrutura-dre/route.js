@@ -37,28 +37,41 @@ async function garantirColunaTipoEstrutura() {
   }
 }
 
+async function garantirColunaTipoDRE() {
+  const info = await turso.execute('PRAGMA table_info(fin_estrutura_dre)');
+  const possuiTipoDRE = info.rows?.some((c) => c.name === 'tipo_dre_id');
+  if (!possuiTipoDRE) {
+    await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN tipo_dre_id INTEGER');
+    await turso.execute('CREATE INDEX IF NOT EXISTS idx_estrutura_dre_tipo_dre ON fin_estrutura_dre(tipo_dre_id)');
+  }
+}
+
 // GET - Listar estrutura do DRE
 export async function GET(request) {
   try {
     await garantirColunaModelo();
     await garantirColunaEmpresa();
     await garantirColunaTipoEstrutura();
+    await garantirColunaTipoDRE();
 
     const { searchParams } = new URL(request.url);
     const modeloId = searchParams.get("modelo_id");
     const empresaId = searchParams.get('empresa_id');
+    const tipoDreId = searchParams.get('tipo_dre_id');
 
     const sql = `
       SELECT * FROM fin_estrutura_dre
       WHERE codigo != '0'
       ${empresaId ? "AND IFNULL(empresa_id, 0) = ?" : ""}
       ${modeloId ? "AND IFNULL(modelo_dre_id, 0) = ?" : ""}
+      ${tipoDreId ? "AND IFNULL(tipo_dre_id, 0) = ?" : ""}
       ORDER BY ordem_exibicao
     `;
 
     const args = [];
     if (empresaId) args.push(Number(empresaId));
     if (modeloId) args.push(modeloId);
+    if (tipoDreId) args.push(Number(tipoDreId));
 
     const result = await turso.execute({ sql, args });
 
@@ -134,8 +147,8 @@ export async function POST(request) {
 
     const result = await turso.execute({
       sql: `INSERT INTO fin_estrutura_dre
-            (codigo, descricao, nivel, tipo, ordem_exibicao, formula, exibir_negativo, negrito, modelo_dre_id, empresa_id, tipo_estrutura_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            (codigo, descricao, nivel, tipo, ordem_exibicao, formula, exibir_negativo, negrito, modelo_dre_id, empresa_id, tipo_estrutura_id, tipo_dre_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       ,
       args: [
         codigo,
@@ -149,6 +162,7 @@ export async function POST(request) {
         dados.modelo_dre_id || null,
         dados.empresa_id || null,
         tipo_estrutura_id || null,
+        dados.tipo_dre_id || null,
       ],
     });
 
