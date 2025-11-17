@@ -25,6 +25,29 @@ async function garantirTabelasObjetivos() {
       UNIQUE(empresa_id, ano, trimestre, plano_conta_id)
     )
   `);
+
+  // Migração: garantir que coluna codigo existe
+  try {
+    const tableInfo = await turso.execute('PRAGMA table_info(obj_objetivos_trimestrais)');
+    const temCodigo = tableInfo.rows?.some(row => row.name === 'codigo');
+
+    if (!temCodigo) {
+      await turso.execute('ALTER TABLE obj_objetivos_trimestrais ADD COLUMN codigo VARCHAR(20)');
+
+      const registros = await turso.execute('SELECT id FROM obj_objetivos_trimestrais');
+      for (const reg of registros.rows) {
+        const codigo = `OBJ-TRI-${String(reg.id).padStart(4, '0')}`;
+        await turso.execute({
+          sql: 'UPDATE obj_objetivos_trimestrais SET codigo = ? WHERE id = ?',
+          args: [codigo, reg.id]
+        });
+      }
+
+      await turso.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_obj_trim_codigo ON obj_objetivos_trimestrais(codigo)');
+    }
+  } catch (error) {
+    console.log('Migração codigo objetivos:', error.message);
+  }
 }
 
 export async function GET(request) {

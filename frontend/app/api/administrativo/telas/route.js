@@ -23,13 +23,39 @@ async function garantirTabelaTelas() {
     )
   `);
 
+  // Migração: garantir que coluna codigo existe
+  try {
+    const tableInfo = await turso.execute('PRAGMA table_info(adm_telas)');
+    const temCodigo = tableInfo.rows?.some(row => row.name === 'codigo');
+
+    if (!temCodigo) {
+      // Adicionar coluna codigo
+      await turso.execute('ALTER TABLE adm_telas ADD COLUMN codigo VARCHAR(20)');
+
+      // Preencher com valores temporários únicos
+      const registros = await turso.execute('SELECT id FROM adm_telas');
+      for (const reg of registros.rows) {
+        await turso.execute({
+          sql: 'UPDATE adm_telas SET codigo = ? WHERE id = ?',
+          args: [`TEMP-${reg.id}`, reg.id]
+        });
+      }
+
+      // Criar índice único
+      await turso.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_adm_telas_codigo ON adm_telas(codigo)');
+    }
+  } catch (error) {
+    // Migração já foi aplicada ou erro recuperável
+    console.log('Migração codigo:', error.message);
+  }
+
   const telasPadroes = [
     { codigo: 'ADM-001', modulo: 'ADMINISTRATIVO', nome: 'CADASTRO DA EMPRESA', rota: '/modules/administrativo/empresa', icone: '🏢', ordem: 1 },
     { codigo: 'ADM-002', modulo: 'ADMINISTRATIVO', nome: 'FUNCIONARIOS', rota: '/modules/administrativo/funcionarios', icone: '👥', ordem: 2 },
     { codigo: 'ADM-006', modulo: 'ADMINISTRATIVO', nome: 'DEPARTAMENTOS', rota: '/modules/administrativo/departamentos', icone: '🏛️', ordem: 6 },
     { codigo: 'FIN-001', modulo: 'FINANCEIRO', nome: 'PLANO DE CONTAS', rota: '/modules/modelos-plano/plano-contas', icone: '📊', ordem: 1 },
-    { codigo: 'FIN-002', modulo: 'FINANCEIRO', nome: 'TIPOS DE DRE', rota: '/modules/modelos-plano/planos-padroes', icone: '📈', ordem: 2 },
-    { codigo: 'FIN-003', modulo: 'FINANCEIRO', nome: 'ESTRUTURA DRE', rota: '/modules/modelos-plano/estrutura-dre', icone: '🎯', ordem: 3 },
+    { codigo: 'FIN-002', modulo: 'FINANCEIRO', nome: 'TIPOS DE DRE', rota: '/modules/modelos-plano/tipos-dre-lista', icone: '📈', ordem: 2 },
+    { codigo: 'FIN-003', modulo: 'FINANCEIRO', nome: 'ESTRUTURA DRE', rota: '/modules/modelos-plano/estrutura-dre-editor', icone: '🎯', ordem: 3 },
     { codigo: 'PAR-001', modulo: 'PARCEIROS', nome: 'CADASTRO DE PARCEIROS', rota: '/modules/parceiros/cadastro', icone: '🤝', ordem: 1 },
     { codigo: 'OBJ-001', modulo: 'OBJETIVOS', nome: 'OBJETIVOS TRIMESTRAIS', rota: '/modules/objetivos/trimestrais', icone: '🎯', ordem: 1 },
     { codigo: 'OBJ-002', modulo: 'OBJETIVOS', nome: 'METAS SEMANAIS', rota: '/modules/objetivos/semanais', icone: '📅', ordem: 2 },
@@ -39,8 +65,14 @@ async function garantirTabelaTelas() {
     { codigo: 'HOME-001', modulo: 'GERAL', nome: 'PAGINA INICIAL', rota: '/dashboard', icone: '🏠', ordem: 0 },
   ];
 
-  const existentes = await turso.execute('SELECT codigo FROM adm_telas');
-  const codigosExistentes = existentes.rows?.map(row => row.codigo) || [];
+  let codigosExistentes = [];
+  try {
+    const existentes = await turso.execute('SELECT codigo FROM adm_telas WHERE codigo IS NOT NULL');
+    codigosExistentes = existentes.rows?.map(row => row.codigo) || [];
+  } catch (error) {
+    // Se falhar, array vazio - inserirá todas
+    codigosExistentes = [];
+  }
 
   for (const tela of telasPadroes) {
     if (!codigosExistentes.includes(tela.codigo)) {
