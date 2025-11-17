@@ -142,7 +142,7 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
-      id: result.lastInsertRowid,
+      id: Number(result.lastInsertRowid),
       message: "Conta criada com sucesso",
     });
   } catch (error) {

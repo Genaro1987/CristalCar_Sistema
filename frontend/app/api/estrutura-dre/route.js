@@ -102,7 +102,7 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
-      id: result.lastInsertRowid,
+      id: Number(result.lastInsertRowid),
       message: "Estrutura DRE criada com sucesso",
     });
   } catch (error) {

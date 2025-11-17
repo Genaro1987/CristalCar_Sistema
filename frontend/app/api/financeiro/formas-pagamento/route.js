@@ -46,7 +46,7 @@ export async function POST(request) {
       ]
     });
 
-    return Response.json({ success: true, id: result.lastInsertRowid });
+    return Response.json({ success: true, id: Number(result.lastInsertRowid) });
   } catch (error) {
     console.error('Erro ao criar forma de pagamento:', error);
     return Response.json({ error: 'Erro ao criar forma de pagamento: ' + error.message }, { status: 500 });

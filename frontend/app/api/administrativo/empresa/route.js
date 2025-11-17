@@ -159,7 +159,7 @@ export async function POST(request) {
         ]
       });
 
-      return Response.json({ success: true, id: result.lastInsertRowid, action: 'created' });
+      return Response.json({ success: true, id: Number(result.lastInsertRowid), action: 'created' });
     }
   } catch (error) {
     console.error('Erro ao salvar empresa:', error);

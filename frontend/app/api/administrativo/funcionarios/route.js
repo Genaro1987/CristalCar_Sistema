@@ -65,7 +65,7 @@ export async function POST(request) {
       ]
     });
 
-    return Response.json({ success: true, id: result.lastInsertRowid });
+    return Response.json({ success: true, id: Number(result.lastInsertRowid) });
   } catch (error) {
     console.error('Erro ao criar funcionário:', error);
     return Response.json({ error: 'Erro ao criar funcionário: ' + error.message }, { status: 500 });
