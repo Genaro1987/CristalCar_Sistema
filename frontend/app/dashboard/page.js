@@ -105,9 +105,9 @@ export default function DashboardPage() {
             <p className="text-primary-100 text-lg">
               Bem-vindo ao sistema {empresaData?.nome_fantasia || 'Cristal Car'}
             </p>
-            <div className="w-48 h-48 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center">
+            <div className="flex items-center justify-center py-8">
               {empresaData?.logo_path ? (
-                <img src={empresaData.logo_path} alt="Logo" className="w-full h-full object-contain p-4" />
+                <img src={empresaData.logo_path} alt="Logo" className="w-144 h-144 object-contain" />
               ) : (
                 <div className="text-center">
                   <div className="text-6xl mb-2">🚗</div>

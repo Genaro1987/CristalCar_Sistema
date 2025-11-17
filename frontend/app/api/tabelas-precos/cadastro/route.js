@@ -32,6 +32,10 @@ async function garantirTabelasPrecos() {
       { nome: 'nome', ddl: 'ALTER TABLE tab_tabelas_precos ADD COLUMN nome VARCHAR(200) NOT NULL DEFAULT ""' },
       { nome: 'descricao', ddl: 'ALTER TABLE tab_tabelas_precos ADD COLUMN descricao TEXT' },
       { nome: 'observacoes', ddl: 'ALTER TABLE tab_tabelas_precos ADD COLUMN observacoes TEXT' },
+      { nome: 'tipo_ajuste', ddl: 'ALTER TABLE tab_tabelas_precos ADD COLUMN tipo_ajuste VARCHAR(20) NOT NULL DEFAULT "PERCENTUAL"' },
+      { nome: 'valor_ajuste', ddl: 'ALTER TABLE tab_tabelas_precos ADD COLUMN valor_ajuste DECIMAL(15,2) NOT NULL DEFAULT 0' },
+      { nome: 'tipo_tabela', ddl: 'ALTER TABLE tab_tabelas_precos ADD COLUMN tipo_tabela VARCHAR(20) DEFAULT "VENDA"' },
+      { nome: 'empresa_id', ddl: 'ALTER TABLE tab_tabelas_precos ADD COLUMN empresa_id INTEGER' },
     ];
 
     for (const coluna of colunasObrigatorias) {
@@ -60,18 +64,32 @@ async function garantirTabelasPrecos() {
   }
 }
 
-export async function GET() {
+export async function GET(request) {
   try {
     await garantirTabelasPrecos();
-    const result = await turso.execute(`
+    const { searchParams } = new URL(request.url);
+    const empresaId = searchParams.get('empresa_id');
+
+    let sql = `
       SELECT
-        t.*, 
+        t.*,
         COUNT(tp.parceiro_id) as parceiros_count
       FROM tab_tabelas_precos t
       LEFT JOIN tab_tabelas_precos_parceiros tp ON t.id = tp.tabela_preco_id
-      GROUP BY t.id
-      ORDER BY t.nome ASC
-    `);
+    `;
+
+    const args = [];
+
+    if (empresaId) {
+      sql += ` WHERE (t.empresa_id = ? OR t.empresa_id IS NULL)`;
+      args.push(Number(empresaId));
+    }
+
+    sql += ` GROUP BY t.id ORDER BY t.nome ASC`;
+
+    const result = args.length > 0
+      ? await turso.execute({ sql, args })
+      : await turso.execute(sql);
 
     return Response.json(serializeRows(result.rows));
   } catch (error) {
@@ -92,9 +110,9 @@ export async function POST(request) {
       sql: `
         INSERT INTO tab_tabelas_precos (
           codigo, nome, descricao, tipo_ajuste, valor_ajuste,
-          data_inicio, data_fim,
+          data_inicio, data_fim, tipo_tabela, empresa_id,
           observacoes, ativo
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       args: [
         codigo,
@@ -104,6 +122,8 @@ export async function POST(request) {
         data.valor_ajuste,
         data.data_inicio || null,
         data.data_fim || null,
+        data.tipo_tabela || 'VENDA',
+        data.empresa_id || null,
         data.observacoes || null,
         data.ativo ? 1 : 0
       ]

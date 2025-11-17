@@ -308,7 +308,7 @@ export default function CondicoesPagamentoPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {condicao.forma_pagamento_nome || formasPagamento.find(f => f.id === condicao.forma_pagamento_id)?.nome || '-'}
+                        {condicao.forma_pagamento_nome || formasPagamento.find(f => f.id === condicao.forma_pagamento_id)?.descricao || formasPagamento.find(f => f.id === condicao.forma_pagamento_id)?.nome || '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {condicao.tipo === 'A_VISTA' ? '1x' : `${condicao.qtd_parcelas}x`}
@@ -443,10 +443,10 @@ export default function CondicoesPagamentoPage() {
                       onChange={(e) => setFormData({...formData, forma_pagamento_id: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                     >
-                      <option value="">Selecione...</option>
+                      <option value="">Selecione uma forma de pagamento...</option>
                       {formasPagamento.map(forma => (
                         <option key={forma.id} value={forma.id}>
-                          {forma.nome}
+                          {forma.descricao || forma.nome}
                         </option>
                       ))}
                     </select>

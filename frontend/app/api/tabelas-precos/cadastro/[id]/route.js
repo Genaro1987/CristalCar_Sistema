@@ -39,6 +39,8 @@ export async function PUT(request, { params }) {
             valor_ajuste = ?,
             data_inicio = ?,
             data_fim = ?,
+            tipo_tabela = ?,
+            empresa_id = ?,
             observacoes = ?,
             ativo = ?,
             atualizado_em = CURRENT_TIMESTAMP
@@ -51,6 +53,8 @@ export async function PUT(request, { params }) {
         data.valor_ajuste,
         data.data_inicio || null,
         data.data_fim || null,
+        data.tipo_tabela || 'VENDA',
+        data.empresa_id || null,
         data.observacoes || null,
         data.ativo ? 1 : 0,
         id
