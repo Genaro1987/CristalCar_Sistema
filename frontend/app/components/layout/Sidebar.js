@@ -133,6 +133,7 @@ export default function Sidebar() {
           icon: '📋',
           submenu: [
             { name: 'Tabelas de Preços', href: '/modules/tabelas-precos/cadastro', code: 'TAB-001' },
+            { name: 'Itens por Tabela', href: '/modules/cadastros/tabelas-precos-itens', code: 'CAD-001' },
             { name: 'Histórico de Alterações', href: '/modules/tabelas-precos/historico', code: 'TAB-002' },
           ]
         },
