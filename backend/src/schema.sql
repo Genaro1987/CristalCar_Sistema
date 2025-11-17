@@ -121,10 +121,12 @@ CREATE TABLE IF NOT EXISTS adm_funcionarios (
     data_admissao DATE NOT NULL,
     data_demissao DATE,
     salario DECIMAL(10,2),
+    empresa_id INTEGER,
     status VARCHAR(20) DEFAULT 'ATIVO', -- ATIVO, INATIVO, DEMITIDO
     observacoes TEXT,
     criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
-    atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+    atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (empresa_id) REFERENCES adm_empresa(id)
 );
 
 -- Tabela de Usuários do Sistema
@@ -210,6 +212,17 @@ CREATE TABLE IF NOT EXISTS fin_plano_contas (
     FOREIGN KEY (conta_pai_id) REFERENCES fin_plano_contas(id)
 );
 
+-- Tabela de Tipos de Estrutura do DRE
+CREATE TABLE IF NOT EXISTS fin_tipos_estrutura_dre (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    codigo VARCHAR(50) UNIQUE NOT NULL,
+    nome VARCHAR(200) NOT NULL,
+    descricao TEXT,
+    status VARCHAR(20) DEFAULT 'ATIVO',
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Tabela de Estrutura do DRE
 CREATE TABLE IF NOT EXISTS fin_estrutura_dre (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -217,12 +230,14 @@ CREATE TABLE IF NOT EXISTS fin_estrutura_dre (
     descricao VARCHAR(200) NOT NULL,
     nivel INTEGER NOT NULL, -- Nível hierárquico
     tipo VARCHAR(50) NOT NULL, -- RECEITA_BRUTA, DEDUCOES, RECEITA_LIQUIDA, CPV, LUCRO_BRUTO, DESPESAS_OPERACIONAIS, etc
+    tipo_estrutura_id INTEGER,
     ordem_exibicao INTEGER NOT NULL,
     formula VARCHAR(200), -- Para cálculos (ex: RECEITA_BRUTA - DEDUCOES)
     exibir_negativo BOOLEAN DEFAULT 0,
     negrito BOOLEAN DEFAULT 0,
     criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
-    atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+    atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (tipo_estrutura_id) REFERENCES fin_tipos_estrutura_dre(id)
 );
 
 -- Tabela de Vinculação DRE x Plano de Contas
