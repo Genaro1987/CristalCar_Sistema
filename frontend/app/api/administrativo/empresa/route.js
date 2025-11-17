@@ -83,7 +83,7 @@ export async function POST(request) {
           UPDATE adm_empresa
           SET razao_social = ?,
               nome_fantasia = ?,
-              cpf_cnpj = ?,
+              cnpj = ?,
               inscricao_estadual = ?,
               inscricao_municipal = ?,
               regime_tributario = ?,
@@ -105,7 +105,7 @@ export async function POST(request) {
         args: [
           normalizedData.razao_social,
           normalizedData.nome_fantasia || null,
-          normalizedData.cnpj || normalizedData.cpf_cnpj,
+          normalizedData.cnpj || normalizedData.cpf_cnpj || null,
           normalizedData.inscricao_estadual || null,
           normalizedData.inscricao_municipal || null,
           normalizedData.regime_tributario || 'SIMPLES_NACIONAL',
@@ -131,7 +131,7 @@ export async function POST(request) {
       const result = await turso.execute({
         sql: `
           INSERT INTO adm_empresa (
-            razao_social, nome_fantasia, cpf_cnpj, inscricao_estadual, inscricao_municipal,
+            razao_social, nome_fantasia, cnpj, inscricao_estadual, inscricao_municipal,
             regime_tributario, telefone, celular, email, site,
             endereco, numero, complemento, bairro, cidade, estado, cep,
             observacoes
@@ -140,7 +140,7 @@ export async function POST(request) {
         args: [
           normalizedData.razao_social,
           normalizedData.nome_fantasia || null,
-          normalizedData.cnpj || normalizedData.cpf_cnpj,
+          normalizedData.cnpj || normalizedData.cpf_cnpj || null,
           normalizedData.inscricao_estadual || null,
           normalizedData.inscricao_municipal || null,
           normalizedData.regime_tributario || 'SIMPLES_NACIONAL',
