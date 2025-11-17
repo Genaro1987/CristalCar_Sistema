@@ -75,6 +75,27 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+
+        <Card title="Atalhos rápidos" subtitle="Acesse rapidamente as telas principais do sistema">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[{
+              titulo: 'Cadastro da Empresa', descricao: 'Revise ou atualize os dados oficiais', caminho: '/modules/administrativo/empresa'
+            }, {
+              titulo: 'Plano de Contas', descricao: 'Mantenha a hierarquia contábil em dia', caminho: '/modules/modelos-plano/plano-contas'
+            }, {
+              titulo: 'Formas de Pagamento', descricao: 'Configure meios de cobrança e recebimento', caminho: '/modules/financeiro/formas-pagamento'
+            }].map((atalho, idx) => (
+              <a
+                key={idx}
+                href={atalho.caminho}
+                className="block p-4 border border-gray-200 rounded-lg hover:border-primary-500 hover:shadow-md transition"
+              >
+                <h3 className="font-semibold text-gray-900">{atalho.titulo}</h3>
+                <p className="text-sm text-gray-600 mt-1">{atalho.descricao}</p>
+              </a>
+            ))}
+          </div>
+        </Card>
       </div>
     </DashboardLayout>
   );

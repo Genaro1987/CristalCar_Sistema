@@ -115,9 +115,8 @@ export default function CadastroEmpresaPage() {
   };
 
   const handleSelecionarEmpresa = async (id) => {
-    const selecionada = id ? Number(id) : null;
-    setEmpresaSelecionada(selecionada);
-    await carregarDadosEmpresa(selecionada);
+    setEmpresaSelecionada(id);
+    await carregarDadosEmpresa(id);
   };
 
   const iniciarNovaEmpresa = () => {
@@ -264,7 +263,7 @@ export default function CadastroEmpresaPage() {
               <p className="text-xs text-gray-500 mt-1">Caso tenha mais de uma empresa, defina a padrão para ser carregada automaticamente.</p>
             </div>
 
-            <Button type="button" variant="outline" onClick={iniciarNovaEmpresa} className="md:self-end">
+            <Button type="button" variant="outline" onClick={iniciarNovaEmpresa}>
               + Nova empresa
             </Button>
           </div>

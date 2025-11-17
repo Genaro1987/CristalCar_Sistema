@@ -87,10 +87,9 @@ export default function Header({ screenCode = '', screenName = '', onShowHelp })
   };
 
   const handleSelecionarEmpresa = (id) => {
-    const valor = id ? Number(id) : null;
-    setEmpresaSelecionada(valor);
-    if (valor) {
-      localStorage.setItem('empresaSelecionadaId', valor);
+    setEmpresaSelecionada(id || null);
+    if (id) {
+      localStorage.setItem('empresaSelecionadaId', id);
     } else {
       localStorage.removeItem('empresaSelecionadaId');
     }
@@ -130,20 +129,20 @@ export default function Header({ screenCode = '', screenName = '', onShowHelp })
           </div>
 
           {/* Ações do Header */}
-          <div className="flex flex-col lg:flex-row lg:items-center lg:space-x-4 gap-3 lg:gap-0">
+          <div className="flex items-center space-x-4">
             {/* Seleção de Empresa */}
             {empresas.length > 0 && (
-              <div className="flex flex-col items-center lg:flex-row lg:items-center lg:space-x-3">
-                <div className="text-center lg:text-right lg:min-w-[220px]">
+              <div className="flex items-center space-x-2">
+                <div className="text-right hidden lg:block">
                   <p className="text-xs text-gray-500">Empresa ativa</p>
-                  <p className="text-sm font-semibold text-gray-800 truncate max-w-xs">
-                    {empresas.find(emp => Number(emp.id) === Number(empresaSelecionada))?.nome_fantasia || 'Selecione'}
+                  <p className="text-sm font-semibold text-gray-800 truncate max-w-[200px]">
+                    {empresas.find(emp => emp.id === empresaSelecionada)?.nome_fantasia || 'Selecione'}
                   </p>
                 </div>
                 <select
                   value={empresaSelecionada || ''}
                   onChange={(e) => handleSelecionarEmpresa(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 text-sm min-w-[240px]"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 text-sm"
                   title="Selecione a empresa ativa"
                 >
                   <option value="">Selecione...</option>

@@ -25,13 +25,6 @@ async function garantirTabelasPrecos() {
       )
     `);
 
-    // Ajuste retroativo para bancos que ainda não possuem a coluna "nome"
-    const colunas = await turso.execute('PRAGMA table_info(tab_tabelas_precos)');
-    const possuiNome = colunas.rows?.some((c) => c.name === 'nome');
-    if (!possuiNome) {
-      await turso.execute('ALTER TABLE tab_tabelas_precos ADD COLUMN nome VARCHAR(200) NOT NULL DEFAULT ""');
-    }
-
     await turso.execute(`
       CREATE TABLE IF NOT EXISTS tab_tabelas_precos_parceiros (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
