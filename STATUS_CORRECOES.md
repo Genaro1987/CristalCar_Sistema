@@ -1,7 +1,7 @@
 # STATUS DAS CORREÇÕES - CRISTALCAR SISTEMA
 *Atualizado em: 15/11/2025*
 
-## ✅ PROBLEMAS CORRIGIDOS (5 de 11 críticos)
+## ✅ PROBLEMAS CORRIGIDOS (6 de 11 críticos)
 
 ### 1. ✅ FUNCIONÁRIOS - Colunas fantasma removidas
 **Status:** CORRIGIDO ✅
@@ -73,7 +73,24 @@
 
 ---
 
-## ⚠️ PROBLEMAS AINDA NÃO CORRIGIDOS (6)
+### 6. ✅ BACKUP - Nomes das tabelas corrigidos
+**Status:** CORRIGIDO ✅
+**Commit:** 1bc3902
+
+**PROBLEMA CRÍTICO:** "SQLite error: no such table: adm_backup_historico" - Erro no deploy Vercel
+
+- ✅ `adm_backup_config` → `adm_configuracao_backup`
+- ✅ `adm_backup_historico` → `adm_historico_backup`
+- ✅ Corrigidos 3 arquivos de API:
+  - `/frontend/app/api/backup/config/route.js` (4 ocorrências)
+  - `/frontend/app/api/backup/historico/route.js` (1 ocorrência)
+  - `/frontend/app/api/backup/executar/route.js` (5 ocorrências)
+
+**IMPACTO:** Resolvia erro que bloqueava deploy completo no Vercel
+
+---
+
+## ⚠️ PROBLEMAS AINDA NÃO CORRIGIDOS (5)
 
 ### 1. ❌ PLANO DE CONTAS - Não salva no banco
 **Prioridade:** CRÍTICA 🔴
@@ -161,7 +178,7 @@
 
 ---
 
-### 7. ❌ BACKUP - Download do navegador
+### 6. ❌ BACKUP - Download do navegador
 **Prioridade:** BAIXA 🟢
 **Problema:** "O armazenamento local não permite escolher a pasta que irá salvar o arquivo"
 
@@ -178,11 +195,11 @@
 
 | Categoria | Quantidade | Status |
 |-----------|-----------|---------|
-| **Problemas críticos corrigidos** | 5 | ✅ |
+| **Problemas críticos corrigidos** | 6 | ✅ |
 | **Problemas críticos pendentes** | 2 | ❌ |
 | **Problemas frontend pendentes** | 3 | ❌ |
 | **Melhorias/Recursos novos** | 1 | 📋 |
-| **Total de problemas resolvidos** | 45% | 🟡 |
+| **Total de problemas resolvidos** | 55% | 🟡 |
 
 ---
 
@@ -191,8 +208,10 @@
 1. `7bac3a3` - fix: Corrigir API de Funcionários
 2. `ec86aa9` - fix: Corrigir APIs de Bancos e Condições de Pagamento
 3. `c5fd685` - fix: Corrigir erros críticos em Empresa e Formas de Pagamento
+4. `1540ac6` - docs: Adicionar STATUS_CORRECOES.md
+5. `1bc3902` - fix: Corrigir nomes das tabelas de backup conforme schema
 
-Total de arquivos modificados: **8 APIs corrigidas**
+Total de arquivos modificados: **11 APIs corrigidas** (8 cadastros + 3 backup)
 
 ---
 
@@ -224,4 +243,4 @@ Consulte também:
 ---
 
 **Branch atual:** `claude/fix-database-schema-migration-018u2TTkhUifuiNbUGK6YEbV`
-**Último push:** c5fd685
+**Último push:** 1bc3902 (Fix backup tables - CRITICAL deployment blocker)
