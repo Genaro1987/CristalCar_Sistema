@@ -61,7 +61,6 @@ export default function CondicoesPagamentoPage() {
         const data = await response.json();
         const normalizadas = (data || []).map((item) => ({
           ...item,
-          id: Number(item.id),
           ativo: item.ativo === 1 || item.ativo === true || item.status === 'ATIVO'
         }));
         setFormasPagamento(normalizadas.filter(f => f.ativo));

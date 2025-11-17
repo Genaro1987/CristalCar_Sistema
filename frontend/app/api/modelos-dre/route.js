@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@libsql/client';
 import { normalizarTexto } from '@/lib/text-utils';
-import { serializeRows, serializeValue } from '@/lib/db-utils';
 
 const turso = createClient({
   url: process.env.TURSO_DATABASE_URL,
@@ -33,7 +32,7 @@ export async function GET() {
       args: [],
     });
 
-    return NextResponse.json(serializeRows(result.rows));
+    return NextResponse.json(result.rows);
   } catch (error) {
     console.error('Erro ao listar modelos de DRE:', error);
     return NextResponse.json({ error: 'Erro ao listar modelos de DRE' }, { status: 500 });
@@ -65,7 +64,7 @@ export async function POST(request) {
       ],
     });
 
-    return NextResponse.json({ success: true, id: serializeValue(result.lastInsertRowid) });
+    return NextResponse.json({ success: true, id: Number(result.lastInsertRowid) });
   } catch (error) {
     console.error('Erro ao criar modelo de DRE:', error);
     return NextResponse.json({ error: 'Erro ao criar modelo de DRE' }, { status: 500 });
