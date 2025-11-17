@@ -194,15 +194,63 @@ export default function FuncionariosPage() {
         body: JSON.stringify(dataToSave)
       });
 
-      if (response.ok) {
+      const data = await response.json();
+
+      if (response.ok && data.success !== false) {
+        const mensagem = document.createElement('div');
+        mensagem.className = 'fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-lg z-50';
+        mensagem.innerHTML = `
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+              </svg>
+            </div>
+            <div class="ml-3">
+              <p class="text-sm font-medium">Funcionário ${editingId ? 'atualizado' : 'cadastrado'} com sucesso!</p>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(mensagem);
+        setTimeout(() => mensagem.remove(), 5000);
         await loadFuncionarios();
         resetForm();
       } else {
-        alert('Erro ao salvar funcionário');
+        const mensagem = document.createElement('div');
+        mensagem.className = 'fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-lg z-50';
+        mensagem.innerHTML = `
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+              </svg>
+            </div>
+            <div class="ml-3">
+              <p class="text-sm font-medium">${data.error || 'Erro ao salvar funcionário'}</p>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(mensagem);
+        setTimeout(() => mensagem.remove(), 5000);
       }
     } catch (error) {
       console.error('Erro ao salvar funcionário:', error);
-      alert('Erro ao salvar funcionário');
+      const mensagem = document.createElement('div');
+      mensagem.className = 'fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-lg z-50';
+      mensagem.innerHTML = `
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+            </svg>
+          </div>
+          <div class="ml-3">
+            <p class="text-sm font-medium">Erro ao salvar funcionário: ${error.message}</p>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(mensagem);
+      setTimeout(() => mensagem.remove(), 5000);
     }
   };
 
@@ -222,14 +270,62 @@ export default function FuncionariosPage() {
           method: 'DELETE'
         });
 
-        if (response.ok) {
+        const data = await response.json();
+
+        if (response.ok && data.success !== false) {
+          const mensagem = document.createElement('div');
+          mensagem.className = 'fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-lg z-50';
+          mensagem.innerHTML = `
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm font-medium">Funcionário excluído com sucesso!</p>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(mensagem);
+          setTimeout(() => mensagem.remove(), 5000);
           await loadFuncionarios();
         } else {
-          alert('Erro ao excluir funcionário');
+          const mensagem = document.createElement('div');
+          mensagem.className = 'fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-lg z-50';
+          mensagem.innerHTML = `
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                </svg>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm font-medium">${data.error || 'Erro ao excluir funcionário'}</p>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(mensagem);
+          setTimeout(() => mensagem.remove(), 5000);
         }
       } catch (error) {
         console.error('Erro ao excluir funcionário:', error);
-        alert('Erro ao excluir funcionário');
+        const mensagem = document.createElement('div');
+        mensagem.className = 'fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-lg z-50';
+        mensagem.innerHTML = `
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+              </svg>
+            </div>
+            <div class="ml-3">
+              <p class="text-sm font-medium">Erro ao excluir funcionário: ${error.message}</p>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(mensagem);
+        setTimeout(() => mensagem.remove(), 5000);
       }
     }
   };
