@@ -1,4 +1,5 @@
 import { createClient } from '@libsql/client';
+import { normalizarTexto } from '@/lib/text-utils';
 
 const turso = createClient({
   url: process.env.TURSO_DATABASE_URL,
@@ -9,7 +10,7 @@ export async function GET() {
   try {
     const result = await turso.execute(`
       SELECT * FROM fin_bancos
-      ORDER BY ativo DESC, nome ASC
+      ORDER BY status DESC, nome_banco ASC
     `);
 
     return Response.json(result.rows);
@@ -23,34 +24,36 @@ export async function POST(request) {
   try {
     const data = await request.json();
 
+    // Normalizar campos de texto (MAIÚSCULO sem acentos)
+    const nome_banco = normalizarTexto(data.nome_banco || data.nome);
+    const observacoes = data.observacoes ? normalizarTexto(data.observacoes) : null;
+
     const result = await turso.execute({
       sql: `
         INSERT INTO fin_bancos (
-          codigo, nome, nome_completo, site, telefone,
-          agencia, conta, tipo_conta,
-          permite_ofx, config_ofx,
-          observacoes, ativo
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          codigo_banco, nome_banco, agencia, conta, tipo_conta,
+          saldo_inicial, saldo_atual, data_saldo_inicial,
+          plano_contas_id, status, observacoes
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       args: [
-        data.codigo || null,
-        data.nome,
-        data.nome_completo || null,
-        data.site || null,
-        data.telefone || null,
+        data.codigo_banco || data.codigo,
+        nome_banco,
         data.agencia || null,
         data.conta || null,
         data.tipo_conta || 'CORRENTE',
-        data.permite_ofx ? 1 : 0,
-        data.config_ofx || null,
-        data.observacoes || null,
-        data.ativo ? 1 : 0
+        data.saldo_inicial || 0,
+        data.saldo_atual || data.saldo_inicial || 0,
+        data.data_saldo_inicial || null,
+        data.plano_contas_id || null,
+        data.status || (data.ativo ? 'ATIVO' : 'INATIVO'),
+        observacoes
       ]
     });
 
     return Response.json({ success: true, id: result.lastInsertRowid });
   } catch (error) {
     console.error('Erro ao criar banco:', error);
-    return Response.json({ error: 'Erro ao criar banco' }, { status: 500 });
+    return Response.json({ error: 'Erro ao criar banco: ' + error.message }, { status: 500 });
   }
 }
