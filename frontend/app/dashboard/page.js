@@ -105,6 +105,12 @@ export default function DashboardPage() {
             <p className="text-primary-100 text-lg">
               Bem-vindo ao sistema {empresaData?.nome_fantasia || 'Cristal Car'}
             </p>
+            <button
+              onClick={() => window.location.href = '/selecionar-empresa'}
+              className="bg-white/20 hover:bg-white/30 text-white px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
+            >
+              🔄 Trocar Empresa
+            </button>
             <div className="flex items-center justify-center py-8">
               {empresaData?.logo_path ? (
                 <img src={empresaData.logo_path} alt="Logo" className="w-144 h-144 object-contain" />

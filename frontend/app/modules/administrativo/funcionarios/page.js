@@ -232,7 +232,7 @@ export default function FuncionariosPage() {
     }
 
     if (!formData.empresa_id && !empresaSelecionada) {
-      setMensagem({ tipo: 'erro', texto: 'Selecione a empresa à qual o funcionário pertence.' });
+      setMensagem({ tipo: 'erro', texto: 'Nenhuma empresa selecionada. Por favor, selecione uma empresa no início do sistema.' });
       return;
     }
 
@@ -801,27 +801,6 @@ export default function FuncionariosPage() {
                     Dados Profissionais
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Empresa do Funcionário
-                      </label>
-                      <select
-                        name="empresa_id"
-                        value={formData.empresa_id || empresaSelecionada || ''}
-                        onChange={(e) => setFormData(prev => ({ ...prev, empresa_id: e.target.value ? Number(e.target.value) : '' }))}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        required
-                      >
-                        <option value="">Selecione</option>
-                        {empresas.map((emp) => (
-                          <option key={emp.id} value={emp.id}>
-                            {emp.nome_fantasia || emp.razao_social}
-                          </option>
-                        ))}
-                      </select>
-                      <p className="text-xs text-gray-500 mt-1">Controle multiempresa: cada funcionário fica vinculado a uma empresa.</p>
-                    </div>
-
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Cargo

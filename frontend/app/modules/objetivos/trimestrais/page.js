@@ -42,9 +42,10 @@ export default function ObjetivosTrimestraisPage() {
 
   const carregarPlanoContas = async () => {
     try {
-      const response = await fetch('/api/financeiro/plano-contas');
+      const response = await fetch('/api/plano-contas?utilizado_objetivo=true&status=ATIVO');
       if (response.ok) {
-        const data = await response.json();
+        const result = await response.json();
+        const data = result.data || result;
         setPlanoContas(data);
       }
     } catch (error) {

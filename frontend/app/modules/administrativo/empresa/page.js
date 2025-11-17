@@ -243,32 +243,6 @@ export default function CadastroEmpresaPage() {
           </div>
         )}
 
-        {/* Seleção de Empresa */}
-        <Card title="Empresas cadastradas" subtitle="Escolha qual empresa deseja visualizar ou editar">
-          <div className="flex flex-col md:flex-row md:items-end gap-4">
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Selecione uma empresa</label>
-              <select
-                value={empresaSelecionada || ''}
-                onChange={(e) => handleSelecionarEmpresa(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-              >
-                <option value="">Nova empresa</option>
-                {empresas.map((emp) => (
-                  <option key={emp.id} value={emp.id}>
-                    {emp.nome_fantasia || emp.razao_social} {emp.padrao ? '• Padrão' : ''}
-                  </option>
-                ))}
-              </select>
-              <p className="text-xs text-gray-500 mt-1">Caso tenha mais de uma empresa, defina a padrão para ser carregada automaticamente.</p>
-            </div>
-
-            <Button type="button" variant="outline" onClick={iniciarNovaEmpresa}>
-              + Nova empresa
-            </Button>
-          </div>
-        </Card>
-
         {/* Logo da Empresa */}
         <Card title="Logo da Empresa" subtitle="Imagem que será exibida em documentos e no sistema">
           <div className="flex items-center space-x-6">

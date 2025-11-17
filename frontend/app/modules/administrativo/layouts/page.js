@@ -63,9 +63,16 @@ export default function LayoutsImportacaoPage() {
     filterLayouts();
   }, [searchTerm, tipoFilter, layouts]);
 
-  const loadLayouts = () => {
-    // Banco de dados vazio - nenhum layout cadastrado
-    setLayouts([]);
+  const loadLayouts = async () => {
+    try {
+      const response = await fetch('/api/administrativo/layouts');
+      if (response.ok) {
+        const data = await response.json();
+        setLayouts(data);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar layouts:', error);
+    }
   };
 
   const filterLayouts = () => {
@@ -120,7 +127,7 @@ export default function LayoutsImportacaoPage() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Validações
@@ -129,18 +136,31 @@ export default function LayoutsImportacaoPage() {
       return;
     }
 
-    if (editingId) {
-      // Atualizar
-      setLayouts(prev =>
-        prev.map(layout => layout.id === editingId ? { ...formData, id: editingId } : layout)
-      );
-    } else {
-      // Criar novo
-      const newId = Math.max(...layouts.map(l => l.id), 0) + 1;
-      setLayouts(prev => [...prev, { ...formData, id: newId }]);
-    }
+    try {
+      const url = '/api/administrativo/layouts';
+      const method = editingId ? 'PUT' : 'POST';
+      const body = editingId
+        ? { ...formData, id: editingId }
+        : formData;
 
-    resetForm();
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      if (response.ok) {
+        alert(`Layout ${editingId ? 'atualizado' : 'cadastrado'} com sucesso!`);
+        await loadLayouts();
+        resetForm();
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Erro ao salvar layout');
+      }
+    } catch (error) {
+      console.error('Erro ao salvar layout:', error);
+      alert('Erro ao salvar layout');
+    }
   };
 
   const handleEdit = (layout) => {
@@ -154,9 +174,24 @@ export default function LayoutsImportacaoPage() {
     setShowForm(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (confirm('Tem certeza que deseja excluir este layout?')) {
-      setLayouts(prev => prev.filter(layout => layout.id !== id));
+      try {
+        const response = await fetch(`/api/administrativo/layouts?id=${id}`, {
+          method: 'DELETE'
+        });
+
+        if (response.ok) {
+          alert('Layout excluído com sucesso!');
+          await loadLayouts();
+        } else {
+          const error = await response.json();
+          alert(error.error || 'Erro ao excluir layout');
+        }
+      } catch (error) {
+        console.error('Erro ao excluir layout:', error);
+        alert('Erro ao excluir layout');
+      }
     }
   };
 
