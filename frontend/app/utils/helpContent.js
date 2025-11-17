@@ -335,7 +335,21 @@ export const helpContents = {
       {
         heading: '📋 O que são Tabelas de Preços?',
         icon: '📋',
-        content: 'Tabelas de preços permitem ter diferentes preços para os mesmos produtos/serviços baseados em critérios como tipo de cliente, volume, período promocional, etc.'
+        content: 'Tabelas de preços permitem ter diferentes preços para os mesmos produtos/serviços baseados em critérios como tipo de cliente, volume, período promocional, etc. Pode ser usada para vendas (receitas) ou compras (despesas).'
+      },
+      {
+        heading: '🏷️ Tipo de Tabela',
+        icon: '🏷️',
+        items: [
+          {
+            label: 'Venda (Receita)',
+            description: 'Tabela para precificação de produtos/serviços vendidos. Define quanto você cobra do cliente.'
+          },
+          {
+            label: 'Compra (Despesa)',
+            description: 'Tabela para controle de preços de compra de fornecedores. Define quanto você paga.'
+          }
+        ]
       },
       {
         heading: '🔑 Tipos de Ajuste',
@@ -685,6 +699,200 @@ export const helpContents = {
   },
 
   'FIN-002': {
+    title: 'Tipos de DRE',
+    sections: [
+      {
+        heading: '📋 O que são os Tipos de DRE?',
+        icon: '📋',
+        content: 'DRE (Demonstrativo de Resultados do Exercício) mostra se a empresa teve lucro ou prejuízo. O sistema oferece 3 modelos fixos prontos e a opção de criar estruturas personalizadas.'
+      },
+      {
+        heading: '📊 Modelo Oficial',
+        icon: '📊',
+        content: 'Estrutura padrão de DRE conforme legislação contábil brasileira. Ideal para empresas que precisam seguir normas contábeis oficiais e apresentar demonstrativos formais.',
+        items: [
+          {
+            label: '(=) Receita Bruta',
+            description: 'Total de vendas e serviços antes de deduções'
+          },
+          {
+            label: '(-) Deduções e Impostos',
+            description: 'Impostos sobre vendas, devoluções e abatimentos'
+          },
+          {
+            label: '(=) Receita Líquida',
+            description: 'Receita após deduções'
+          },
+          {
+            label: '(-) CPV/CMV',
+            description: 'Custo dos Produtos Vendidos / Custo das Mercadorias Vendidas'
+          },
+          {
+            label: '(=) Lucro Bruto',
+            description: 'Resultado após deduzir custos diretos'
+          },
+          {
+            label: '(-) Despesas Operacionais',
+            description: 'Gastos para manter a operação da empresa'
+          },
+          {
+            label: '(-) Despesas Financeiras',
+            description: 'Juros pagos, IOF, tarifas bancárias'
+          },
+          {
+            label: '(+) Receitas Financeiras',
+            description: 'Rendimentos de aplicações, juros recebidos'
+          },
+          {
+            label: '(+) Outras Receitas Operacionais',
+            description: 'Receitas secundárias da atividade'
+          },
+          {
+            label: '(=) Resultado Antes do IRPJ e CSLL',
+            description: 'Lucro antes dos impostos sobre o lucro'
+          },
+          {
+            label: '(-) IRPJ / CSLL',
+            description: 'Imposto de Renda e Contribuição Social'
+          },
+          {
+            label: '(=) Lucro Líquido do Exercício',
+            description: 'Resultado final da empresa no período'
+          }
+        ]
+      },
+      {
+        heading: '📈 Modelo EBITDA',
+        icon: '📈',
+        content: 'Foca no resultado operacional antes de juros, impostos, depreciação e amortização. Muito usado para análise de performance e comparação entre empresas.',
+        items: [
+          {
+            label: '(+) Receita de Vendas',
+            description: 'Receita total de vendas e serviços'
+          },
+          {
+            label: '(-) Deduções e Impostos',
+            description: 'Impostos sobre vendas'
+          },
+          {
+            label: '(=) Receita Líquida',
+            description: 'Receita após impostos sobre vendas'
+          },
+          {
+            label: '(-) Custo Variável (CPV ou CMV)',
+            description: 'Custos que variam conforme produção/vendas'
+          },
+          {
+            label: '(=) Margem Bruta',
+            description: 'Receita menos custos variáveis'
+          },
+          {
+            label: '(-) Despesas Variáveis',
+            description: 'Despesas que variam com as vendas (comissões, fretes)'
+          },
+          {
+            label: '(=) Margem de Contribuição',
+            description: 'Quanto sobra para cobrir custos fixos e gerar lucro'
+          },
+          {
+            label: '(-) Gastos com Pessoal',
+            description: 'Salários, encargos e benefícios'
+          },
+          {
+            label: '(-) Despesas Operacionais',
+            description: 'Aluguel, energia, telefone, etc'
+          },
+          {
+            label: '(=) EBITDA',
+            description: 'Resultado operacional puro da empresa'
+          },
+          {
+            label: '(-) Depreciação, Amortização ou Exaustão',
+            description: 'Desgaste de ativos ao longo do tempo'
+          },
+          {
+            label: '(-) Outras Receitas e Despesas',
+            description: 'Itens não operacionais'
+          },
+          {
+            label: '(=) Resultado Antes do IRPJ e CSLL',
+            description: 'Lucro antes dos impostos sobre lucro'
+          },
+          {
+            label: '(-) IRPJ e CSLL',
+            description: 'Impostos sobre o lucro'
+          },
+          {
+            label: '(=) Resultado Líquido',
+            description: 'Lucro final após todos os custos e impostos'
+          }
+        ]
+      },
+      {
+        heading: '📊 Modelo Custeio Variável',
+        icon: '📊',
+        content: 'Separa custos e despesas entre fixos e variáveis. Essencial para análise de ponto de equilíbrio e tomada de decisões gerenciais.',
+        items: [
+          {
+            label: 'Receita de Vendas',
+            description: 'Total das vendas no período'
+          },
+          {
+            label: '(-) Custos Variáveis',
+            description: 'Custos que mudam conforme volume de produção/vendas'
+          },
+          {
+            label: '(-) Despesas Variáveis',
+            description: 'Despesas proporcionais às vendas'
+          },
+          {
+            label: '(=) Margem de Contribuição Total',
+            description: 'Valor disponível para cobrir custos fixos e gerar lucro'
+          },
+          {
+            label: '(-) Custos Fixos',
+            description: 'Custos que não mudam com volume de produção'
+          },
+          {
+            label: '(-) Despesas Fixas',
+            description: 'Despesas que não variam com vendas (aluguel, salários fixos)'
+          },
+          {
+            label: '(=) Lucro Líquido',
+            description: 'Resultado final após todos os gastos'
+          }
+        ]
+      },
+      {
+        heading: '🎨 Modo Personalizado',
+        icon: '🎨',
+        content: 'Crie estruturas DRE totalmente customizadas para atender necessidades específicas da sua empresa. Você define quantas linhas quiser e como organizá-las.'
+      },
+      {
+        heading: '⚠️ Importante',
+        icon: '⚠️',
+        content: 'Os modelos fixos (Oficial, EBITDA, Custeio Variável) NÃO podem ser alterados. Eles servem como referência e garantem conformidade contábil. Use o modo Personalizado se precisar adaptar a estrutura.'
+      },
+      {
+        heading: '🔗 Vínculo com Plano de Contas',
+        icon: '🔗',
+        content: 'Ao cadastrar uma estrutura DRE, você deve vincular cada linha a contas do seu Plano de Contas. Isso garante que os valores sejam calculados automaticamente a partir dos lançamentos reais.'
+      },
+      {
+        tips: [
+          'Escolha o modelo que melhor se adequa ao seu tipo de análise',
+          'Modelo Oficial: obrigatório para prestação de contas e auditorias',
+          'Modelo EBITDA: ideal para análise de performance e valuation',
+          'Custeio Variável: essencial para análise gerencial e precificação',
+          'Modo Personalizado: para relatórios internos específicos',
+          'Você pode ter múltiplas estruturas ativas simultaneamente',
+          'Vincule sempre as contas corretas do Plano de Contas'
+        ]
+      }
+    ]
+  },
+
+  'FIN-003': {
     title: 'Estrutura DRE',
     sections: [
       {

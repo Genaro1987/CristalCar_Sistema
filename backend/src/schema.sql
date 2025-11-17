@@ -663,6 +663,7 @@ CREATE TABLE IF NOT EXISTS par_parceiros (
     estado VARCHAR(2),
     cep VARCHAR(10),
     -- Informações Comerciais
+    empresa_id INTEGER,
     limite_credito DECIMAL(15,2) DEFAULT 0,
     condicao_pagamento_padrao_id INTEGER,
     forma_pagamento_padrao_id INTEGER,
@@ -694,14 +695,17 @@ CREATE TABLE IF NOT EXISTS tab_tabelas_precos (
     codigo VARCHAR(20) UNIQUE NOT NULL,
     nome VARCHAR(200) NOT NULL,
     descricao TEXT,
+    tipo_tabela VARCHAR(20) DEFAULT 'VENDA', -- VENDA, COMPRA
     tipo_ajuste VARCHAR(20) NOT NULL, -- PERCENTUAL, FIXO, SUBSTITUIR
     valor_ajuste DECIMAL(15,2) NOT NULL, -- Valor do ajuste (% ou R$)
     data_inicio DATE,
     data_fim DATE,
+    empresa_id INTEGER,
     ativo BOOLEAN DEFAULT 1,
     observacoes TEXT,
     criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
-    atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+    atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (empresa_id) REFERENCES adm_empresa(id)
 );
 
 -- Tabela de Vinculação de Tabelas de Preços com Parceiros

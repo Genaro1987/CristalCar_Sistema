@@ -22,12 +22,14 @@ export default function TabelasPrecosPage() {
     id: null,
     nome: '',
     descricao: '',
+    tipo_tabela: 'VENDA',
     tipo_ajuste: 'PERCENTUAL',
     valor_ajuste: 0,
     data_inicio: '',
     data_fim: '',
     observacoes: '',
-    ativo: true
+    ativo: true,
+    empresa_id: null
   });
 
   const tiposAjuste = [
@@ -175,12 +177,14 @@ export default function TabelasPrecosPage() {
       id: null,
       nome: '',
       descricao: '',
+      tipo_tabela: 'VENDA',
       tipo_ajuste: 'PERCENTUAL',
       valor_ajuste: 0,
       data_inicio: '',
       data_fim: '',
       observacoes: '',
-      ativo: true
+      ativo: true,
+      empresa_id: null
     });
     setModoEdicao(false);
   };
@@ -408,6 +412,19 @@ export default function TabelasPrecosPage() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                       placeholder="Descrição opcional..."
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Tabela *</label>
+                    <select
+                      required
+                      value={formData.tipo_tabela}
+                      onChange={(e) => setFormData({...formData, tipo_tabela: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                    >
+                      <option value="VENDA">💰 Venda (Receita)</option>
+                      <option value="COMPRA">🛒 Compra (Despesa)</option>
+                    </select>
                   </div>
 
                   <div className="md:col-span-2">

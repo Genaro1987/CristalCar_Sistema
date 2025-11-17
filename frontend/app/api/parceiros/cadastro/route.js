@@ -6,12 +6,24 @@ const turso = createClient({
   authToken: process.env.TURSO_AUTH_TOKEN,
 });
 
-export async function GET() {
+export async function GET(request) {
   try {
-    const result = await turso.execute({
-      sql: `SELECT * FROM par_parceiros ORDER BY status DESC, nome_fantasia ASC`,
-      args: []
-    });
+    const { searchParams } = new URL(request.url);
+    const empresaId = searchParams.get('empresa_id');
+
+    let sql = `SELECT * FROM par_parceiros`;
+    const args = [];
+
+    if (empresaId) {
+      sql += ` WHERE (empresa_id = ? OR empresa_id IS NULL)`;
+      args.push(Number(empresaId));
+    }
+
+    sql += ` ORDER BY status DESC, nome_fantasia ASC`;
+
+    const result = args.length > 0
+      ? await turso.execute({ sql, args })
+      : await turso.execute({ sql, args: [] });
 
     return Response.json(result.rows);
   } catch (error) {
@@ -30,6 +42,13 @@ export async function POST(request) {
     // Gerar código único se não fornecido
     const codigo_unico = normalizedData.codigo_unico || normalizedData.codigo || `PAR${Date.now()}`;
 
+    // Adicionar empresa_id se não existir a coluna
+    try {
+      await turso.execute(`ALTER TABLE par_parceiros ADD COLUMN empresa_id INTEGER`);
+    } catch (e) {
+      // Coluna já existe
+    }
+
     const result = await turso.execute({
       sql: `
         INSERT INTO par_parceiros (
@@ -37,8 +56,8 @@ export async function POST(request) {
           cnpj, cpf, inscricao_estadual, inscricao_municipal, rg, email, telefone, celular, website,
           cep, endereco, numero, complemento, bairro, cidade, estado,
           banco, agencia, conta, tipo_conta, pix_chave, pix_tipo,
-          limite_credito, observacoes, status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          empresa_id, limite_credito, observacoes, status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       args: [
         codigo_unico,
@@ -69,6 +88,7 @@ export async function POST(request) {
         normalizedData.tipo_conta || null,
         normalizedData.pix_chave || normalizedData.pix || null,
         normalizedData.pix_tipo || null,
+        normalizedData.empresa_id || null,
         normalizedData.limite_credito || 0,
         normalizedData.observacoes || null,
         normalizedData.status || (normalizedData.ativo ? 'ATIVO' : 'INATIVO')

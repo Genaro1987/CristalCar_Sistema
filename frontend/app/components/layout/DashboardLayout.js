@@ -24,7 +24,7 @@ export default function DashboardLayout({ children, screenCode = '', onShowHelp 
     'TAB-002': 'Histórico de Alterações',
   };
 
-  const screenName = screenNames[screenCode] || 'Dashboard';
+  const screenName = screenNames[screenCode] || 'Página Inicial';
 
   return (
     <ToastProvider>

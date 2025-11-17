@@ -73,7 +73,7 @@ export default function Header({ screenCode = '', screenName = '', onShowHelp })
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           {/* Título da Tela */}
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{screenName || 'Dashboard'}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{screenName || 'Página Inicial'}</h1>
             <div className="flex items-center space-x-3 mt-1">
               <span className="text-sm text-gray-500">
                 {new Date().toLocaleDateString('pt-BR', {

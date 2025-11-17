@@ -107,10 +107,16 @@ export default function CondicoesPagamentoPage() {
         setMostrarModal(false);
         resetForm();
         setMensagem({ tipo: 'success', texto: 'Condição salva com sucesso.' });
+        setTimeout(() => setMensagem(null), 5000);
+      } else {
+        const erro = await response.json();
+        setMensagem({ tipo: 'error', texto: erro.error || 'Não foi possível salvar a condição de pagamento.' });
+        setTimeout(() => setMensagem(null), 5000);
       }
     } catch (error) {
       console.error('Erro ao salvar condição:', error);
       setMensagem({ tipo: 'error', texto: 'Não foi possível salvar a condição de pagamento.' });
+      setTimeout(() => setMensagem(null), 5000);
     }
   };
 
@@ -138,6 +144,11 @@ export default function CondicoesPagamentoPage() {
 
       if (response.ok) {
         carregarCondicoes();
+        setMensagem({ tipo: 'success', texto: 'Condição de pagamento removida com sucesso.' });
+        setTimeout(() => setMensagem(null), 5000);
+      } else {
+        setMensagem({ tipo: 'error', texto: 'Não foi possível excluir a condição de pagamento.' });
+        setTimeout(() => setMensagem(null), 5000);
       }
     } catch (error) {
       console.error('Erro ao excluir condição:', error);
@@ -308,7 +319,7 @@ export default function CondicoesPagamentoPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {condicao.forma_pagamento_nome || formasPagamento.find(f => f.id === condicao.forma_pagamento_id)?.nome || '-'}
+                        {condicao.forma_pagamento_nome || formasPagamento.find(f => f.id === condicao.forma_pagamento_id)?.descricao || formasPagamento.find(f => f.id === condicao.forma_pagamento_id)?.nome || '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {condicao.tipo === 'A_VISTA' ? '1x' : `${condicao.qtd_parcelas}x`}
@@ -443,10 +454,10 @@ export default function CondicoesPagamentoPage() {
                       onChange={(e) => setFormData({...formData, forma_pagamento_id: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                     >
-                      <option value="">Selecione...</option>
+                      <option value="">Selecione uma forma de pagamento...</option>
                       {formasPagamento.map(forma => (
                         <option key={forma.id} value={forma.id}>
-                          {forma.nome}
+                          {forma.descricao || forma.nome}
                         </option>
                       ))}
                     </select>
