@@ -12,9 +12,9 @@ async function garantirTabelasCondicoes() {
     CREATE TABLE IF NOT EXISTS fin_condicoes_pagamento (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       codigo VARCHAR(20) UNIQUE NOT NULL,
-      nome VARCHAR(200) NOT NULL,
+      nome VARCHAR(200) NOT NULL DEFAULT '',
       descricao TEXT,
-      tipo VARCHAR(20) NOT NULL,
+      tipo VARCHAR(20) NOT NULL DEFAULT 'A_VISTA',
       forma_pagamento_id INTEGER,
       quantidade_parcelas INTEGER DEFAULT 1,
       dias_primeira_parcela INTEGER DEFAULT 0,
@@ -75,8 +75,8 @@ export async function POST(request) {
     const data = await request.json();
 
     // Normalizar campos de texto (MAIÚSCULO sem acentos)
-    const nome = normalizarTexto(data.nome);
-    const descricao = data.descricao ? normalizarTexto(data.descricao) : null;
+    const nome = normalizarTexto(data.nome || 'SEM NOME');
+    const descricao = data.descricao ? normalizarTexto(data.descricao) : '';
     const observacoes = data.observacoes ? normalizarTexto(data.observacoes) : null;
 
     const result = await turso.execute({

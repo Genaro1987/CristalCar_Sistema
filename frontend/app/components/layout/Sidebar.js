@@ -174,9 +174,12 @@ export default function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 h-screen w-80 bg-gradient-to-b from-secondary-800 to-secondary-900 text-white shadow-xl flex flex-col">
       {/* Logo */}
-      <div className="flex-shrink-0 p-6 border-b border-secondary-700">
-        <div className="flex flex-col items-center space-y-3 text-center">
-          <div className="w-80 h-80 flex items-center justify-center overflow-hidden">
+      <div className="flex-shrink-0 p-4 border-b border-secondary-700">
+        <div className="flex flex-col items-center space-y-2 text-center">
+          <h2 className="text-xl font-bold text-white">
+            {empresa?.nome_fantasia || 'Cristal Car'}
+          </h2>
+          <div className="w-48 h-48 flex items-center justify-center overflow-hidden">
             {empresa?.logo_path ? (
               <img
                 src={empresa.logo_path}
@@ -184,14 +187,12 @@ export default function Sidebar() {
                 className="w-full h-full object-contain"
               />
             ) : (
-              <span className="text-6xl font-bold text-white">
-                {empresa?.nome_fantasia ? empresa.nome_fantasia.substring(0, 2).toUpperCase() : ''}
+              <span className="text-5xl font-bold text-white">
+                {(empresa?.nome_fantasia || 'CC').substring(0, 2).toUpperCase()}
               </span>
             )}
           </div>
-          <div>
-            <p className="text-lg font-semibold text-white">Sistema ERP</p>
-          </div>
+          <p className="text-base font-semibold text-white">Sistema ERP</p>
         </div>
       </div>
 
@@ -210,8 +211,8 @@ export default function Sidebar() {
                         : 'hover:bg-secondary-700 text-secondary-300 hover:text-white'
                     }`}
                   >
-                    <span className="text-xl">{item.icon}</span>
-                    <span className="font-medium text-base">{item.name}</span>
+                    <span className="text-2xl">{item.icon}</span>
+                    <span className="font-medium text-lg">{item.name}</span>
                   </Link>
                 ) : (
                   <>
@@ -220,8 +221,8 @@ export default function Sidebar() {
                       className="w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 hover:bg-secondary-700 text-secondary-300 hover:text-white"
                     >
                       <div className="flex items-center space-x-3">
-                        <span className="text-xl">{item.icon}</span>
-                        <span className="font-medium text-base">{item.name}</span>
+                        <span className="text-2xl">{item.icon}</span>
+                        <span className="font-medium text-lg">{item.name}</span>
                       </div>
                       <svg
                         className={`w-4 h-4 transition-transform duration-200 ${
@@ -243,11 +244,11 @@ export default function Sidebar() {
                             <div>
                               <button
                                 onClick={() => toggleSubmodule(subitem.id)}
-                                className="w-full cursor-pointer px-3 py-2.5 rounded-lg text-sm font-medium text-secondary-300 hover:bg-secondary-700 hover:text-white transition-all duration-200"
+                                className="w-full cursor-pointer px-3 py-2.5 rounded-lg text-base font-medium text-secondary-300 hover:bg-secondary-700 hover:text-white transition-all duration-200"
                               >
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center space-x-2">
-                                    <span className="text-base">{subitem.icon}</span>
+                                    <span className="text-lg">{subitem.icon}</span>
                                     <span>{subitem.name}</span>
                                   </div>
                                   <svg
@@ -268,7 +269,7 @@ export default function Sidebar() {
                                     <li key={idx}>
                                       <Link
                                         href={subsubitem.href}
-                                        className={`block px-3 py-2 rounded-lg text-xs transition-all duration-200 ${
+                                        className={`block px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
                                           isActive(subsubitem.href)
                                             ? 'bg-primary-500 text-white font-semibold shadow-md'
                                             : 'text-secondary-400 hover:bg-secondary-700 hover:text-white'
