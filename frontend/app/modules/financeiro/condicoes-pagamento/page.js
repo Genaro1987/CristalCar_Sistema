@@ -46,7 +46,14 @@ export default function CondicoesPagamentoPage() {
         const data = await response.json();
         const normalizadas = (data || []).map((item) => ({
           ...item,
-          ativo: item.ativo === 1 || item.ativo === true || item.status === 'ATIVO'
+          ativo: item.ativo === 1 || item.ativo === true || item.status === 'ATIVO',
+          forma_pagamento_id: item.forma_pagamento_id ? Number(item.forma_pagamento_id) : '',
+          forma_pagamento_nome: item.forma_pagamento_nome || item.nome_forma_pagamento,
+          qtd_parcelas: Number(item.quantidade_parcelas ?? item.qtd_parcelas ?? 1),
+          dias_primeira_parcela: Number(item.dias_primeira_parcela ?? 0),
+          dias_entre_parcelas: Number(item.dias_entre_parcelas ?? 30),
+          desconto_percentual: Number(item.desconto_percentual ?? item.percentual_desconto ?? 0),
+          acrescimo_percentual: Number(item.acrescimo_percentual ?? item.percentual_acrescimo ?? 0),
         }));
         setCondicoes(normalizadas);
       }
@@ -108,7 +115,15 @@ export default function CondicoesPagamentoPage() {
   };
 
   const handleEditar = (condicao) => {
-    setFormData(condicao);
+    setFormData({
+      ...condicao,
+      forma_pagamento_id: condicao.forma_pagamento_id ? Number(condicao.forma_pagamento_id) : '',
+      qtd_parcelas: condicao.qtd_parcelas || condicao.quantidade_parcelas || 1,
+      dias_primeira_parcela: condicao.dias_primeira_parcela || 0,
+      dias_entre_parcelas: condicao.dias_entre_parcelas || 30,
+      desconto_percentual: condicao.desconto_percentual || 0,
+      acrescimo_percentual: condicao.acrescimo_percentual || 0,
+    });
     setModoEdicao(true);
     setMostrarModal(true);
   };
@@ -293,7 +308,7 @@ export default function CondicoesPagamentoPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formasPagamento.find(f => f.id === condicao.forma_pagamento_id)?.nome || '-'}
+                        {condicao.forma_pagamento_nome || formasPagamento.find(f => f.id === condicao.forma_pagamento_id)?.nome || '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {condicao.tipo === 'A_VISTA' ? '1x' : `${condicao.qtd_parcelas}x`}

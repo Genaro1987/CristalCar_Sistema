@@ -12,11 +12,13 @@ export default function EstruturaDREPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [empresaId, setEmpresaId] = useState(null);
+  const [tiposEstrutura, setTiposEstrutura] = useState([]);
   const [formData, setFormData] = useState({
     codigo: '',
     descricao: '',
     nivel: 1,
     tipo: 'RECEITA_BRUTA',
+    tipo_estrutura_id: null,
     ordem_exibicao: 1,
     eh_totalizadora: false,
     formula: '',
@@ -63,6 +65,26 @@ export default function EstruturaDREPage() {
   }, []);
 
   useEffect(() => {
+    carregarTiposEstrutura();
+  }, []);
+
+  useEffect(() => {
+    if (tiposEstrutura.length > 0 && !formData.tipo_estrutura_id) {
+      const correspondente = tiposEstrutura.find(
+        (t) => (t.codigo || '').toUpperCase() === (formData.tipo || '').toUpperCase()
+      );
+      const padrao = correspondente || tiposEstrutura[0];
+      if (padrao) {
+        setFormData((prev) => ({
+          ...prev,
+          tipo_estrutura_id: Number(padrao.id),
+          tipo: padrao.codigo || prev.tipo,
+        }));
+      }
+    }
+  }, [tiposEstrutura]);
+
+  useEffect(() => {
     loadItens();
     carregarModelos();
   }, [empresaId]);
@@ -72,6 +94,22 @@ export default function EstruturaDREPage() {
       loadItens(modeloSelecionado);
     }
   }, [modeloSelecionado]);
+
+  const carregarTiposEstrutura = async () => {
+    try {
+      const resp = await fetch('/api/tipos-estrutura-dre');
+      if (resp.ok) {
+        const data = await resp.json();
+        const normalizados = (data || []).map((tipo) => ({
+          ...tipo,
+          id: Number(tipo.id),
+        }));
+        setTiposEstrutura(normalizados);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar tipos de estrutura do DRE:', error);
+    }
+  };
 
   const carregarModelos = async () => {
     try {
@@ -108,6 +146,7 @@ export default function EstruturaDREPage() {
           ...item,
           descricao: (item.descricao || '').trim(),
           codigo: (item.codigo || '').toString().trim(),
+          tipo_estrutura_id: item.tipo_estrutura_id ? Number(item.tipo_estrutura_id) : null,
         }));
         const filtrados = normalizados.filter(item => Number(item.id) !== 0);
         setItens(filtrados);
@@ -123,6 +162,33 @@ export default function EstruturaDREPage() {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+  };
+
+  const handleTipoChange = (valorSelecionado) => {
+    const encontrado = tiposEstrutura.find((t) => `${t.id}` === valorSelecionado);
+    if (encontrado) {
+      setFormData((prev) => ({
+        ...prev,
+        tipo_estrutura_id: Number(encontrado.id),
+        tipo: encontrado.codigo || encontrado.nome,
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        tipo_estrutura_id: null,
+        tipo: valorSelecionado,
+      }));
+    }
+  };
+
+  const obterTipoLabel = (codigo, tipoId) => {
+    const porId = tiposEstrutura.find((t) => tipoId && Number(t.id) === Number(tipoId));
+    if (porId) return porId.nome || porId.codigo;
+    const porCodigo = tiposEstrutura.find(
+      (t) => (t.codigo || '').toUpperCase() === (codigo || '').toUpperCase()
+    );
+    if (porCodigo) return porCodigo.nome || porCodigo.codigo;
+    return tiposDRE.find((tipo) => tipo.value === codigo)?.label || codigo;
   };
 
   const handleSubmit = async (e) => {
@@ -154,6 +220,7 @@ export default function EstruturaDREPage() {
         descricao: formData.descricao,
         nivel: formData.nivel,
         tipo: formData.tipo,
+        tipo_estrutura_id: formData.tipo_estrutura_id,
         ordem_exibicao: formData.ordem_exibicao,
         formula: formData.eh_totalizadora ? formData.formula : null,
         exibir_negativo: formData.exibir_negativo,
@@ -253,6 +320,7 @@ export default function EstruturaDREPage() {
       descricao: item.descricao,
       nivel: item.nivel,
       tipo: item.tipo,
+      tipo_estrutura_id: item.tipo_estrutura_id || null,
       ordem_exibicao: item.ordem_exibicao,
       eh_totalizadora: item.eh_totalizadora || false,
       formula: item.formula || '',
@@ -353,6 +421,7 @@ export default function EstruturaDREPage() {
       descricao: '',
       nivel: 1,
       tipo: 'RECEITA_BRUTA',
+      tipo_estrutura_id: null,
       ordem_exibicao: 1,
       eh_totalizadora: false,
       formula: '',
@@ -375,6 +444,15 @@ export default function EstruturaDREPage() {
     };
     return style;
   };
+
+  const opcoesTipos = tiposEstrutura.length > 0
+    ? [
+        ...tiposEstrutura,
+        ...tiposDRE
+          .filter((tipo) => !tiposEstrutura.some((t) => (t.codigo || '').toUpperCase() === tipo.value))
+          .map((tipo) => ({ id: tipo.value, codigo: tipo.value, nome: tipo.label })),
+      ]
+    : tiposDRE.map((tipo) => ({ id: tipo.value, codigo: tipo.value, nome: tipo.label }));
 
   return (
     <DashboardLayout screenCode="FIN-002">
@@ -577,12 +655,14 @@ export default function EstruturaDREPage() {
                       </label>
                       <select
                         name="tipo"
-                        value={formData.tipo}
-                        onChange={handleInputChange}
+                        value={formData.tipo_estrutura_id ? String(formData.tipo_estrutura_id) : formData.tipo}
+                        onChange={(e) => handleTipoChange(e.target.value)}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                       >
-                        {tiposDRE.map(tipo => (
-                          <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
+                        {opcoesTipos.map(tipo => (
+                          <option key={tipo.id || tipo.codigo} value={tipo.id ? String(tipo.id) : tipo.codigo}>
+                            {tipo.nome || tipo.label || tipo.codigo}
+                          </option>
                         ))}
                       </select>
                     </div>

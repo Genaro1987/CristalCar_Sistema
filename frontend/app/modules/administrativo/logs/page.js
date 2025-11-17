@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import DashboardLayout from '@/app/components/layout/DashboardLayout';
 import Card from '@/app/components/ui/Card';
 import Button from '@/app/components/ui/Button';
+import { useToast } from '@/app/components/ui/ToastProvider';
 
 export default function RegistroLogPage() {
   const [configs, setConfigs] = useState([]);
@@ -12,6 +13,7 @@ export default function RegistroLogPage() {
   const [moduloFilter, setModuloFilter] = useState('TODOS');
   const [showLogs, setShowLogs] = useState(false);
   const [logs, setLogs] = useState([]);
+  const { addToast } = useToast();
 
   // Definição de todas as telas do sistema
   const telasDisponiveis = [
@@ -44,23 +46,16 @@ export default function RegistroLogPage() {
 
   const loadConfigs = async () => {
     try {
-      const response = await fetch('/api/administrativo/telas');
+      const response = await fetch('/api/administrativo/logs?logs=1');
       if (!response.ok) throw new Error('Falha ao buscar telas');
 
-      const telas = await response.json();
-      const configuracoes = telas.map((tela) => ({
-        id: tela.id || tela.codigo_tela,
-        modulo: tela.modulo,
-        tela: tela.nome_tela,
-        codigo: tela.codigo_tela,
-        registrar_log: false,
-        registrar_visualizacao: true,
-        registrar_inclusao: true,
-        registrar_edicao: true,
-        registrar_exclusao: true,
+      const { configs: configuracoes = [], logs: registros = [] } = await response.json();
+      const normalizados = configuracoes.map((cfg) => ({
+        ...cfg,
+        nome: cfg.tela,
       }));
-
-      setConfigs(configuracoes);
+      setConfigs(normalizados);
+      setLogs(registros);
     } catch (error) {
       console.error('Erro ao carregar telas para log:', error);
       // Fallback para lista estática
@@ -91,7 +86,7 @@ export default function RegistroLogPage() {
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(config =>
-        config.nome.toLowerCase().includes(term) ||
+        config.nome?.toLowerCase().includes(term) ||
         config.codigo.toLowerCase().includes(term) ||
         config.tela.toLowerCase().includes(term)
       );
@@ -113,8 +108,27 @@ export default function RegistroLogPage() {
   };
 
   const handleSaveAll = () => {
-    // Aqui salvaria todas as configurações no banco
-    alert('Configurações salvas com sucesso!');
+    fetch('/api/administrativo/logs', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ configs }),
+    })
+      .then((resp) => {
+        if (!resp.ok) throw new Error('Falha ao salvar configurações');
+        addToast({
+          type: 'success',
+          title: 'Configurações atualizadas',
+          message: 'Preferências de auditoria salvas com sucesso.',
+        });
+      })
+      .catch((err) => {
+        console.error(err);
+        addToast({
+          type: 'error',
+          title: 'Erro ao salvar',
+          message: 'Não foi possível gravar as configurações de log.',
+        });
+      });
   };
 
   const handleAtivarTodas = () => {
@@ -295,7 +309,7 @@ export default function RegistroLogPage() {
                       filteredConfigs.map((config) => (
                         <tr key={config.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">{config.nome}</div>
+                            <div className="text-sm font-medium text-gray-900">{config.nome || config.tela}</div>
                             <div className="text-xs text-gray-500">{config.codigo}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

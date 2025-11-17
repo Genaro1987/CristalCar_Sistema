@@ -76,24 +76,34 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <Card title="Atalhos rápidos" subtitle="Acesse rapidamente as telas principais do sistema">
+        <Card title="Você sabia?" subtitle="Dicas rápidas para melhorar a gestão e os processos">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[{
-              titulo: 'Cadastro da Empresa', descricao: 'Revise ou atualize os dados oficiais', caminho: '/modules/administrativo/empresa'
-            }, {
-              titulo: 'Plano de Contas', descricao: 'Mantenha a hierarquia contábil em dia', caminho: '/modules/modelos-plano/plano-contas'
-            }, {
-              titulo: 'Formas de Pagamento', descricao: 'Configure meios de cobrança e recebimento', caminho: '/modules/financeiro/formas-pagamento'
-            }].map((atalho, idx) => (
-              <a
-                key={idx}
-                href={atalho.caminho}
-                className="block p-4 border border-gray-200 rounded-lg hover:border-primary-500 hover:shadow-md transition"
-              >
-                <h3 className="font-semibold text-gray-900">{atalho.titulo}</h3>
-                <p className="text-sm text-gray-600 mt-1">{atalho.descricao}</p>
-              </a>
-            ))}
+            <div className="p-4 rounded-lg bg-white border border-gray-200 shadow-sm">
+              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                <span className="text-lg">📊</span> Fluxo de caixa saudável
+              </h3>
+              <p className="text-sm text-gray-600 mt-2">
+                Atualize o plano de contas antes de começar os lançamentos e acompanhe semanalmente os saldos das contas bancárias.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-lg bg-white border border-gray-200 shadow-sm">
+              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                <span className="text-lg">🤝</span> Equipes alinhadas
+              </h3>
+              <p className="text-sm text-gray-600 mt-2">
+                Registre cada funcionário na empresa correta e defina responsáveis por área para facilitar aprovações e controles.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-lg bg-white border border-gray-200 shadow-sm">
+              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                <span className="text-lg">⚙️</span> Processos padronizados
+              </h3>
+              <p className="text-sm text-gray-600 mt-2">
+                Utilize os modelos de DRE para definir tipos e estrutura. Isso garante relatórios consistentes e comparáveis entre empresas.
+              </p>
+            </div>
           </div>
         </Card>
       </div>
