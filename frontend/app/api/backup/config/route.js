@@ -8,7 +8,7 @@ const turso = createClient({
 export async function GET() {
   try {
     const result = await turso.execute({
-      sql: `SELECT * FROM adm_backup_config LIMIT 1`,
+      sql: `SELECT * FROM adm_configuracao_backup LIMIT 1`,
       args: []
     });
 
@@ -43,7 +43,7 @@ export async function POST(request) {
 
     // Verificar se já existe configuração
     const existing = await turso.execute({
-      sql: `SELECT id FROM adm_backup_config LIMIT 1`,
+      sql: `SELECT id FROM adm_configuracao_backup LIMIT 1`,
       args: []
     });
 
@@ -51,7 +51,7 @@ export async function POST(request) {
       // Atualizar configuração existente
       await turso.execute({
         sql: `
-          UPDATE adm_backup_config
+          UPDATE adm_configuracao_backup
           SET tipo_backup = ?,
               diretorio_local = ?,
               google_drive_folder_id = ?,
@@ -83,7 +83,7 @@ export async function POST(request) {
       // Criar nova configuração
       const result = await turso.execute({
         sql: `
-          INSERT INTO adm_backup_config (
+          INSERT INTO adm_configuracao_backup (
             tipo_backup, diretorio_local, google_drive_folder_id,
             frequencia, horario_execucao, dia_semana, dia_mes,
             quantidade_manter, backup_automatico

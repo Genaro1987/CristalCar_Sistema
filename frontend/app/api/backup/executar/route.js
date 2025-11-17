@@ -15,8 +15,8 @@ const TABELAS_BACKUP = [
   'adm_perfis_acesso',
   'adm_permissoes',
   'adm_favoritos',
-  'adm_backup_config',
-  'adm_backup_historico',
+  'adm_configuracao_backup',
+  'adm_historico_backup',
   'adm_logs',
 
   // Parceiros
@@ -82,7 +82,7 @@ export async function POST() {
     try {
       await turso.execute({
         sql: `
-          INSERT INTO adm_backup_historico (
+          INSERT INTO adm_historico_backup (
             data_backup, status, tipo_backup, local_arquivo,
             tamanho_arquivo_bytes, tempo_execucao_segundos, mensagem_erro
           ) VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -106,7 +106,7 @@ export async function POST() {
     try {
       await turso.execute({
         sql: `
-          UPDATE adm_backup_config
+          UPDATE adm_configuracao_backup
           SET ultimo_backup = ?
           WHERE id = 1
         `,
@@ -136,7 +136,7 @@ export async function POST() {
     try {
       await turso.execute({
         sql: `
-          INSERT INTO adm_backup_historico (
+          INSERT INTO adm_historico_backup (
             data_backup, status, tipo_backup, tempo_execucao_segundos, mensagem_erro
           ) VALUES (?, ?, ?, ?, ?)
         `,
