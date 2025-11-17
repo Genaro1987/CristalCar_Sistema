@@ -23,13 +23,18 @@ async function garantirTabelaTelas() {
     )
   `);
 
-  // Migração: garantir que coluna codigo existe
+  // Migrações: garantir que todas as colunas existem
   try {
     const tableInfo = await turso.execute('PRAGMA table_info(adm_telas)');
-    const temCodigo = tableInfo.rows?.some(row => row.name === 'codigo');
+    const colunas = tableInfo.rows?.map(row => row.name) || [];
 
-    if (!temCodigo) {
-      // Adicionar coluna codigo
+    // Migração 1: adicionar coluna nome se não existir
+    if (!colunas.includes('nome')) {
+      await turso.execute('ALTER TABLE adm_telas ADD COLUMN nome VARCHAR(200)');
+    }
+
+    // Migração 2: adicionar coluna codigo se não existir
+    if (!colunas.includes('codigo')) {
       await turso.execute('ALTER TABLE adm_telas ADD COLUMN codigo VARCHAR(20)');
 
       // Preencher com valores temporários únicos
@@ -44,9 +49,29 @@ async function garantirTabelaTelas() {
       // Criar índice único
       await turso.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_adm_telas_codigo ON adm_telas(codigo)');
     }
+
+    // Migração 3: adicionar outras colunas se não existirem
+    if (!colunas.includes('modulo')) {
+      await turso.execute('ALTER TABLE adm_telas ADD COLUMN modulo VARCHAR(50)');
+    }
+    if (!colunas.includes('descricao')) {
+      await turso.execute('ALTER TABLE adm_telas ADD COLUMN descricao TEXT');
+    }
+    if (!colunas.includes('rota')) {
+      await turso.execute('ALTER TABLE adm_telas ADD COLUMN rota VARCHAR(500)');
+    }
+    if (!colunas.includes('icone')) {
+      await turso.execute('ALTER TABLE adm_telas ADD COLUMN icone VARCHAR(50)');
+    }
+    if (!colunas.includes('ordem')) {
+      await turso.execute('ALTER TABLE adm_telas ADD COLUMN ordem INTEGER DEFAULT 999');
+    }
+    if (!colunas.includes('ativo')) {
+      await turso.execute('ALTER TABLE adm_telas ADD COLUMN ativo BOOLEAN DEFAULT 1');
+    }
   } catch (error) {
     // Migração já foi aplicada ou erro recuperável
-    console.log('Migração codigo:', error.message);
+    console.log('Migração colunas adm_telas:', error.message);
   }
 
   const telasPadroes = [
