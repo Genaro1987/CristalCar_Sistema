@@ -42,10 +42,13 @@ export default function IndicadoresCustomizaveisPage() {
       const response = await fetch('/api/indicadores/customizaveis');
       if (response.ok) {
         const data = await response.json();
-        setIndicadores(data);
+        setIndicadores(Array.isArray(data) ? data : []);
+      } else {
+        setIndicadores([]);
       }
     } catch (error) {
       console.error('Erro ao carregar indicadores:', error);
+      setIndicadores([]);
     }
   };
 

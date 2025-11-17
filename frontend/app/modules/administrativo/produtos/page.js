@@ -39,10 +39,13 @@ export default function ProdutosPage() {
       const response = await fetch('/api/administrativo/produtos');
       if (response.ok) {
         const data = await response.json();
-        setProdutos(data);
+        setProdutos(Array.isArray(data) ? data : []);
+      } else {
+        setProdutos([]);
       }
     } catch (error) {
       console.error('Erro ao carregar produtos:', error);
+      setProdutos([]);
     }
   };
 
@@ -436,17 +439,16 @@ export default function ProdutosPage() {
 
                   {/* Grid de Campos */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Código (read-only se editando) */}
+                    {/* Código (sempre read-only, auto-gerado) */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Código {!editandoId && <span className="text-gray-500">(gerado automaticamente)</span>}
+                        Código <span className="text-gray-500">(gerado automaticamente)</span>
                       </label>
                       <input
                         type="text"
-                        value={formData.codigo}
-                        onChange={(e) => setFormData({...formData, codigo: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        disabled={!!editandoId}
+                        value={formData.codigo || 'Será gerado automaticamente'}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
+                        readOnly
                       />
                     </div>
 
