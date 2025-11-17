@@ -1,4 +1,5 @@
 import { createClient } from '@libsql/client';
+import { normalizarTexto } from '@/lib/text-utils';
 
 const turso = createClient({
   url: process.env.TURSO_DATABASE_URL,
@@ -23,6 +24,14 @@ export async function POST(request) {
   try {
     const data = await request.json();
 
+    // Normalizar campos de texto (MAIÚSCULO sem acentos)
+    const nome_completo = normalizarTexto(data.nome_completo);
+    const endereco = data.endereco ? normalizarTexto(data.endereco) : null;
+    const cidade = data.cidade ? normalizarTexto(data.cidade) : null;
+    const cargo = data.cargo ? normalizarTexto(data.cargo) : null;
+    const departamento = data.departamento ? normalizarTexto(data.departamento) : null;
+    const observacoes = data.observacoes ? normalizarTexto(data.observacoes) : null;
+
     const result = await turso.execute({
       sql: `
         INSERT INTO adm_funcionarios (
@@ -30,42 +39,35 @@ export async function POST(request) {
           telefone, celular, email,
           endereco, cidade, estado, cep,
           cargo, departamento, data_admissao, data_demissao,
-          salario, horario_entrada, horario_saida,
-          horario_almoco_inicio, horario_almoco_fim,
-          dias_trabalho, status, observacoes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          salario, status, observacoes
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       args: [
         data.codigo_unico,
-        data.nome_completo,
+        nome_completo,
         data.cpf,
         data.rg || null,
         data.data_nascimento || null,
         data.telefone || null,
         data.celular || null,
-        data.email || null,
-        data.endereco || null,
-        data.cidade || null,
+        data.email?.toLowerCase() || null,
+        endereco,
+        cidade,
         data.estado || null,
         data.cep || null,
-        data.cargo || null,
-        data.departamento || null,
+        cargo,
+        departamento,
         data.data_admissao || null,
         data.data_demissao || null,
         data.salario || null,
-        data.horario_entrada || null,
-        data.horario_saida || null,
-        data.horario_almoco_inicio || null,
-        data.horario_almoco_fim || null,
-        data.dias_trabalho ? data.dias_trabalho.join(',') : null,
         data.status || 'ATIVO',
-        data.observacoes || null
+        observacoes
       ]
     });
 
     return Response.json({ success: true, id: result.lastInsertRowid });
   } catch (error) {
     console.error('Erro ao criar funcionário:', error);
-    return Response.json({ error: 'Erro ao criar funcionário' }, { status: 500 });
+    return Response.json({ error: 'Erro ao criar funcionário: ' + error.message }, { status: 500 });
   }
 }
