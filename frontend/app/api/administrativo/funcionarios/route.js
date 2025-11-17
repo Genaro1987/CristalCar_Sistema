@@ -16,9 +16,19 @@ async function garantirColunaEmpresa() {
   }
 }
 
+async function garantirColunaDepartamento() {
+  const info = await turso.execute('PRAGMA table_info(adm_funcionarios)');
+  const possuiDepartamentoId = info.rows?.some((c) => c.name === 'departamento_id');
+  if (!possuiDepartamentoId) {
+    await turso.execute('ALTER TABLE adm_funcionarios ADD COLUMN departamento_id INTEGER');
+    await turso.execute('CREATE INDEX IF NOT EXISTS idx_funcionarios_departamento ON adm_funcionarios(departamento_id)');
+  }
+}
+
 export async function GET(request) {
   try {
     await garantirColunaEmpresa();
+    await garantirColunaDepartamento();
     const { searchParams } = new URL(request.url);
     const empresaId = searchParams.get('empresa_id');
 
@@ -41,6 +51,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     await garantirColunaEmpresa();
+    await garantirColunaDepartamento();
     const data = await request.json();
 
     // Normalizar campos de texto (MAIÚSCULO sem acentos)
@@ -48,7 +59,6 @@ export async function POST(request) {
     const endereco = data.endereco ? normalizarTexto(data.endereco) : null;
     const cidade = data.cidade ? normalizarTexto(data.cidade) : null;
     const cargo = data.cargo ? normalizarTexto(data.cargo) : null;
-    const departamento = data.departamento ? normalizarTexto(data.departamento) : null;
     const observacoes = data.observacoes ? normalizarTexto(data.observacoes) : null;
 
     const result = await turso.execute({
@@ -57,7 +67,7 @@ export async function POST(request) {
           codigo_unico, nome_completo, cpf, rg, data_nascimento,
           telefone, celular, email,
           endereco, cidade, estado, cep,
-          cargo, departamento, data_admissao, data_demissao,
+          cargo, departamento_id, data_admissao, data_demissao,
           salario, status, observacoes, empresa_id
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
@@ -75,7 +85,7 @@ export async function POST(request) {
         data.estado || null,
         data.cep || null,
         cargo,
-        departamento,
+        data.departamento_id || null,
         data.data_admissao || null,
         data.data_demissao || null,
         data.salario || null,
