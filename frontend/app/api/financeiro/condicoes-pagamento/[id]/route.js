@@ -1,4 +1,5 @@
 import { createClient } from '@libsql/client';
+import { normalizarTexto } from '@/lib/text-utils';
 
 const turso = createClient({
   url: process.env.TURSO_DATABASE_URL,
@@ -10,35 +11,42 @@ export async function PUT(request, { params }) {
     const data = await request.json();
     const { id } = params;
 
+    // Normalizar campos de texto (MAIÚSCULO sem acentos)
+    const nome = normalizarTexto(data.nome);
+    const descricao = data.descricao ? normalizarTexto(data.descricao) : null;
+    const observacoes = data.observacoes ? normalizarTexto(data.observacoes) : null;
+
     await turso.execute({
       sql: `
         UPDATE fin_condicoes_pagamento
-        SET nome = ?,
+        SET codigo = ?,
+            nome = ?,
             descricao = ?,
             tipo = ?,
             forma_pagamento_id = ?,
-            qtd_parcelas = ?,
+            quantidade_parcelas = ?,
             dias_primeira_parcela = ?,
             dias_entre_parcelas = ?,
-            acrescimo_percentual = ?,
-            desconto_percentual = ?,
+            percentual_desconto = ?,
+            percentual_acrescimo = ?,
+            status = ?,
             observacoes = ?,
-            ativo = ?,
-            updated_at = CURRENT_TIMESTAMP
+            atualizado_em = CURRENT_TIMESTAMP
         WHERE id = ?
       `,
       args: [
-        data.nome,
-        data.descricao || null,
+        data.codigo || `COND${Date.now()}`,
+        nome,
+        descricao,
         data.tipo,
         data.forma_pagamento_id,
-        data.qtd_parcelas || 1,
+        data.quantidade_parcelas || data.qtd_parcelas || 1,
         data.dias_primeira_parcela || 0,
         data.dias_entre_parcelas || 30,
-        data.acrescimo_percentual || 0,
-        data.desconto_percentual || 0,
-        data.observacoes || null,
-        data.ativo ? 1 : 0,
+        data.percentual_desconto || data.desconto_percentual || 0,
+        data.percentual_acrescimo || data.acrescimo_percentual || 0,
+        data.status || (data.ativo ? 'ATIVO' : 'INATIVO'),
+        observacoes,
         id
       ]
     });
@@ -46,7 +54,7 @@ export async function PUT(request, { params }) {
     return Response.json({ success: true });
   } catch (error) {
     console.error('Erro ao atualizar condição:', error);
-    return Response.json({ error: 'Erro ao atualizar condição' }, { status: 500 });
+    return Response.json({ error: 'Erro ao atualizar condição: ' + error.message }, { status: 500 });
   }
 }
 
@@ -54,18 +62,11 @@ export async function DELETE(request, { params }) {
   try {
     const { id } = params;
 
-    // Verificar se a condição está sendo usada em vendas
-    const checkResult = await turso.execute({
-      sql: 'SELECT COUNT(*) as count FROM mov_vendas WHERE condicao_pagamento_id = ?',
-      args: [id]
-    });
-
-    if (checkResult.rows[0].count > 0) {
-      return Response.json(
-        { error: 'Não é possível excluir. Esta condição está sendo usada em vendas.' },
-        { status: 400 }
-      );
-    }
+    // TODO: Verificar se a condição está sendo usada quando tabelas de vendas/compras forem implementadas
+    // const checkResult = await turso.execute({
+    //   sql: 'SELECT COUNT(*) as count FROM fat_notas_fiscais WHERE condicao_pagamento_id = ?',
+    //   args: [id]
+    // });
 
     await turso.execute({
       sql: 'DELETE FROM fin_condicoes_pagamento WHERE id = ?',
@@ -75,6 +76,6 @@ export async function DELETE(request, { params }) {
     return Response.json({ success: true });
   } catch (error) {
     console.error('Erro ao excluir condição:', error);
-    return Response.json({ error: 'Erro ao excluir condição' }, { status: 500 });
+    return Response.json({ error: 'Erro ao excluir condição: ' + error.message }, { status: 500 });
   }
 }
