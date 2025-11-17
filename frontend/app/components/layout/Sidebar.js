@@ -92,6 +92,7 @@ export default function Sidebar() {
             { name: 'Cadastro da Empresa', href: '/modules/administrativo/empresa', code: 'ADM-001' },
             { name: 'Funcionários', href: '/modules/administrativo/funcionarios', code: 'ADM-002' },
             { name: 'Departamentos', href: '/modules/administrativo/departamentos', code: 'ADM-006' },
+            { name: 'Produtos', href: '/modules/administrativo/produtos', code: 'ADM-007' },
             { name: 'Layouts de Importação', href: '/modules/administrativo/layouts', code: 'ADM-003' },
             { name: 'Configuração de Backup', href: '/modules/administrativo/backup', code: 'ADM-004' },
             { name: 'Registro de Log', href: '/modules/administrativo/logs', code: 'ADM-005' },

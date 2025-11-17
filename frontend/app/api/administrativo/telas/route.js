@@ -80,6 +80,7 @@ async function garantirTabelaTelas() {
     { codigo: 'ADM-001', modulo: 'ADMINISTRATIVO', nome: 'CADASTRO DA EMPRESA', rota: '/modules/administrativo/empresa', icone: '🏢', ordem: 1 },
     { codigo: 'ADM-002', modulo: 'ADMINISTRATIVO', nome: 'FUNCIONARIOS', rota: '/modules/administrativo/funcionarios', icone: '👥', ordem: 2 },
     { codigo: 'ADM-006', modulo: 'ADMINISTRATIVO', nome: 'DEPARTAMENTOS', rota: '/modules/administrativo/departamentos', icone: '🏛️', ordem: 6 },
+    { codigo: 'ADM-007', modulo: 'ADMINISTRATIVO', nome: 'PRODUTOS', rota: '/modules/administrativo/produtos', icone: '📦', ordem: 7 },
     { codigo: 'FIN-001', modulo: 'FINANCEIRO', nome: 'PLANO DE CONTAS', rota: '/modules/modelos-plano/plano-contas', icone: '📊', ordem: 1 },
     { codigo: 'FIN-002', modulo: 'FINANCEIRO', nome: 'TIPOS DE DRE', rota: '/modules/modelos-plano/tipos-dre-lista', icone: '📈', ordem: 2 },
     { codigo: 'FIN-003', modulo: 'FINANCEIRO', nome: 'ESTRUTURA DRE', rota: '/modules/modelos-plano/estrutura-dre-editor', icone: '🎯', ordem: 3 },
