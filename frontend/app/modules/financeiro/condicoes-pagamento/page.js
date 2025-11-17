@@ -12,6 +12,7 @@ export default function CondicoesPagamentoPage() {
   const [termoPesquisa, setTermoPesquisa] = useState('');
   const [filtroTipo, setFiltroTipo] = useState('TODOS');
   const [filtroStatus, setFiltroStatus] = useState('TODOS');
+  const [mensagem, setMensagem] = useState(null);
   const [formData, setFormData] = useState({
     id: null,
     nome: '',
@@ -73,24 +74,36 @@ export default function CondicoesPagamentoPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!formData.forma_pagamento_id) {
+      setMensagem({ tipo: 'error', texto: 'Selecione uma forma de pagamento para vincular à condição.' });
+      return;
+    }
+
     try {
       const url = modoEdicao
         ? `/api/financeiro/condicoes-pagamento/${formData.id}`
         : '/api/financeiro/condicoes-pagamento';
 
+      const payload = {
+        ...formData,
+        forma_pagamento_id: formData.forma_pagamento_id ? Number(formData.forma_pagamento_id) : null,
+      };
+
       const response = await fetch(url, {
         method: modoEdicao ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
 
       if (response.ok) {
         carregarCondicoes();
         setMostrarModal(false);
         resetForm();
+        setMensagem({ tipo: 'success', texto: 'Condição salva com sucesso.' });
       }
     } catch (error) {
       console.error('Erro ao salvar condição:', error);
+      setMensagem({ tipo: 'error', texto: 'Não foi possível salvar a condição de pagamento.' });
     }
   };
 
@@ -164,6 +177,12 @@ export default function CondicoesPagamentoPage() {
   return (
     <DashboardLayout screenCode="FIN-011">
       <div className="space-y-6">
+        {mensagem && (
+          <div className={`p-4 rounded-lg ${mensagem.tipo === 'success' ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-red-50 border border-red-200 text-red-800'}`}>
+            {mensagem.texto}
+          </div>
+        )}
+
         {/* Barra de Pesquisa e Filtros */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">

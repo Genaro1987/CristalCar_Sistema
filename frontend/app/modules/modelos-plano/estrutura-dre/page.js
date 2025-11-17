@@ -100,7 +100,8 @@ export default function EstruturaDREPage() {
           descricao: (item.descricao || '').trim(),
           codigo: (item.codigo || '').toString().trim(),
         }));
-        setItens(normalizados);
+        const filtrados = normalizados.filter(item => Number(item.id) !== 0);
+        setItens(filtrados);
       }
     } catch (error) {
       console.error('Erro ao carregar estrutura DRE:', error);
