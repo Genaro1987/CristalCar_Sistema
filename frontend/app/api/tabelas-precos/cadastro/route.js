@@ -25,6 +25,21 @@ async function garantirTabelasPrecos() {
       )
     `);
 
+    const tableInfo = await turso.execute('PRAGMA table_info(tab_tabelas_precos)');
+    const colunas = tableInfo?.rows?.map((row) => row.name) || [];
+
+    const colunasObrigatorias = [
+      { nome: 'nome', ddl: 'ALTER TABLE tab_tabelas_precos ADD COLUMN nome VARCHAR(200) NOT NULL DEFAULT ""' },
+      { nome: 'descricao', ddl: 'ALTER TABLE tab_tabelas_precos ADD COLUMN descricao TEXT' },
+      { nome: 'observacoes', ddl: 'ALTER TABLE tab_tabelas_precos ADD COLUMN observacoes TEXT' },
+    ];
+
+    for (const coluna of colunasObrigatorias) {
+      if (!colunas.includes(coluna.nome)) {
+        await turso.execute(coluna.ddl);
+      }
+    }
+
     await turso.execute(`
       CREATE TABLE IF NOT EXISTS tab_tabelas_precos_parceiros (
         id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -10,10 +10,6 @@ export default function Header({ screenCode = '', screenName = '', onShowHelp })
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [showResults, setShowResults] = useState(false);
-  const [empresas, setEmpresas] = useState([]);
-  const [empresaSelecionada, setEmpresaSelecionada] = useState(null);
-  const empresaAtiva = empresas.find(emp => emp.id === empresaSelecionada);
-
   // Todas as telas do sistema
   const allScreens = [
     // Administrativo
@@ -59,42 +55,11 @@ export default function Header({ screenCode = '', screenName = '', onShowHelp })
   }, [searchTerm]);
 
   useEffect(() => {
-    carregarEmpresas();
-  }, []);
-
-  useEffect(() => {
     const salva = localStorage.getItem('empresaSelecionadaId');
-    if (salva && empresas.length > 0) {
-      const existe = empresas.find(emp => `${emp.id}` === `${salva}`);
-      if (existe) {
-        setEmpresaSelecionada(existe.id);
-      }
-    } else if (empresas.length > 0 && !empresaSelecionada) {
-      const padrao = empresas.find(emp => emp.padrao);
-      setEmpresaSelecionada(padrao?.id || empresas[0].id);
-    }
-  }, [empresas]);
-
-  const carregarEmpresas = async () => {
-    try {
-      const response = await fetch('/api/administrativo/empresa?all=true');
-      if (response.ok) {
-        const data = await response.json();
-        setEmpresas(data || []);
-      }
-    } catch (error) {
-      console.error('Erro ao carregar empresas:', error);
-    }
-  };
-
-  const handleSelecionarEmpresa = (id) => {
-    setEmpresaSelecionada(id || null);
-    if (id) {
-      localStorage.setItem('empresaSelecionadaId', id);
-    } else {
-      localStorage.removeItem('empresaSelecionadaId');
-    }
-  };
+    if (!salva) return;
+    // Garantir que o ID salvo continue disponível para as demais telas
+    localStorage.setItem('empresaSelecionadaId', salva);
+  }, []);
 
   const handleNavigate = (path) => {
     setSearchTerm('');
@@ -126,44 +91,11 @@ export default function Header({ screenCode = '', screenName = '', onShowHelp })
                   </span>
                 </>
               )}
-              {empresaAtiva && (
-                <>
-                  <span className="text-gray-300">•</span>
-                  <span className="text-xs font-semibold text-orange-800 bg-orange-50 border border-orange-200 px-2 py-1 rounded">
-                    Empresa ativa: {empresaAtiva.nome_fantasia || empresaAtiva.razao_social}
-                  </span>
-                </>
-              )}
             </div>
           </div>
 
           {/* Ações do Header */}
           <div className="flex items-center space-x-4">
-            {/* Seleção de Empresa */}
-            {empresas.length > 0 && (
-              <div className="flex items-center space-x-2">
-                <div className="text-right hidden lg:block">
-                  <p className="text-xs text-gray-500">Empresa ativa</p>
-                  <p className="text-sm font-semibold text-gray-800 truncate max-w-[200px]">
-                    {empresas.find(emp => emp.id === empresaSelecionada)?.nome_fantasia || 'Selecione'}
-                  </p>
-                </div>
-                <select
-                  value={empresaSelecionada || ''}
-                  onChange={(e) => handleSelecionarEmpresa(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 text-sm"
-                  title="Selecione a empresa ativa"
-                >
-                  <option value="">Selecione...</option>
-                  {empresas.map(emp => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.nome_fantasia || emp.razao_social} {emp.padrao ? '• Padrão' : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
             {/* Pesquisa Global de Telas */}
             <div className="relative">
               <input

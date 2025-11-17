@@ -27,6 +27,9 @@ export default function PlanosPadroesPage() {
   const [filtroStatus, setFiltroStatus] = useState('TODOS');
   const [mostrarAjuda, setMostrarAjuda] = useState(false);
   const [mensagem, setMensagem] = useState(null);
+  const [tiposEstrutura, setTiposEstrutura] = useState([]);
+  const [tipoEstruturaForm, setTipoEstruturaForm] = useState({ codigo: '', nome: '', descricao: '' });
+  const [salvandoTipoEstrutura, setSalvandoTipoEstrutura] = useState(false);
   const [formData, setFormData] = useState({
     nome_modelo: '',
     tipo_modelo: 'OFICIAL',
@@ -38,6 +41,7 @@ export default function PlanosPadroesPage() {
 
   useEffect(() => {
     carregarModelos();
+    carregarTiposEstrutura();
   }, []);
 
   const carregarModelos = async () => {
@@ -57,12 +61,29 @@ export default function PlanosPadroesPage() {
     }
   };
 
+  const carregarTiposEstrutura = async () => {
+    try {
+      const response = await fetch('/api/tipos-estrutura-dre');
+      if (response.ok) {
+        const data = await response.json();
+        setTiposEstrutura(data || []);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar tipos de estrutura do DRE:', error);
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }));
+  };
+
+  const handleTipoEstruturaChange = (e) => {
+    const { name, value } = e.target;
+    setTipoEstruturaForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -121,6 +142,41 @@ export default function PlanosPadroesPage() {
     } catch (error) {
       console.error('Erro ao excluir modelo:', error);
       setMensagem({ type: 'error', texto: 'Erro ao excluir modelo.' });
+    }
+  };
+
+  const handleSalvarTipoEstrutura = async (e) => {
+    e.preventDefault();
+    if (!tipoEstruturaForm.codigo || !tipoEstruturaForm.nome) {
+      setMensagem({ type: 'error', texto: 'Informe código e nome do tipo de estrutura.' });
+      return;
+    }
+
+    try {
+      setSalvandoTipoEstrutura(true);
+      const response = await fetch('/api/tipos-estrutura-dre', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          codigo: tipoEstruturaForm.codigo,
+          nome: tipoEstruturaForm.nome,
+          descricao: tipoEstruturaForm.descricao,
+        }),
+      });
+
+      if (response.ok) {
+        setMensagem({ type: 'success', texto: 'Tipo de estrutura cadastrado com sucesso.' });
+        setTipoEstruturaForm({ codigo: '', nome: '', descricao: '' });
+        carregarTiposEstrutura();
+      } else {
+        const erro = await response.json();
+        setMensagem({ type: 'error', texto: erro.error || 'Não foi possível salvar o tipo.' });
+      }
+    } catch (error) {
+      console.error('Erro ao salvar tipo de estrutura do DRE:', error);
+      setMensagem({ type: 'error', texto: 'Erro ao salvar tipo de estrutura do DRE.' });
+    } finally {
+      setSalvandoTipoEstrutura(false);
     }
   };
 
@@ -211,6 +267,75 @@ export default function PlanosPadroesPage() {
             </div>
           </Card>
         )}
+
+        <Card
+          title="Tipos utilizados na Estrutura DRE"
+          subtitle="Cadastre aqui os tipos base (Receita, Despesa, EBITDA, etc) usados para montar a árvore"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2 max-h-80 overflow-y-auto pr-2">
+              {tiposEstrutura.length === 0 && (
+                <p className="text-sm text-gray-500">Nenhum tipo cadastrado ainda.</p>
+              )}
+              {tiposEstrutura.map((tipo) => (
+                <div key={tipo.id} className="p-3 border border-gray-200 rounded-lg bg-gray-50">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-gray-500">Código</p>
+                      <p className="font-semibold text-gray-900">{tipo.codigo}</p>
+                    </div>
+                    <span className="text-xs px-2 py-1 rounded-full bg-green-50 text-green-700">Ativo</span>
+                  </div>
+                  <p className="text-sm text-gray-800 mt-1">{tipo.nome}</p>
+                  {tipo.descricao && <p className="text-xs text-gray-500 mt-1">{tipo.descricao}</p>}
+                </div>
+              ))}
+            </div>
+
+            <form onSubmit={handleSalvarTipoEstrutura} className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Código *</label>
+                <input
+                  type="text"
+                  name="codigo"
+                  value={tipoEstruturaForm.codigo}
+                  onChange={handleTipoEstruturaChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  placeholder="Ex: RECEITA, DESPESA"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nome *</label>
+                <input
+                  type="text"
+                  name="nome"
+                  value={tipoEstruturaForm.nome}
+                  onChange={handleTipoEstruturaChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  placeholder="Ex: Receita Bruta, Deduções"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                <textarea
+                  name="descricao"
+                  value={tipoEstruturaForm.descricao}
+                  onChange={handleTipoEstruturaChange}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  placeholder="Como este tipo será usado na árvore do DRE"
+                />
+              </div>
+              <div className="flex justify-end">
+                <Button type="submit" variant="primary" disabled={salvandoTipoEstrutura}>
+                  {salvandoTipoEstrutura ? 'Salvando...' : 'Cadastrar tipo'}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </Card>
 
         <Card title="Tipos de DRE" subtitle="Cadastre visões oficiais e gerenciais para estruturar o relatório">
           <div className="overflow-x-auto">

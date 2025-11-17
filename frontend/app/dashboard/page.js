@@ -2,11 +2,41 @@
 
 import DashboardLayout from '../components/layout/DashboardLayout';
 import Card from '../components/ui/Card';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+
+const dicasDashboard = [
+  {
+    titulo: 'Fluxo de caixa saudável',
+    descricao: 'Atualize o plano de contas e acompanhe semanalmente os saldos bancários para evitar surpresas.',
+    emoji: '📊'
+  },
+  {
+    titulo: 'Equipes alinhadas',
+    descricao: 'Registre responsáveis por área e defina quem aprova cada processo para reduzir retrabalho.',
+    emoji: '🤝'
+  },
+  {
+    titulo: 'Processos padronizados',
+    descricao: 'Use os modelos de DRE para definir tipos e estrutura, garantindo relatórios consistentes.',
+    emoji: '⚙️'
+  },
+  {
+    titulo: 'Controle de custos',
+    descricao: 'Separe despesas fixas e variáveis para facilitar análises de ponto de equilíbrio.',
+    emoji: '💡'
+  },
+  {
+    titulo: 'Revisão de preços',
+    descricao: 'Centralize as tabelas de preço e mantenha histórico de alterações para auditoria rápida.',
+    emoji: '📈'
+  }
+];
 
 export default function DashboardPage() {
   const [empresaData, setEmpresaData] = useState(null);
+  const [empresaSelecionadaId, setEmpresaSelecionadaId] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [seedDicas, setSeedDicas] = useState(Date.now());
 
   useEffect(() => {
     // Atualizar hora a cada minuto
@@ -14,15 +44,22 @@ export default function DashboardPage() {
       setCurrentTime(new Date());
     }, 60000);
 
-    // Buscar dados da empresa
-    carregarDadosEmpresa();
+    const salva = localStorage.getItem('empresaSelecionadaId');
+    if (salva) {
+      setEmpresaSelecionadaId(Number(salva));
+    }
 
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    carregarDadosEmpresa();
+  }, [empresaSelecionadaId]);
+
   const carregarDadosEmpresa = async () => {
     try {
-      const response = await fetch('/api/administrativo/empresa');
+      const query = empresaSelecionadaId ? `?id=${empresaSelecionadaId}` : '';
+      const response = await fetch(`/api/administrativo/empresa${query}`);
       if (response.ok) {
         const data = await response.json();
         if (data) {
@@ -47,6 +84,11 @@ export default function DashboardPage() {
     if (hour < 18) return 'Boa tarde';
     return 'Boa noite';
   };
+
+  const dicasSelecionadas = useMemo(() => {
+    const embaralhadas = [...dicasDashboard].sort(() => 0.5 - Math.random());
+    return embaralhadas.slice(0, 3);
+  }, [seedDicas]);
 
   return (
     <DashboardLayout title="Painel de Controle">
@@ -76,34 +118,29 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <Card title="Você sabia?" subtitle="Dicas rápidas para melhorar a gestão e os processos">
+        <Card
+          title="Você sabia?"
+          subtitle="Dicas rápidas para melhorar a gestão e os processos"
+          actions={(
+            <button
+              onClick={() => setSeedDicas(Date.now())}
+              className="text-sm text-primary-50 hover:text-white underline"
+            >
+              Ver novas dicas
+            </button>
+          )}
+        >
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 rounded-lg bg-white border border-gray-200 shadow-sm">
-              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                <span className="text-lg">📊</span> Fluxo de caixa saudável
-              </h3>
-              <p className="text-sm text-gray-600 mt-2">
-                Atualize o plano de contas antes de começar os lançamentos e acompanhe semanalmente os saldos das contas bancárias.
-              </p>
-            </div>
-
-            <div className="p-4 rounded-lg bg-white border border-gray-200 shadow-sm">
-              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                <span className="text-lg">🤝</span> Equipes alinhadas
-              </h3>
-              <p className="text-sm text-gray-600 mt-2">
-                Registre cada funcionário na empresa correta e defina responsáveis por área para facilitar aprovações e controles.
-              </p>
-            </div>
-
-            <div className="p-4 rounded-lg bg-white border border-gray-200 shadow-sm">
-              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                <span className="text-lg">⚙️</span> Processos padronizados
-              </h3>
-              <p className="text-sm text-gray-600 mt-2">
-                Utilize os modelos de DRE para definir tipos e estrutura. Isso garante relatórios consistentes e comparáveis entre empresas.
-              </p>
-            </div>
+            {dicasSelecionadas.map((dica, index) => (
+              <div key={index} className="p-4 rounded-lg bg-white border border-gray-200 shadow-sm">
+                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <span className="text-lg">{dica.emoji}</span> {dica.titulo}
+                </h3>
+                <p className="text-sm text-gray-600 mt-2">
+                  {dica.descricao}
+                </p>
+              </div>
+            ))}
           </div>
         </Card>
       </div>
