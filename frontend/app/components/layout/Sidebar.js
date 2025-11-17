@@ -91,6 +91,7 @@ export default function Sidebar() {
           submenu: [
             { name: 'Cadastro da Empresa', href: '/modules/administrativo/empresa', code: 'ADM-001' },
             { name: 'Funcionários', href: '/modules/administrativo/funcionarios', code: 'ADM-002' },
+            { name: 'Departamentos', href: '/modules/administrativo/departamentos', code: 'ADM-006' },
             { name: 'Layouts de Importação', href: '/modules/administrativo/layouts', code: 'ADM-003' },
             { name: 'Configuração de Backup', href: '/modules/administrativo/backup', code: 'ADM-004' },
             { name: 'Registro de Log', href: '/modules/administrativo/logs', code: 'ADM-005' },
@@ -136,6 +137,22 @@ export default function Sidebar() {
         },
       ]
     },
+    {
+      id: 'objetivos',
+      name: 'Objetivos',
+      icon: '🎯',
+      submenu: [
+        {
+          id: 'objetivos-metas',
+          name: 'Objetivos e Metas',
+          icon: '📈',
+          submenu: [
+            { name: 'Objetivos Trimestrais', href: '/modules/objetivos/trimestrais', code: 'OBJ-001' },
+            { name: 'Metas Semanais', href: '/modules/objetivos/semanais', code: 'OBJ-002' },
+          ]
+        },
+      ]
+    },
   ];
 
   const toggleModule = (moduleId) => {
@@ -176,19 +193,17 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="flex-shrink-0 p-4 border-b border-secondary-700">
         <div className="flex flex-col items-center space-y-2 text-center">
-          <h2 className="text-xl font-bold text-white">
-            {empresa?.nome_fantasia || 'Cristal Car'}
-          </h2>
-          <div className="w-48 h-48 flex items-center justify-center overflow-hidden">
+          <div className="w-48 h-48 flex items-center justify-center">
             {empresa?.logo_path ? (
               <img
                 src={empresa.logo_path}
-                alt={`Logo ${empresa.nome_fantasia || 'empresa'}`}
-                className="w-full h-full object-contain"
+                alt="Logo empresa"
+                className="max-w-full max-h-full object-contain"
+                style={{ margin: 0, padding: 0 }}
               />
             ) : (
               <span className="text-5xl font-bold text-white">
-                {(empresa?.nome_fantasia || 'CC').substring(0, 2).toUpperCase()}
+                {(empresa?.nome_fantasia || 'ERP').substring(0, 2).toUpperCase()}
               </span>
             )}
           </div>
