@@ -38,6 +38,7 @@ async function garantirTabelasPrecos() {
       { nome: 'empresa_id', ddl: 'ALTER TABLE tab_tabelas_precos ADD COLUMN empresa_id INTEGER' },
       { nome: 'data_inicio', ddl: 'ALTER TABLE tab_tabelas_precos ADD COLUMN data_inicio DATE' },
       { nome: 'data_fim', ddl: 'ALTER TABLE tab_tabelas_precos ADD COLUMN data_fim DATE' },
+      { nome: 'ativo', ddl: 'ALTER TABLE tab_tabelas_precos ADD COLUMN ativo BOOLEAN DEFAULT 1' },
     ];
 
     for (const coluna of colunasObrigatorias) {

@@ -28,13 +28,34 @@ async function garantirTabelasCondicoes() {
       FOREIGN KEY (forma_pagamento_id) REFERENCES fin_formas_pagamento(id)
     )
   `);
+
+  // Garantir colunas adicionais
+  const tableInfo = await turso.execute('PRAGMA table_info(fin_condicoes_pagamento)');
+  const colunas = tableInfo?.rows?.map((row) => row.name) || [];
+
+  const colunasObrigatorias = [
+    { nome: 'nome', ddl: 'ALTER TABLE fin_condicoes_pagamento ADD COLUMN nome VARCHAR(200) NOT NULL DEFAULT ""' },
+    { nome: 'descricao', ddl: 'ALTER TABLE fin_condicoes_pagamento ADD COLUMN descricao TEXT' },
+    { nome: 'observacoes', ddl: 'ALTER TABLE fin_condicoes_pagamento ADD COLUMN observacoes TEXT' },
+    { nome: 'empresa_id', ddl: 'ALTER TABLE fin_condicoes_pagamento ADD COLUMN empresa_id INTEGER' },
+  ];
+
+  for (const coluna of colunasObrigatorias) {
+    if (!colunas.includes(coluna.nome)) {
+      try {
+        await turso.execute(coluna.ddl);
+      } catch (e) {
+        // Coluna já existe
+      }
+    }
+  }
 }
 
 export async function GET() {
   try {
     await garantirTabelasCondicoes();
     const result = await turso.execute(`
-      SELECT cp.*, fp.nome AS forma_pagamento_nome
+      SELECT cp.*, fp.descricao AS forma_pagamento_nome
       FROM fin_condicoes_pagamento cp
       LEFT JOIN fin_formas_pagamento fp ON fp.id = cp.forma_pagamento_id
       ORDER BY cp.status DESC, cp.nome ASC
