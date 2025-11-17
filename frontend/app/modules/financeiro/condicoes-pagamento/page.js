@@ -43,7 +43,11 @@ export default function CondicoesPagamentoPage() {
       const response = await fetch('/api/financeiro/condicoes-pagamento');
       if (response.ok) {
         const data = await response.json();
-        setCondicoes(data);
+        const normalizadas = (data || []).map((item) => ({
+          ...item,
+          ativo: item.ativo === 1 || item.ativo === true || item.status === 'ATIVO'
+        }));
+        setCondicoes(normalizadas);
       }
     } catch (error) {
       console.error('Erro ao carregar condições:', error);
@@ -55,7 +59,11 @@ export default function CondicoesPagamentoPage() {
       const response = await fetch('/api/financeiro/formas-pagamento');
       if (response.ok) {
         const data = await response.json();
-        setFormasPagamento(data.filter(f => f.ativo));
+        const normalizadas = (data || []).map((item) => ({
+          ...item,
+          ativo: item.ativo === 1 || item.ativo === true || item.status === 'ATIVO'
+        }));
+        setFormasPagamento(normalizadas.filter(f => f.ativo));
       }
     } catch (error) {
       console.error('Erro ao carregar formas de pagamento:', error);
@@ -144,20 +152,6 @@ export default function CondicoesPagamentoPage() {
 
     return matchPesquisa && matchTipo && matchStatus;
   });
-
-  // Calcular parcelas para preview
-  const calcularParcelas = () => {
-    if (formData.tipo === 'A_VISTA') return [{ numero: 1, dias: formData.dias_primeira_parcela }];
-
-    const parcelas = [];
-    for (let i = 0; i < formData.qtd_parcelas; i++) {
-      const dias = i === 0
-        ? formData.dias_primeira_parcela
-        : formData.dias_primeira_parcela + (i * formData.dias_entre_parcelas);
-      parcelas.push({ numero: i + 1, dias });
-    }
-    return parcelas;
-  };
 
   const getTipoIcon = (tipo) => {
     return tiposCondicao.find(t => t.value === tipo)?.icon || '💰';
@@ -518,82 +512,24 @@ export default function CondicoesPagamentoPage() {
                     />
                   </div>
 
-                  {/* Status */}
-                  <div className="md:col-span-2">
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
+                {/* Status */}
+                <div className="md:col-span-2">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
                         checked={formData.ativo}
                         onChange={(e) => setFormData({...formData, ativo: e.target.checked})}
-                        className="rounded border-gray-300 text-orange-500 focus:ring-orange-500"
-                      />
-                      <span className="ml-2 text-sm text-gray-700">Condição ativa</span>
-                    </label>
-                  </div>
+                      className="rounded border-gray-300 text-orange-500 focus:ring-orange-500"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">Condição ativa</span>
+                  </label>
                 </div>
+              </div>
 
-                {/* Preview das Parcelas */}
-                {formData.qtd_parcelas > 0 && (
-                  <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <h4 className="font-semibold text-blue-900 mb-3">
-                      📊 Preview - Exemplo R$ 1.000,00
-                    </h4>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      {calcularParcelas().slice(0, 12).map((parcela) => {
-                        const valorParcela = 1000 / formData.qtd_parcelas;
-                        const valorComAjuste = valorParcela *
-                          (1 + (formData.acrescimo_percentual - formData.desconto_percentual) / 100);
-
-                        return (
-                          <div key={parcela.numero} className="bg-white p-2 rounded border border-blue-200">
-                            <div className="text-xs text-gray-600">Parcela {parcela.numero}</div>
-                            <div className="font-semibold text-blue-900">
-                              R$ {valorComAjuste.toFixed(2)}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {parcela.dias === 0 ? 'Hoje' : `+${parcela.dias} dias`}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    {formData.qtd_parcelas > 12 && (
-                      <p className="text-xs text-gray-500 mt-2">
-                        ... e mais {formData.qtd_parcelas - 12} parcelas
-                      </p>
-                    )}
-                    <div className="mt-3 pt-3 border-t border-blue-200">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-700">Valor Original:</span>
-                        <span className="font-semibold">R$ 1.000,00</span>
-                      </div>
-                      <div className="flex justify-between text-sm mt-1">
-                        <span className="text-gray-700">Valor Final:</span>
-                        <span className="font-semibold text-blue-900">
-                          R$ {(1000 * (1 + (formData.acrescimo_percentual - formData.desconto_percentual) / 100)).toFixed(2)}
-                        </span>
-                      </div>
-                      {(formData.acrescimo_percentual > 0 || formData.desconto_percentual > 0) && (
-                        <div className="flex justify-between text-sm mt-1">
-                          <span className="text-gray-700">Diferença:</span>
-                          <span className={`font-semibold ${
-                            formData.desconto_percentual > formData.acrescimo_percentual
-                              ? 'text-green-600'
-                              : 'text-red-600'
-                          }`}>
-                            {formData.desconto_percentual > formData.acrescimo_percentual ? '-' : '+'}
-                            R$ {Math.abs(1000 * (formData.acrescimo_percentual - formData.desconto_percentual) / 100).toFixed(2)}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Botões */}
-                <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
-                  <button
-                    type="button"
+              {/* Botões */}
+              <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
+                <button
+                  type="button"
                     onClick={() => { setMostrarModal(false); resetForm(); }}
                     className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
                   >

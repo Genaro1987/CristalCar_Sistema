@@ -49,8 +49,8 @@ export default function FormasPagamentoPage() {
         // Converte os valores booleanos e status do banco
         const formasFormatadas = data.map(forma => ({
           ...forma,
-          gera_movimento_bancario: forma.gera_movimento_bancario === 1,
-          status: forma.ativo === 1 ? 'ATIVO' : 'INATIVO'
+          gera_movimento_bancario: forma.gera_movimento_bancario === 1 || forma.gera_movimento_bancario === true,
+          status: forma.status || 'ATIVO'
         }));
         setFormas(formasFormatadas);
       }
@@ -178,7 +178,7 @@ export default function FormasPagamentoPage() {
       taxa_percentual: forma.taxa_percentual?.toString() || '0',
       taxa_fixa: forma.taxa_fixa?.toString() || '0',
       gera_movimento_bancario: forma.gera_movimento_bancario !== undefined ? forma.gera_movimento_bancario : true,
-      status: forma.status
+      status: forma.status || 'ATIVO'
     });
     setEditingId(forma.id);
     setShowForm(true);

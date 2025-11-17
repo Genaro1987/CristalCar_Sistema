@@ -24,7 +24,8 @@ export async function GET(request) {
         pc.tipo,
         pc.nivel,
         pc.conta_pai_id,
-        pc.considera_resultado,
+        pc.compoe_dre,
+        pc.compoe_dre as considera_resultado,
         pc.tipo_gasto,
         pc.utilizado_objetivo,
         pc.aceita_lancamento,
@@ -87,6 +88,8 @@ export async function POST(request) {
       aceita_lancamento,
     } = dados;
 
+    const compoeDre = considera_resultado ?? dados.compoe_dre ?? true;
+
     // Normalizar texto: MAIÚSCULO sem acentos
     descricao = normalizarTexto(descricao);
     tipo = normalizarTexto(tipo);
@@ -123,7 +126,7 @@ export async function POST(request) {
 
     const result = await turso.execute({
       sql: `INSERT INTO fin_plano_contas
-            (codigo_conta, descricao, tipo, nivel, conta_pai_id, considera_resultado, tipo_gasto, utilizado_objetivo, aceita_lancamento, status)
+            (codigo_conta, descricao, tipo, nivel, conta_pai_id, compoe_dre, tipo_gasto, utilizado_objetivo, aceita_lancamento, status)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'ATIVO')`,
       args: [
         codigo_conta,
@@ -131,7 +134,7 @@ export async function POST(request) {
         tipo,
         nivel,
         conta_pai_id || null,
-        considera_resultado ? 1 : 0,
+        compoeDre ? 1 : 0,
         tipo_gasto || null,
         utilizado_objetivo ? 1 : 0,
         aceita_lancamento ? 1 : 0,
@@ -171,19 +174,25 @@ export async function PUT(request) {
     const updates = [];
     const args = [];
 
+    const mapeamentos = {
+      considera_resultado: "compoe_dre",
+      compoe_dre: "compoe_dre",
+      descricao: "descricao",
+      tipo_gasto: "tipo_gasto",
+      utilizado_objetivo: "utilizado_objetivo",
+      aceita_lancamento: "aceita_lancamento",
+      status: "status",
+    };
+
     Object.entries(campos).forEach(([key, value]) => {
-      if (
-        [
-          "descricao",
-          "tipo_gasto",
-          "considera_resultado",
-          "utilizado_objetivo",
-          "aceita_lancamento",
-          "status",
-        ].includes(key)
-      ) {
-        updates.push(`${key} = ?`);
-        args.push(value);
+      const coluna = mapeamentos[key];
+      if (coluna) {
+        updates.push(`${coluna} = ?`);
+        if (["compoe_dre", "utilizado_objetivo", "aceita_lancamento"].includes(coluna)) {
+          args.push(value ? 1 : 0);
+        } else {
+          args.push(value);
+        }
       }
     });
 

@@ -66,7 +66,12 @@ export default function CadastroParceirosPage() {
       const response = await fetch('/api/parceiros/cadastro');
       if (response.ok) {
         const data = await response.json();
-        setParceiros(data);
+        const normalizados = data.map((parceiro) => ({
+          ...parceiro,
+          cpf_cnpj: parceiro.cnpj || parceiro.cpf || parceiro.cpf_cnpj,
+          ativo: (parceiro.status || '').toUpperCase() === 'ATIVO'
+        }));
+        setParceiros(normalizados);
       }
     } catch (error) {
       console.error('Erro ao carregar parceiros:', error);
@@ -441,79 +446,79 @@ export default function CadastroParceirosPage() {
         </div>
 
         {/* Lista de Parceiros */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {parceirosFiltrados.length === 0 ? (
-            <div className="col-span-full bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center text-gray-500">
-              {termoPesquisa || filtroTipo !== 'TODOS' || filtroStatus !== 'TODOS'
-                ? '🔍 Nenhum parceiro encontrado com os filtros aplicados'
-                : '👥 Nenhum parceiro cadastrado. Clique em "Novo Parceiro" para começar.'}
-            </div>
-          ) : (
-            parceirosFiltrados.map((parceiro) => (
-              <div
-                key={parceiro.id}
-                className={`bg-white rounded-lg shadow-sm border-2 transition-all hover:shadow-md ${
-                  parceiro.ativo ? 'border-gray-200' : 'border-red-200 bg-red-50'
-                }`}
-              >
-                <div className="p-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-2xl">{getTipoIcon(parceiro.tipo)}</span>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Parceiro</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Documento</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contato</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {parceirosFiltrados.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                      {termoPesquisa || filtroTipo !== 'TODOS' || filtroStatus !== 'TODOS'
+                        ? '🔍 Nenhum parceiro encontrado com os filtros aplicados'
+                        : '👥 Nenhum parceiro cadastrado. Clique em "Novo Parceiro" para começar.'}
+                    </td>
+                  </tr>
+                ) : (
+                  parceirosFiltrados.map((parceiro) => (
+                    <tr key={parceiro.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        <div className="text-sm font-semibold text-gray-900">{parceiro.nome_fantasia || parceiro.nome_completo}</div>
+                        {parceiro.razao_social && parceiro.razao_social !== parceiro.nome_fantasia && (
+                          <div className="text-xs text-gray-500">{parceiro.razao_social}</div>
+                        )}
+                        {parceiro.cidade && (
+                          <div className="text-xs text-gray-500">{parceiro.cidade}/{parceiro.estado}</div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${getTipoColor(parceiro.tipo)}`}>
                           {getTipoLabel(parceiro.tipo)}
                         </span>
-                      </div>
-                      <div className="font-bold text-gray-900">{parceiro.nome_fantasia}</div>
-                      {parceiro.razao_social && parceiro.razao_social !== parceiro.nome_fantasia && (
-                        <div className="text-xs text-gray-500">{parceiro.razao_social}</div>
-                      )}
-                    </div>
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                      parceiro.ativo
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {parceiro.ativo ? '✅' : '⛔'}
-                    </span>
-                  </div>
-
-                  <div className="space-y-1 text-xs text-gray-600 mb-3">
-                    {parceiro.cpf_cnpj && (
-                      <div className="font-mono">
-                        {parceiro.tipo_pessoa === 'FISICA' ? '📄 CPF' : '📄 CNPJ'}: {parceiro.cpf_cnpj}
-                      </div>
-                    )}
-                    {parceiro.telefone && (
-                      <div>📞 {parceiro.telefone}</div>
-                    )}
-                    {parceiro.email && (
-                      <div className="truncate">✉️ {parceiro.email}</div>
-                    )}
-                    {parceiro.cidade && (
-                      <div>📍 {parceiro.cidade}/{parceiro.estado}</div>
-                    )}
-                  </div>
-
-                  <div className="flex gap-2 pt-3 border-t border-gray-200">
-                    <button
-                      onClick={() => handleEditar(parceiro)}
-                      className="flex-1 px-3 py-1.5 text-sm bg-orange-500 text-white rounded hover:bg-orange-600"
-                    >
-                      ✏️ Editar
-                    </button>
-                    <button
-                      onClick={() => handleExcluir(parceiro.id)}
-                      className="px-3 py-1.5 text-sm bg-red-500 text-white rounded hover:bg-red-600"
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {parceiro.cpf_cnpj || '-'}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                        {parceiro.telefone && <div>📞 {parceiro.telefone}</div>}
+                        {parceiro.email && <div className="truncate">✉️ {parceiro.email}</div>}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                          parceiro.ativo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {parceiro.ativo ? 'Ativo' : 'Inativo'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                        <button
+                          onClick={() => handleEditar(parceiro)}
+                          className="px-3 py-1.5 bg-orange-500 text-white rounded hover:bg-orange-600"
+                        >
+                          ✏️ Editar
+                        </button>
+                        <button
+                          onClick={() => handleExcluir(parceiro.id)}
+                          className="px-3 py-1.5 bg-red-500 text-white rounded hover:bg-red-600"
+                        >
+                          🗑️ Excluir
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* Modal de Cadastro/Edição */}
