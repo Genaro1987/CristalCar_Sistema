@@ -58,9 +58,17 @@ export default function EstruturaDREPage() {
     loadItens();
   }, []);
 
-  const loadItens = () => {
-    // Banco de dados vazio - nenhum item DRE cadastrado
-    setItens([]);
+  const loadItens = async () => {
+    try {
+      const response = await fetch('/api/estrutura-dre');
+      const data = await response.json();
+
+      if (data.success) {
+        setItens(data.data || []);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar estrutura DRE:', error);
+    }
   };
 
   const handleInputChange = (e) => {
@@ -71,29 +79,124 @@ export default function EstruturaDREPage() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!formData.codigo || !formData.descricao) {
-      alert('Preencha código e descrição');
+      const mensagem = document.createElement('div');
+      mensagem.className = 'fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-lg z-50';
+      mensagem.innerHTML = `
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+            </svg>
+          </div>
+          <div class="ml-3">
+            <p class="text-sm font-medium">Preencha código e descrição</p>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(mensagem);
+      setTimeout(() => mensagem.remove(), 5000);
       return;
     }
 
-    if (editingId) {
-      setItens(prev =>
-        prev.map(item => item.id === editingId ? { ...formData, id: editingId } : item)
-      );
-    } else {
-      const newId = Math.max(...itens.map(i => i.id), 0) + 1;
-      const maxOrdem = Math.max(...itens.map(i => i.ordem_exibicao), 0);
-      setItens(prev => [...prev, {
-        ...formData,
-        id: newId,
-        ordem_exibicao: maxOrdem + 1
-      }]);
-    }
+    try {
+      const payload = {
+        codigo: formData.codigo,
+        descricao: formData.descricao,
+        nivel: formData.nivel,
+        tipo: formData.tipo,
+        ordem_exibicao: formData.ordem_exibicao,
+        formula: formData.eh_totalizadora ? formData.formula : null,
+        exibir_negativo: formData.exibir_negativo,
+        negrito: formData.negrito,
+      };
 
-    resetForm();
+      if (editingId) {
+        // Atualizar item existente
+        const response = await fetch('/api/estrutura-dre', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...payload, id: editingId })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          const mensagem = document.createElement('div');
+          mensagem.className = 'fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-lg z-50';
+          mensagem.innerHTML = `
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm font-medium">Item DRE atualizado com sucesso!</p>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(mensagem);
+          setTimeout(() => mensagem.remove(), 5000);
+        } else {
+          throw new Error(data.error || 'Erro ao atualizar item DRE');
+        }
+      } else {
+        // Criar novo item
+        const response = await fetch('/api/estrutura-dre', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          const mensagem = document.createElement('div');
+          mensagem.className = 'fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-lg z-50';
+          mensagem.innerHTML = `
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm font-medium">Item DRE criado com sucesso!</p>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(mensagem);
+          setTimeout(() => mensagem.remove(), 5000);
+        } else {
+          throw new Error(data.error || 'Erro ao criar item DRE');
+        }
+      }
+
+      resetForm();
+      loadItens();
+    } catch (error) {
+      console.error('Erro ao salvar item DRE:', error);
+      const mensagem = document.createElement('div');
+      mensagem.className = 'fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-lg z-50';
+      mensagem.innerHTML = `
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+            </svg>
+          </div>
+          <div class="ml-3">
+            <p class="text-sm font-medium">Erro ao salvar: ${error.message}</p>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(mensagem);
+      setTimeout(() => mensagem.remove(), 5000);
+    }
   };
 
   const handleEdit = (item) => {
@@ -115,9 +218,55 @@ export default function EstruturaDREPage() {
     setShowForm(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (confirm('Tem certeza que deseja excluir este item da estrutura DRE?')) {
-      setItens(prev => prev.filter(item => item.id !== id));
+      try {
+        const response = await fetch(`/api/estrutura-dre?id=${id}`, {
+          method: 'DELETE'
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          const mensagem = document.createElement('div');
+          mensagem.className = 'fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-lg z-50';
+          mensagem.innerHTML = `
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm font-medium">Item DRE excluído com sucesso!</p>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(mensagem);
+          setTimeout(() => mensagem.remove(), 5000);
+          loadItens();
+        } else {
+          throw new Error(data.error || 'Erro ao excluir item DRE');
+        }
+      } catch (error) {
+        console.error('Erro ao excluir item DRE:', error);
+        const mensagem = document.createElement('div');
+        mensagem.className = 'fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-lg z-50';
+        mensagem.innerHTML = `
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+              </svg>
+            </div>
+            <div class="ml-3">
+              <p class="text-sm font-medium">Erro: ${error.message}</p>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(mensagem);
+        setTimeout(() => mensagem.remove(), 5000);
+      }
     }
   };
 
