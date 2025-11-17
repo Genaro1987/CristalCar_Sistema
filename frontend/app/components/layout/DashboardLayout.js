@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import { ToastProvider } from '../ui/ToastProvider';
 
 export default function DashboardLayout({ children, screenCode = '', onShowHelp }) {
   // Mapeamento de códigos para nomes de telas
@@ -26,24 +27,26 @@ export default function DashboardLayout({ children, screenCode = '', onShowHelp 
   const screenName = screenNames[screenCode] || 'Dashboard';
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Sidebar */}
-      <Sidebar />
+    <ToastProvider>
+      <div className="min-h-screen bg-gray-50">
+        {/* Sidebar */}
+        <Sidebar />
 
-      {/* Main Content */}
-      <div className="ml-80">
-        {/* Header */}
-        <Header
-          screenCode={screenCode}
-          screenName={screenName}
-          onShowHelp={onShowHelp}
-        />
+        {/* Main Content */}
+        <div className="ml-80">
+          {/* Header */}
+          <Header
+            screenCode={screenCode}
+            screenName={screenName}
+            onShowHelp={onShowHelp}
+          />
 
-        {/* Page Content */}
-        <main className="p-6">
-          {children}
-        </main>
+          {/* Page Content */}
+          <main className="p-6">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </ToastProvider>
   );
 }

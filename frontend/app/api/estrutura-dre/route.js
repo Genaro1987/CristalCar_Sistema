@@ -28,11 +28,21 @@ async function garantirColunaEmpresa() {
   }
 }
 
+async function garantirColunaTipoEstrutura() {
+  const info = await turso.execute('PRAGMA table_info(fin_estrutura_dre)');
+  const possuiTipoEstrutura = info.rows?.some((c) => c.name === 'tipo_estrutura_id');
+  if (!possuiTipoEstrutura) {
+    await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN tipo_estrutura_id INTEGER');
+    await turso.execute('CREATE INDEX IF NOT EXISTS idx_estrutura_dre_tipo ON fin_estrutura_dre(tipo_estrutura_id)');
+  }
+}
+
 // GET - Listar estrutura do DRE
 export async function GET(request) {
   try {
     await garantirColunaModelo();
     await garantirColunaEmpresa();
+    await garantirColunaTipoEstrutura();
 
     const { searchParams } = new URL(request.url);
     const modeloId = searchParams.get("modelo_id");
@@ -73,6 +83,7 @@ export async function POST(request) {
   try {
     await garantirColunaModelo();
     await garantirColunaEmpresa();
+    await garantirColunaTipoEstrutura();
     const dados = await request.json();
 
     let {
@@ -84,6 +95,7 @@ export async function POST(request) {
       formula,
       exibir_negativo,
       negrito,
+      tipo_estrutura_id,
     } = dados;
 
     // Normalizar texto: MAIÚSCULO sem acentos
@@ -122,8 +134,8 @@ export async function POST(request) {
 
     const result = await turso.execute({
       sql: `INSERT INTO fin_estrutura_dre
-            (codigo, descricao, nivel, tipo, ordem_exibicao, formula, exibir_negativo, negrito, modelo_dre_id, empresa_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            (codigo, descricao, nivel, tipo, ordem_exibicao, formula, exibir_negativo, negrito, modelo_dre_id, empresa_id, tipo_estrutura_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       ,
       args: [
         codigo,
@@ -136,6 +148,7 @@ export async function POST(request) {
         negrito ? 1 : 0,
         dados.modelo_dre_id || null,
         dados.empresa_id || null,
+        tipo_estrutura_id || null,
       ],
     });
 
@@ -160,6 +173,8 @@ export async function POST(request) {
 export async function PUT(request) {
   try {
     await garantirColunaModelo();
+    await garantirColunaEmpresa();
+    await garantirColunaTipoEstrutura();
     const dados = await request.json();
     const { id, ...campos } = dados;
 
@@ -189,6 +204,7 @@ export async function PUT(request) {
           "negrito",
           "modelo_dre_id",
           "empresa_id",
+          "tipo_estrutura_id",
         ].includes(key)
       ) {
         updates.push(`${key} = ?`);

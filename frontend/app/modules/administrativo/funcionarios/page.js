@@ -12,6 +12,9 @@ export default function FuncionariosPage() {
   const [statusFilter, setStatusFilter] = useState('TODOS');
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [empresas, setEmpresas] = useState([]);
+  const [empresaSelecionada, setEmpresaSelecionada] = useState(null);
+  const [mensagem, setMensagem] = useState(null);
   const [formData, setFormData] = useState({
     codigo_unico: '',
     nome_completo: '',
@@ -35,6 +38,7 @@ export default function FuncionariosPage() {
     horario_almoco_inicio: '',
     horario_almoco_fim: '',
     dias_trabalho: [],
+    empresa_id: '',
     status: 'ATIVO',
     observacoes: ''
   });
@@ -60,28 +64,65 @@ export default function FuncionariosPage() {
     'Diretoria'
   ];
 
+  const carregarEmpresas = async () => {
+    try {
+      const response = await fetch('/api/administrativo/empresa?all=true');
+      if (response.ok) {
+        const lista = await response.json();
+        setEmpresas(lista || []);
+        const salva = localStorage.getItem('empresaSelecionadaId');
+        let ativa = null;
+        if (salva && lista?.some((emp) => `${emp.id}` === `${salva}`)) {
+          ativa = Number(salva);
+        } else if (lista && lista.length > 0) {
+          const padrao = lista.find((emp) => emp.padrao);
+          ativa = padrao ? Number(padrao.id) : Number(lista[0].id);
+        }
+        setEmpresaSelecionada(ativa);
+        setFormData((prev) => ({ ...prev, empresa_id: ativa || '' }));
+      }
+    } catch (error) {
+      console.error('Erro ao carregar empresas:', error);
+      setMensagem({ tipo: 'erro', texto: 'Não foi possível carregar as empresas ativas.' });
+    }
+  };
+
+  useEffect(() => {
+    carregarEmpresas();
+  }, []);
+
   useEffect(() => {
     loadFuncionarios();
-  }, []);
+  }, [empresaSelecionada]);
 
   useEffect(() => {
     filterFuncionarios();
   }, [searchTerm, statusFilter, funcionarios]);
 
+  useEffect(() => {
+    if (mensagem) {
+      const timer = setTimeout(() => setMensagem(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [mensagem]);
+
   const loadFuncionarios = async () => {
     try {
-      const response = await fetch('/api/administrativo/funcionarios');
+      const query = empresaSelecionada ? `?empresa_id=${empresaSelecionada}` : '';
+      const response = await fetch(`/api/administrativo/funcionarios${query}`);
       if (response.ok) {
         const data = await response.json();
         // Converte dias_trabalho de string para array
         const funcionariosFormatados = data.map(func => ({
           ...func,
-          dias_trabalho: func.dias_trabalho ? func.dias_trabalho.split(',') : []
+          dias_trabalho: func.dias_trabalho ? func.dias_trabalho.split(',') : [],
+          empresa_id: func.empresa_id ? Number(func.empresa_id) : null,
         }));
         setFuncionarios(funcionariosFormatados);
       }
     } catch (error) {
       console.error('Erro ao carregar funcionários:', error);
+      setMensagem({ tipo: 'erro', texto: 'Não foi possível carregar os funcionários.' });
     }
   };
 
@@ -104,6 +145,17 @@ export default function FuncionariosPage() {
     }
 
     setFilteredFuncionarios(filtered);
+  };
+
+  const handleEmpresaChange = (id) => {
+    const valor = id ? Number(id) : null;
+    setEmpresaSelecionada(valor);
+    setFormData((prev) => ({ ...prev, empresa_id: valor || '' }));
+    if (valor) {
+      localStorage.setItem('empresaSelecionadaId', valor);
+    } else {
+      localStorage.removeItem('empresaSelecionadaId');
+    }
   };
 
   const handleInputChange = (e) => {
@@ -172,12 +224,17 @@ export default function FuncionariosPage() {
 
     // Validações
     if (!formData.nome_completo || !formData.cpf || !formData.data_admissao) {
-      alert('Preencha todos os campos obrigatórios (Nome, CPF e Data de Admissão)');
+      setMensagem({ tipo: 'erro', texto: 'Preencha Nome, CPF e Data de Admissão para salvar.' });
+      return;
+    }
+
+    if (!formData.empresa_id && !empresaSelecionada) {
+      setMensagem({ tipo: 'erro', texto: 'Selecione a empresa à qual o funcionário pertence.' });
       return;
     }
 
     // Gera código único automaticamente se for novo
-    const dataToSave = { ...formData };
+    const dataToSave = { ...formData, empresa_id: formData.empresa_id || empresaSelecionada };
     if (!editingId && !formData.codigo_unico) {
       const nextNum = funcionarios.length + 1;
       dataToSave.codigo_unico = `FUNC-${String(nextNum).padStart(3, '0')}`;
@@ -257,7 +314,8 @@ export default function FuncionariosPage() {
   const handleEdit = (funcionario) => {
     setFormData({
       ...funcionario,
-      dias_trabalho: funcionario.dias_trabalho ? funcionario.dias_trabalho.split(',') : []
+      dias_trabalho: funcionario.dias_trabalho ? funcionario.dias_trabalho.split(',') : [],
+      empresa_id: funcionario.empresa_id || empresaSelecionada || ''
     });
     setEditingId(funcionario.id);
     setShowForm(true);
@@ -354,6 +412,7 @@ export default function FuncionariosPage() {
       horario_almoco_inicio: '',
       horario_almoco_fim: '',
       dias_trabalho: [],
+      empresa_id: empresaSelecionada || '',
       status: 'ATIVO',
       observacoes: ''
     });
@@ -370,9 +429,26 @@ export default function FuncionariosPage() {
     return badges[status] || badges.INATIVO;
   };
 
+  const getEmpresaNome = (id) => {
+    if (!id) return '—';
+    const encontrada = empresas.find((emp) => Number(emp.id) === Number(id));
+    return encontrada?.nome_fantasia || encontrada?.razao_social || '—';
+  };
+
   return (
     <DashboardLayout screenCode="ADM-002">
       <div className="space-y-6">
+        {mensagem && (
+          <div
+            className={`p-4 rounded-lg border ${
+              mensagem.tipo === 'erro'
+                ? 'bg-red-50 border-red-200 text-red-800'
+                : 'bg-green-50 border-green-200 text-green-800'
+            }`}
+          >
+            {mensagem.texto}
+          </div>
+        )}
         {!showForm ? (
           <>
             {/* Filtros e Ações */}
@@ -390,6 +466,25 @@ export default function FuncionariosPage() {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
+                </div>
+
+                {/* Empresa */}
+                <div className="w-full md:w-60">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Empresa
+                  </label>
+                  <select
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    value={empresaSelecionada || ''}
+                    onChange={(e) => handleEmpresaChange(e.target.value)}
+                  >
+                    <option value="">Todas</option>
+                    {empresas.map((emp) => (
+                      <option key={emp.id} value={emp.id}>
+                        {emp.nome_fantasia || emp.razao_social}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Filtro de Status */}
@@ -438,6 +533,9 @@ export default function FuncionariosPage() {
                         Departamento
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Empresa
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Admissão
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -451,7 +549,7 @@ export default function FuncionariosPage() {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredFuncionarios.length === 0 ? (
                       <tr>
-                        <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
+                        <td colSpan="9" className="px-6 py-8 text-center text-gray-500">
                           Nenhum funcionário encontrado
                         </td>
                       </tr>
@@ -472,6 +570,9 @@ export default function FuncionariosPage() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {funcionario.departamento}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {getEmpresaNome(funcionario.empresa_id)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {new Date(funcionario.data_admissao).toLocaleDateString('pt-BR')}
@@ -696,7 +797,28 @@ export default function FuncionariosPage() {
                   <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
                     Dados Profissionais
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Empresa do Funcionário
+                      </label>
+                      <select
+                        name="empresa_id"
+                        value={formData.empresa_id || empresaSelecionada || ''}
+                        onChange={(e) => setFormData(prev => ({ ...prev, empresa_id: e.target.value ? Number(e.target.value) : '' }))}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        required
+                      >
+                        <option value="">Selecione</option>
+                        {empresas.map((emp) => (
+                          <option key={emp.id} value={emp.id}>
+                            {emp.nome_fantasia || emp.razao_social}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-xs text-gray-500 mt-1">Controle multiempresa: cada funcionário fica vinculado a uma empresa.</p>
+                    </div>
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Cargo

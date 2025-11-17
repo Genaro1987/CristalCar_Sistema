@@ -1,15 +1,30 @@
 import { createClient } from '@libsql/client';
 import { normalizarTexto } from '@/lib/text-utils';
+import { registrarLogAcao } from '@/lib/log-utils';
 
 const turso = createClient({
   url: process.env.TURSO_DATABASE_URL,
   authToken: process.env.TURSO_AUTH_TOKEN,
 });
 
+async function garantirColunaEmpresa() {
+  const info = await turso.execute('PRAGMA table_info(adm_funcionarios)');
+  const possuiEmpresa = info.rows?.some((c) => c.name === 'empresa_id');
+  if (!possuiEmpresa) {
+    await turso.execute('ALTER TABLE adm_funcionarios ADD COLUMN empresa_id INTEGER');
+    await turso.execute('CREATE INDEX IF NOT EXISTS idx_funcionarios_empresa ON adm_funcionarios(empresa_id)');
+  }
+}
+
 export async function PUT(request, { params }) {
   try {
+    await garantirColunaEmpresa();
     const { id } = params;
     const data = await request.json();
+    const existente = await turso.execute({
+      sql: 'SELECT * FROM adm_funcionarios WHERE id = ?',
+      args: [id],
+    });
 
     // Normalizar campos de texto (MAIÚSCULO sem acentos)
     const nome_completo = normalizarTexto(data.nome_completo);
@@ -41,6 +56,7 @@ export async function PUT(request, { params }) {
           salario = ?,
           status = ?,
           observacoes = ?,
+          empresa_id = ?,
           atualizado_em = CURRENT_TIMESTAMP
         WHERE id = ?
       `,
@@ -64,8 +80,20 @@ export async function PUT(request, { params }) {
         data.salario || null,
         data.status || 'ATIVO',
         observacoes,
+        data.empresa_id || null,
         id
       ]
+    });
+
+    await registrarLogAcao({
+      modulo: 'ADMINISTRATIVO',
+      tela: 'FUNCIONARIOS',
+      acao: 'EDITAR',
+      registroId: Number(id),
+      dadosAnteriores: existente.rows?.[0] || null,
+      dadosNovos: data,
+      ipAddress: request.headers.get('x-forwarded-for') || null,
+      userAgent: request.headers.get('user-agent') || null,
     });
 
     return Response.json({ success: true });
@@ -78,10 +106,23 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const { id } = params;
-
+    const existente = await turso.execute({
+      sql: 'SELECT * FROM adm_funcionarios WHERE id = ?',
+      args: [id],
+    });
     await turso.execute({
       sql: 'DELETE FROM adm_funcionarios WHERE id = ?',
       args: [id]
+    });
+
+    await registrarLogAcao({
+      modulo: 'ADMINISTRATIVO',
+      tela: 'FUNCIONARIOS',
+      acao: 'EXCLUIR',
+      registroId: Number(id),
+      dadosAnteriores: existente.rows?.[0] || null,
+      ipAddress: request.headers.get('x-forwarded-for') || null,
+      userAgent: request.headers.get('user-agent') || null,
     });
 
     return Response.json({ success: true });
