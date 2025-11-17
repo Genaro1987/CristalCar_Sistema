@@ -111,7 +111,24 @@ export async function POST(request) {
     await garantirTabelaDepartamentos();
     const data = await request.json();
 
-    const codigo = normalizarTexto(data.codigo || `DEP${Date.now()}`);
+    // Gerar código sequencial se não fornecido
+    let codigo = data.codigo;
+    if (!codigo) {
+      const ultimoCodigo = await turso.execute(`
+        SELECT codigo FROM adm_departamentos
+        WHERE codigo LIKE 'DEP-%'
+        ORDER BY codigo DESC LIMIT 1
+      `);
+
+      if (ultimoCodigo.rows.length > 0) {
+        const ultimoNumero = parseInt(ultimoCodigo.rows[0].codigo.split('-')[1]) || 0;
+        codigo = `DEP-${String(ultimoNumero + 1).padStart(3, '0')}`;
+      } else {
+        codigo = 'DEP-001';
+      }
+    }
+
+    codigo = normalizarTexto(codigo);
     const nome = normalizarTexto(data.nome);
 
     const result = await turso.execute({
@@ -130,7 +147,8 @@ export async function POST(request) {
 
     return Response.json({
       success: true,
-      id: serializeValue(result.lastInsertRowid)
+      id: serializeValue(result.lastInsertRowid),
+      codigo: codigo
     });
   } catch (error) {
     console.error('Erro ao criar departamento:', error);

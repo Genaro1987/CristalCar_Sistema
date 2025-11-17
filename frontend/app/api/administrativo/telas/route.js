@@ -23,6 +23,13 @@ async function garantirTabelaTelas() {
     )
   `);
 
+  // Garantir que coluna codigo existe (fix Vercel deploy)
+  const tableInfo = await turso.execute('PRAGMA table_info(adm_telas)');
+  const temCodigo = tableInfo.rows?.some(row => row.name === 'codigo');
+  if (!temCodigo) {
+    await turso.execute('ALTER TABLE adm_telas ADD COLUMN codigo VARCHAR(20) UNIQUE NOT NULL DEFAULT "TEMP"');
+  }
+
   const telasPadroes = [
     { codigo: 'ADM-001', modulo: 'ADMINISTRATIVO', nome: 'CADASTRO DA EMPRESA', rota: '/modules/administrativo/empresa', icone: '🏢', ordem: 1 },
     { codigo: 'ADM-002', modulo: 'ADMINISTRATIVO', nome: 'FUNCIONARIOS', rota: '/modules/administrativo/funcionarios', icone: '👥', ordem: 2 },

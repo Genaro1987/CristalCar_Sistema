@@ -44,6 +44,23 @@ export async function POST(request) {
     await garantirTabelaFormasPagamento();
     const data = await request.json();
 
+    // Gerar código sequencial se não fornecido
+    let codigo = data.codigo;
+    if (!codigo) {
+      const ultimoCodigo = await turso.execute(`
+        SELECT codigo FROM fin_formas_pagamento
+        WHERE codigo LIKE 'FPAG-%'
+        ORDER BY codigo DESC LIMIT 1
+      `);
+
+      if (ultimoCodigo.rows.length > 0) {
+        const ultimoNumero = parseInt(ultimoCodigo.rows[0].codigo.split('-')[1]) || 0;
+        codigo = `FPAG-${String(ultimoNumero + 1).padStart(3, '0')}`;
+      } else {
+        codigo = 'FPAG-001';
+      }
+    }
+
     // Normalizar campos de texto (MAIÚSCULO sem acentos)
     const descricao = normalizarTexto(data.descricao);
 
@@ -56,7 +73,7 @@ export async function POST(request) {
         ) VALUES (?, ?, ?, ?, ?, ?, ?)
       `,
       args: [
-        data.codigo || `FPAG${Date.now()}`,
+        codigo,
         descricao,
         data.tipo,
         data.taxa_percentual || 0,
@@ -66,7 +83,11 @@ export async function POST(request) {
       ]
     });
 
-    return Response.json({ success: true, id: serializeValue(result.lastInsertRowid) });
+    return Response.json({
+      success: true,
+      id: serializeValue(result.lastInsertRowid),
+      codigo: codigo
+    });
   } catch (error) {
     console.error('Erro ao criar forma de pagamento:', error);
     return Response.json({ error: 'Erro ao criar forma de pagamento: ' + error.message }, { status: 500 });

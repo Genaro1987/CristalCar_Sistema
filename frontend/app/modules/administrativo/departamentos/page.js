@@ -277,14 +277,14 @@ export default function DepartamentosPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Código *
+                      Código {!editandoId && <span className="text-xs text-gray-500">(auto-gerado se vazio)</span>}
                     </label>
                     <input
                       type="text"
                       value={formData.codigo}
                       onChange={(e) => setFormData({...formData, codigo: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      required={!editandoId}
+                      placeholder={!editandoId ? "DEP-XXX (auto)" : ""}
                       disabled={editandoId}
                     />
                   </div>

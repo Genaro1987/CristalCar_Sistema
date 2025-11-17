@@ -74,6 +74,23 @@ export async function POST(request) {
     await garantirTabelasCondicoes();
     const data = await request.json();
 
+    // Gerar código sequencial se não fornecido
+    let codigo = data.codigo;
+    if (!codigo) {
+      const ultimoCodigo = await turso.execute(`
+        SELECT codigo FROM fin_condicoes_pagamento
+        WHERE codigo LIKE 'COND-%'
+        ORDER BY codigo DESC LIMIT 1
+      `);
+
+      if (ultimoCodigo.rows.length > 0) {
+        const ultimoNumero = parseInt(ultimoCodigo.rows[0].codigo.split('-')[1]) || 0;
+        codigo = `COND-${String(ultimoNumero + 1).padStart(3, '0')}`;
+      } else {
+        codigo = 'COND-001';
+      }
+    }
+
     // Normalizar campos de texto (MAIÚSCULO sem acentos)
     const nome = normalizarTexto(data.nome || 'SEM NOME');
     const descricao = data.descricao ? normalizarTexto(data.descricao) : '';
@@ -89,7 +106,7 @@ export async function POST(request) {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       args: [
-        data.codigo || `COND${Date.now()}`,
+        codigo,
         nome,
         descricao,
         data.tipo,
@@ -104,7 +121,11 @@ export async function POST(request) {
       ]
     });
 
-    return Response.json({ success: true, id: serializeValue(result.lastInsertRowid) });
+    return Response.json({
+      success: true,
+      id: serializeValue(result.lastInsertRowid),
+      codigo: codigo
+    });
   } catch (error) {
     console.error('Erro ao criar condição:', error);
     return Response.json({ error: 'Erro ao criar condição: ' + error.message }, { status: 500 });

@@ -109,8 +109,22 @@ export async function POST(request) {
     await garantirTabelasPrecos();
     const data = await request.json();
 
-    // Garantir código único exigido pelo schema
-    const codigo = data.codigo || `TAB${Date.now()}`;
+    // Gerar código sequencial se não fornecido
+    let codigo = data.codigo;
+    if (!codigo) {
+      const ultimoCodigo = await turso.execute(`
+        SELECT codigo FROM tab_tabelas_precos
+        WHERE codigo LIKE 'TAB-%'
+        ORDER BY codigo DESC LIMIT 1
+      `);
+
+      if (ultimoCodigo.rows.length > 0) {
+        const ultimoNumero = parseInt(ultimoCodigo.rows[0].codigo.split('-')[1]) || 0;
+        codigo = `TAB-${String(ultimoNumero + 1).padStart(3, '0')}`;
+      } else {
+        codigo = 'TAB-001';
+      }
+    }
 
     // Verificar colunas legado
     const tableInfo = await turso.execute('PRAGMA table_info(tab_tabelas_precos)');
@@ -164,7 +178,11 @@ export async function POST(request) {
       args: args
     });
 
-    return Response.json({ success: true, id: serializeValue(result.lastInsertRowid) });
+    return Response.json({
+      success: true,
+      id: serializeValue(result.lastInsertRowid),
+      codigo: codigo
+    });
   } catch (error) {
     console.error('Erro ao criar tabela:', error);
     return Response.json({ error: 'Erro ao criar tabela: ' + error.message }, { status: 500 });
