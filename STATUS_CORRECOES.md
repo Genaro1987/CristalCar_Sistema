@@ -1,7 +1,7 @@
 # STATUS DAS CORREÇÕES - CRISTALCAR SISTEMA
 *Atualizado em: 15/11/2025*
 
-## ✅ PROBLEMAS CORRIGIDOS (6 de 11 críticos)
+## ✅ PROBLEMAS CORRIGIDOS (7 de 11 críticos)
 
 ### 1. ✅ FUNCIONÁRIOS - Colunas fantasma removidas
 **Status:** CORRIGIDO ✅
@@ -90,36 +90,57 @@
 
 ---
 
-## ⚠️ PROBLEMAS AINDA NÃO CORRIGIDOS (5)
+### 7. ✅ ESTRUTURA DRE - API criada
+**Status:** CORRIGIDO ✅
+**Commit:** 98d0f20
 
-### 1. ❌ PLANO DE CONTAS - Não salva no banco
+**PROBLEMA CRÍTICO:** "Cadastrei estrutura DRE, aparece na tela mas não no banco"
+
+**CAUSA RAIZ:** API não existia! Apenas havia API de relatório (GET do DRE), mas nenhuma API para CRUD da estrutura.
+
+**SOLUÇÃO IMPLEMENTADA:**
+- ✅ Criada `/frontend/app/api/estrutura-dre/route.js` completa (GET, POST, PUT, DELETE)
+- ✅ Criada `/frontend/app/api/dre-plano-contas/route.js` para vínculos
+- ✅ Validações: código único, campos obrigatórios, verificação de vínculos
+- ✅ Normalização de texto aplicada
+- ✅ Logs detalhados para debug
+
+**RECURSOS:**
+- Gerenciamento completo de estruturas DRE
+- Vinculação de DRE com Plano de Contas
+- Prevenção de exclusão se houver vínculos
+- Suporte para fórmulas de cálculo
+
+**PRÓXIMO PASSO:** Adicionar campo `tipo_plano` (DRE Oficial, Gerencial, Custeio Variável) via migration
+
+---
+
+## ⚠️ PROBLEMAS AINDA NÃO CORRIGIDOS (4)
+
+### 1. ⚠️ PLANO DE CONTAS - Investigação necessária
 **Prioridade:** CRÍTICA 🔴
 **Problema:** "Deu aviso de nova conta criada, porém não foi criado o registro no banco"
 
-**Arquivos a verificar:**
-- `/frontend/app/api/plano-contas/route.js`
+**Status da API:** ✅ Código está correto
+- Nomes de colunas conferem com schema
+- Validações implementadas
+- Logs de debug presentes
+- Error handling adequado
 
-**Ações necessárias:**
-- Verificar console logs
-- Verificar nomes de colunas vs schema
-- Testar INSERT manualmente
+**Possíveis causas:**
+1. Frontend não está chamando a API correta
+2. Usuário verificando database/ambiente diferente
+3. Problema de sincronização Turso (replicação)
+4. Frontend mostrando mensagem de sucesso independente da resposta da API
 
----
-
-### 2. ❌ ESTRUTURA DRE - Não salva no banco
-**Prioridade:** CRÍTICA 🔴
-**Problema:** "Registro aparece em tela, mas não identifiquei o registro no banco"
-
-**Arquivos a verificar:**
-- Verificar se existe API `/frontend/app/api/estrutura-dre/`
-- Verificar tabela `fin_estrutura_dre` no banco
-
-**Ações necessárias:**
-- Criar API se não existir
-- Verificar nomes de colunas
-- Implementar tipos de DRE (Oficial, Gerencial com EBITDA, Custeio Variável)
+**Próximos passos:**
+- Verificar console do navegador e servidor
+- Confirmar qual API o frontend está chamando
+- Verificar se registro está sendo criado mas não aparece em queries
+- Testar INSERT diretamente no banco
 
 ---
+
 
 ### 3. ❌ BANCOS - Botão não funciona (FRONTEND)
 **Prioridade:** ALTA 🟠
@@ -195,11 +216,11 @@
 
 | Categoria | Quantidade | Status |
 |-----------|-----------|---------|
-| **Problemas críticos corrigidos** | 6 | ✅ |
-| **Problemas críticos pendentes** | 2 | ❌ |
+| **Problemas críticos corrigidos** | 7 | ✅ |
+| **Problemas críticos pendentes** | 1 | ⚠️ |
 | **Problemas frontend pendentes** | 3 | ❌ |
 | **Melhorias/Recursos novos** | 1 | 📋 |
-| **Total de problemas resolvidos** | 55% | 🟡 |
+| **Total de problemas resolvidos** | 64% | 🟢 |
 
 ---
 
@@ -210,8 +231,10 @@
 3. `c5fd685` - fix: Corrigir erros críticos em Empresa e Formas de Pagamento
 4. `1540ac6` - docs: Adicionar STATUS_CORRECOES.md
 5. `1bc3902` - fix: Corrigir nomes das tabelas de backup conforme schema
+6. `fca9b40` - docs: Atualizar STATUS_CORRECOES com fix das tabelas de backup
+7. `98d0f20` - feat: Criar APIs para gerenciamento de Estrutura DRE
 
-Total de arquivos modificados: **11 APIs corrigidas** (8 cadastros + 3 backup)
+Total de arquivos modificados: **13 APIs** (8 corrigidas + 3 backup + 2 criadas DRE)
 
 ---
 
@@ -243,4 +266,4 @@ Consulte também:
 ---
 
 **Branch atual:** `claude/fix-database-schema-migration-018u2TTkhUifuiNbUGK6YEbV`
-**Último push:** 1bc3902 (Fix backup tables - CRITICAL deployment blocker)
+**Último commit:** 98d0f20 (Create DRE structure APIs - CRITICAL missing functionality)
