@@ -19,7 +19,8 @@ export async function PUT(request, { params }) {
           taxa_percentual = ?,
           taxa_fixa = ?,
           gera_movimento_bancario = ?,
-          ativo = ?
+          status = ?,
+          atualizado_em = CURRENT_TIMESTAMP
         WHERE id = ?
       `,
       args: [
@@ -29,7 +30,7 @@ export async function PUT(request, { params }) {
         data.taxa_percentual || 0,
         data.taxa_fixa || 0,
         data.gera_movimento_bancario ? 1 : 0,
-        data.status === 'ATIVO' ? 1 : 0,
+        data.status || (data.ativo ? 'ATIVO' : 'INATIVO'),
         id
       ]
     });

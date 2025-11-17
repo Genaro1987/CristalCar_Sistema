@@ -42,9 +42,42 @@ export default function RegistroLogPage() {
     filterConfigs();
   }, [searchTerm, moduloFilter, configs]);
 
-  const loadConfigs = () => {
-    // Banco de dados vazio - nenhuma configuração de log cadastrada
-    setConfigs([]);
+  const loadConfigs = async () => {
+    try {
+      const response = await fetch('/api/administrativo/telas');
+      if (!response.ok) throw new Error('Falha ao buscar telas');
+
+      const telas = await response.json();
+      const configuracoes = telas.map((tela) => ({
+        id: tela.id || tela.codigo_tela,
+        modulo: tela.modulo,
+        tela: tela.nome_tela,
+        codigo: tela.codigo_tela,
+        registrar_log: false,
+        registrar_visualizacao: true,
+        registrar_inclusao: true,
+        registrar_edicao: true,
+        registrar_exclusao: true,
+      }));
+
+      setConfigs(configuracoes);
+    } catch (error) {
+      console.error('Erro ao carregar telas para log:', error);
+      // Fallback para lista estática
+      setConfigs(
+        telasDisponiveis.map((tela) => ({
+          id: tela.codigo,
+          modulo: tela.modulo,
+          tela: tela.nome,
+          codigo: tela.codigo,
+          registrar_log: false,
+          registrar_visualizacao: true,
+          registrar_inclusao: true,
+          registrar_edicao: true,
+          registrar_exclusao: true,
+        }))
+      );
+    }
   };
 
   const loadLogs = () => {

@@ -37,8 +37,15 @@ export default function PlanoContasPage() {
       const data = await response.json();
 
       if (data.success) {
+        const normalizados = data.data.map((item) => ({
+          ...item,
+          compoe_dre: item.compoe_dre === 1 || item.compoe_dre === true,
+          aceita_lancamento: item.aceita_lancamento === 1 || item.aceita_lancamento === true,
+          utilizado_objetivo: item.utilizado_objetivo === 1 || item.utilizado_objetivo === true,
+        }));
+
         // Construir árvore hierárquica
-        const tree = buildTree(data.data);
+        const tree = buildTree(normalizados);
         setContas(tree);
       }
     } catch (error) {
@@ -114,7 +121,7 @@ export default function PlanoContasPage() {
     try {
       const payload = {
         ...formData,
-        considera_resultado: formData.compoe_dre
+        compoe_dre: !!formData.compoe_dre,
       };
 
       if (editingId) {
