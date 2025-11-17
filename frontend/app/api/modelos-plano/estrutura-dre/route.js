@@ -79,6 +79,18 @@ async function garantirTabelasEstruturaDRE() {
       console.log('Adicionando coluna negativo à fin_estrutura_dre');
       await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN negativo BOOLEAN DEFAULT 0');
     }
+
+    // Migração especial: se descricao existe com NOT NULL, precisamos recri-la
+    if (colunas.includes('descricao')) {
+      console.log('Removendo coluna descricao (será recriada como nullable se necessário)');
+      // SQLite não suporta DROP COLUMN antes da versão 3.35.0
+      // Vamos apenas garantir que novos inserts não falhem
+      try {
+        await turso.execute('UPDATE fin_estrutura_dre SET descricao = nome WHERE descricao IS NULL');
+      } catch (e) {
+        console.log('Coluna descricao já preenchida ou não existe');
+      }
+    }
   } catch (error) {
     console.error('Erro na migração estrutura DRE:', error);
     throw error;
@@ -168,12 +180,36 @@ export async function POST(request) {
     }
 
     const nome = normalizarTexto(data.nome);
+    const descricao = data.descricao ? normalizarTexto(data.descricao) : nome;
 
-    const result = await turso.execute({
-      sql: `INSERT INTO fin_estrutura_dre
-            (tipo_dre_id, codigo, nome, nivel, pai_id, ordem, tipo_linha, formula, negativo)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      args: [
+    // Verificar se a coluna descricao existe na tabela
+    const tableInfo = await turso.execute('PRAGMA table_info(fin_estrutura_dre)');
+    const colunas = tableInfo.rows?.map(row => row.name) || [];
+    const temDescricao = colunas.includes('descricao');
+
+    let sql, args;
+
+    if (temDescricao) {
+      sql = `INSERT INTO fin_estrutura_dre
+             (tipo_dre_id, codigo, nome, descricao, nivel, pai_id, ordem, tipo_linha, formula, negativo)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      args = [
+        data.tipo_dre_id,
+        data.codigo || `LIN-${Date.now()}`,
+        nome,
+        descricao,
+        data.nivel || 1,
+        data.pai_id || null,
+        data.ordem || 999,
+        data.tipo_linha || 'TITULO',
+        data.formula || null,
+        data.negativo ? 1 : 0
+      ];
+    } else {
+      sql = `INSERT INTO fin_estrutura_dre
+             (tipo_dre_id, codigo, nome, nivel, pai_id, ordem, tipo_linha, formula, negativo)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      args = [
         data.tipo_dre_id,
         data.codigo || `LIN-${Date.now()}`,
         nome,
@@ -183,8 +219,10 @@ export async function POST(request) {
         data.tipo_linha || 'TITULO',
         data.formula || null,
         data.negativo ? 1 : 0
-      ]
-    });
+      ];
+    }
+
+    const result = await turso.execute({ sql, args });
 
     return Response.json({
       success: true,

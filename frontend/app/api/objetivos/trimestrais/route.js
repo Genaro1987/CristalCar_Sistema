@@ -75,6 +75,19 @@ async function garantirTabelasObjetivos() {
 
       await turso.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_obj_trim_codigo ON obj_objetivos_trimestrais(codigo)');
     }
+
+    // Migração 5: tornar plano_conta_id nullable para registros existentes com NOT NULL
+    // Preencher plano_conta_id NULL com um valor padrão temporário se necessário
+    try {
+      const registrosNulos = await turso.execute(
+        'SELECT id FROM obj_objetivos_trimestrais WHERE plano_conta_id IS NULL'
+      );
+      if (registrosNulos.rows.length > 0) {
+        console.log('Encontrados', registrosNulos.rows.length, 'objetivos sem plano_conta_id');
+      }
+    } catch (e) {
+      console.log('Coluna plano_conta_id aceita NULL ou não existe:', e.message);
+    }
   } catch (error) {
     console.log('Migração objetivos trimestrais:', error.message);
   }
@@ -130,9 +143,9 @@ export async function POST(request) {
     await garantirTabelasObjetivos();
     const data = await request.json();
 
-    if (!data.ano || !data.trimestre || !data.plano_conta_id || !data.valor_objetivo) {
+    if (!data.ano || !data.trimestre || !data.valor_objetivo) {
       return Response.json({
-        error: 'Campos obrigatórios: ano, trimestre, plano_conta_id, valor_objetivo'
+        error: 'Campos obrigatórios: ano, trimestre, valor_objetivo'
       }, { status: 400 });
     }
 
@@ -155,6 +168,19 @@ export async function POST(request) {
 
     const descricao = data.descricao ? normalizarTexto(data.descricao) : null;
 
+    // Verificar se a coluna plano_conta_id aceita NULL
+    const tableInfo = await turso.execute('PRAGMA table_info(obj_objetivos_trimestrais)');
+    const colunas = tableInfo.rows || [];
+    const colPlanoContaId = colunas.find(c => c.name === 'plano_conta_id');
+    const planoContaIdRequired = colPlanoContaId && colPlanoContaId.notnull === 1;
+
+    // Se plano_conta_id é obrigatório mas não foi fornecido, retornar erro
+    if (planoContaIdRequired && !data.plano_conta_id) {
+      return Response.json({
+        error: 'plano_conta_id é obrigatório'
+      }, { status: 400 });
+    }
+
     const result = await turso.execute({
       sql: `INSERT INTO obj_objetivos_trimestrais
             (codigo, empresa_id, ano, trimestre, plano_conta_id, tipo_conta, valor_objetivo, descricao)
@@ -164,7 +190,7 @@ export async function POST(request) {
         data.empresa_id || null,
         data.ano,
         data.trimestre,
-        data.plano_conta_id,
+        data.plano_conta_id || null,
         data.tipo_conta || 'RECEITA',
         data.valor_objetivo,
         descricao

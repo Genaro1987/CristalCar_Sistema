@@ -215,9 +215,24 @@ export async function DELETE(request) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
+    console.log('[DELETE Departamento] ID recebido:', id);
+
     if (!id) {
       return Response.json({ error: 'ID não fornecido' }, { status: 400 });
     }
+
+    // Verificar se o departamento existe
+    const departamentoExiste = await turso.execute({
+      sql: 'SELECT id, nome FROM adm_departamentos WHERE id = ?',
+      args: [Number(id)]
+    });
+
+    if (departamentoExiste.rows.length === 0) {
+      console.log('[DELETE Departamento] Departamento não encontrado:', id);
+      return Response.json({ error: 'Departamento não encontrado' }, { status: 404 });
+    }
+
+    console.log('[DELETE Departamento] Departamento encontrado:', departamentoExiste.rows[0]);
 
     // Verificar se a tabela adm_funcionarios existe
     const temTabelaFuncionarios = await turso.execute(`
@@ -228,22 +243,26 @@ export async function DELETE(request) {
     if (temTabelaFuncionarios.rows.length > 0) {
       const funcionarios = await turso.execute({
         sql: 'SELECT COUNT(*) as total FROM adm_funcionarios WHERE departamento_id = ?',
-        args: [id]
+        args: [Number(id)]
       });
 
       if (funcionarios.rows[0].total > 0) {
+        console.log('[DELETE Departamento] Tem funcionários vinculados:', funcionarios.rows[0].total);
         return Response.json({
           error: 'Não é possível excluir departamento com funcionários vinculados'
         }, { status: 400 });
       }
     }
 
-    await turso.execute({
+    const result = await turso.execute({
       sql: 'DELETE FROM adm_departamentos WHERE id = ?',
-      args: [id]
+      args: [Number(id)]
     });
 
-    return Response.json({ success: true });
+    console.log('[DELETE Departamento] Resultado:', result);
+    console.log('[DELETE Departamento] Departamento excluído com sucesso:', id);
+
+    return Response.json({ success: true, id: Number(id) });
   } catch (error) {
     console.error('Erro ao excluir departamento:', error);
     return Response.json({

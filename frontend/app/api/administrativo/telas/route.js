@@ -85,7 +85,7 @@ async function garantirTabelaTelas() {
     { codigo: 'FIN-001', modulo: 'FINANCEIRO', nome: 'PLANO DE CONTAS', rota: '/modules/modelos-plano/plano-contas', icone: '📊', ordem: 1 },
     { codigo: 'FIN-002', modulo: 'FINANCEIRO', nome: 'TIPOS DE DRE', rota: '/modules/modelos-plano/tipos-dre-lista', icone: '📈', ordem: 2 },
     { codigo: 'FIN-003', modulo: 'FINANCEIRO', nome: 'ESTRUTURA DRE', rota: '/modules/modelos-plano/estrutura-dre-editor', icone: '🎯', ordem: 3 },
-    { codigo: 'CAD-001', modulo: 'CADASTROS', nome: 'TABELAS DE PRECOS', rota: '/modules/cadastros/tabelas-precos', icone: '💰', ordem: 1 },
+    { codigo: 'CAD-001', modulo: 'CADASTROS', nome: 'ITENS POR TABELA DE PRECO', rota: '/modules/cadastros/tabelas-precos-itens', icone: '💰', ordem: 1 },
     { codigo: 'CAD-002', modulo: 'CADASTROS', nome: 'FORMAS DE PAGAMENTO', rota: '/modules/cadastros/formas-pagamento', icone: '💳', ordem: 2 },
     { codigo: 'CAD-003', modulo: 'CADASTROS', nome: 'CONDICOES DE PAGAMENTO', rota: '/modules/cadastros/condicoes-pagamento', icone: '📝', ordem: 3 },
     { codigo: 'PAR-001', modulo: 'PARCEIROS', nome: 'CADASTRO DE PARCEIROS', rota: '/modules/parceiros/cadastro', icone: '🤝', ordem: 1 },
@@ -97,6 +97,19 @@ async function garantirTabelaTelas() {
     { codigo: 'IND-001', modulo: 'INDICADORES', nome: 'INDICADORES CUSTOMIZAVEIS', rota: '/modules/indicadores/customizaveis', icone: '📊', ordem: 1 },
     { codigo: 'HOME-001', modulo: 'GERAL', nome: 'PAGINA INICIAL', rota: '/dashboard', icone: '🏠', ordem: 0 },
   ];
+
+  // Limpar registros inválidos ou duplicados
+  const codigosValidos = telasPadroes.map(t => t.codigo);
+  try {
+    // Remover telas que não estão na lista de códigos válidos
+    const placeholders = codigosValidos.map(() => '?').join(',');
+    await turso.execute({
+      sql: `DELETE FROM adm_telas WHERE codigo NOT IN (${placeholders})`,
+      args: codigosValidos
+    });
+  } catch (error) {
+    console.log('Erro ao limpar telas inválidas:', error.message);
+  }
 
   let codigosExistentes = [];
   try {
@@ -112,6 +125,12 @@ async function garantirTabelaTelas() {
       await turso.execute({
         sql: 'INSERT INTO adm_telas (codigo, modulo, nome, rota, icone, ordem, ativo) VALUES (?, ?, ?, ?, ?, ?, ?)',
         args: [tela.codigo, tela.modulo, tela.nome, tela.rota, tela.icone, tela.ordem, 1]
+      });
+    } else {
+      // Atualizar tela existente para garantir dados corretos
+      await turso.execute({
+        sql: 'UPDATE adm_telas SET modulo = ?, nome = ?, rota = ?, icone = ?, ordem = ? WHERE codigo = ?',
+        args: [tela.modulo, tela.nome, tela.rota, tela.icone, tela.ordem, tela.codigo]
       });
     }
   }
