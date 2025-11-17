@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@libsql/client';
 import { normalizarTexto } from '@/lib/text-utils';
+import { serializeRows } from '@/lib/db-utils';
 
 const turso = createClient({
   url: process.env.TURSO_DATABASE_URL,
@@ -88,7 +89,7 @@ export async function GET() {
   try {
     await garantirSeeds();
     const result = await turso.execute('SELECT * FROM fin_tipos_estrutura_dre WHERE status != "INATIVO" ORDER BY ordem ASC, nome ASC');
-    return NextResponse.json(result.rows);
+    return NextResponse.json(serializeRows(result.rows));
   } catch (error) {
     console.error('Erro ao listar tipos de estrutura do DRE:', error);
     return NextResponse.json({ error: 'Erro ao listar tipos de estrutura do DRE' }, { status: 500 });

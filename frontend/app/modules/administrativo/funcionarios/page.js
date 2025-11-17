@@ -15,6 +15,7 @@ export default function FuncionariosPage() {
   const [empresas, setEmpresas] = useState([]);
   const [empresaSelecionada, setEmpresaSelecionada] = useState(null);
   const [mensagem, setMensagem] = useState(null);
+  const [departamentos, setDepartamentos] = useState([]);
   const [formData, setFormData] = useState({
     codigo_unico: '',
     nome_completo: '',
@@ -26,10 +27,10 @@ export default function FuncionariosPage() {
     email: '',
     endereco: '',
     cidade: '',
-    estado: '',
+    estado: 'RS',
     cep: '',
     cargo: '',
-    departamento: '',
+    departamento_id: '',
     data_admissao: '',
     data_demissao: '',
     salario: '',
@@ -51,17 +52,6 @@ export default function FuncionariosPage() {
     { value: 'SEX', label: 'Sexta' },
     { value: 'SAB', label: 'Sábado' },
     { value: 'DOM', label: 'Domingo' }
-  ];
-
-  const departamentos = [
-    'Administrativo',
-    'Financeiro',
-    'Vendas',
-    'Compras',
-    'Estoque',
-    'TI',
-    'RH',
-    'Diretoria'
   ];
 
   const carregarEmpresas = async () => {
@@ -87,8 +77,21 @@ export default function FuncionariosPage() {
     }
   };
 
+  const carregarDepartamentos = async () => {
+    try {
+      const response = await fetch('/api/administrativo/departamentos?status=ATIVO');
+      if (response.ok) {
+        const lista = await response.json();
+        setDepartamentos(lista || []);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar departamentos:', error);
+    }
+  };
+
   useEffect(() => {
     carregarEmpresas();
+    carregarDepartamentos();
   }, []);
 
   useEffect(() => {
@@ -837,14 +840,14 @@ export default function FuncionariosPage() {
                         Departamento
                       </label>
                       <select
-                        name="departamento"
-                        value={formData.departamento}
+                        name="departamento_id"
+                        value={formData.departamento_id}
                         onChange={handleInputChange}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                       >
                         <option value="">Selecione</option>
                         {departamentos.map(dept => (
-                          <option key={dept} value={dept}>{dept}</option>
+                          <option key={dept.id} value={dept.id}>{dept.nome}</option>
                         ))}
                       </select>
                     </div>

@@ -1,130 +1,82 @@
 import { createClient } from '@libsql/client';
+import { serializeRows, serializeValue } from '@/lib/db-utils';
 
 const turso = createClient({
   url: process.env.TURSO_DATABASE_URL,
   authToken: process.env.TURSO_AUTH_TOKEN,
 });
 
-// Telas do sistema
-const telasDoSistema = [
-  // ADMINISTRATIVO
-  { codigo_tela: 'ADM_EMPRESA', nome_tela: 'CADASTRO DE EMPRESA', modulo: 'ADMINISTRATIVO', caminho_tela: '/modules/administrativo/empresa', icone: 'Building', ordem_exibicao: 1 },
-  { codigo_tela: 'ADM_FUNCIONARIOS', nome_tela: 'FUNCIONARIOS', modulo: 'ADMINISTRATIVO', caminho_tela: '/modules/administrativo/funcionarios', icone: 'Users', ordem_exibicao: 2 },
-  { codigo_tela: 'ADM_USUARIOS', nome_tela: 'USUARIOS DO SISTEMA', modulo: 'ADMINISTRATIVO', caminho_tela: '/modules/administrativo/usuarios', icone: 'UserCog', ordem_exibicao: 3 },
-  { codigo_tela: 'ADM_BACKUP', nome_tela: 'CONFIGURACAO DE BACKUP', modulo: 'ADMINISTRATIVO', caminho_tela: '/modules/administrativo/backup', icone: 'Database', ordem_exibicao: 4 },
+async function garantirTabelaTelas() {
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS adm_telas (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      codigo VARCHAR(20) UNIQUE NOT NULL,
+      modulo VARCHAR(50) NOT NULL,
+      nome VARCHAR(200) NOT NULL,
+      descricao TEXT,
+      rota VARCHAR(500),
+      icone VARCHAR(50),
+      ordem INTEGER DEFAULT 999,
+      ativo BOOLEAN DEFAULT 1,
+      criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+      atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
 
-  // FINANCEIRO
-  { codigo_tela: 'FIN_PLANO_CONTAS', nome_tela: 'PLANO DE CONTAS', modulo: 'FINANCEIRO', caminho_tela: '/modules/financeiro/plano-contas', icone: 'List', ordem_exibicao: 10 },
-  { codigo_tela: 'FIN_BANCOS', nome_tela: 'CADASTRO DE BANCOS', modulo: 'FINANCEIRO', caminho_tela: '/modules/financeiro/bancos', icone: 'Landmark', ordem_exibicao: 11 },
-  { codigo_tela: 'FIN_FORMAS_PAGAMENTO', nome_tela: 'FORMAS DE PAGAMENTO', modulo: 'FINANCEIRO', caminho_tela: '/modules/financeiro/formas-pagamento', icone: 'CreditCard', ordem_exibicao: 12 },
-  { codigo_tela: 'FIN_CONDICOES_PAGAMENTO', nome_tela: 'CONDICOES DE PAGAMENTO', modulo: 'FINANCEIRO', caminho_tela: '/modules/financeiro/condicoes-pagamento', icone: 'Calendar', ordem_exibicao: 13 },
-  { codigo_tela: 'FIN_MOVIMENTACAO', nome_tela: 'MOVIMENTACAO FINANCEIRA', modulo: 'FINANCEIRO', caminho_tela: '/modules/financeiro/movimentacao', icone: 'ArrowLeftRight', ordem_exibicao: 14 },
-  { codigo_tela: 'FIN_CONCILIACAO', nome_tela: 'CONCILIACAO BANCARIA', modulo: 'FINANCEIRO', caminho_tela: '/modules/financeiro/conciliacao', icone: 'CheckSquare', ordem_exibicao: 15 },
+  // Garantir que coluna codigo existe (fix Vercel deploy)
+  const tableInfo = await turso.execute('PRAGMA table_info(adm_telas)');
+  const temCodigo = tableInfo.rows?.some(row => row.name === 'codigo');
+  if (!temCodigo) {
+    await turso.execute('ALTER TABLE adm_telas ADD COLUMN codigo VARCHAR(20) UNIQUE NOT NULL DEFAULT "TEMP"');
+  }
 
-  // PARCEIROS
-  { codigo_tela: 'PAR_CADASTRO', nome_tela: 'CADASTRO DE PARCEIROS', modulo: 'PARCEIROS', caminho_tela: '/modules/parceiros/cadastro', icone: 'Users', ordem_exibicao: 20 },
-  { codigo_tela: 'PAR_CONSULTA', nome_tela: 'CONSULTA DE PARCEIROS', modulo: 'PARCEIROS', caminho_tela: '/modules/parceiros/consulta', icone: 'Search', ordem_exibicao: 21 },
+  const telasPadroes = [
+    { codigo: 'ADM-001', modulo: 'ADMINISTRATIVO', nome: 'CADASTRO DA EMPRESA', rota: '/modules/administrativo/empresa', icone: '🏢', ordem: 1 },
+    { codigo: 'ADM-002', modulo: 'ADMINISTRATIVO', nome: 'FUNCIONARIOS', rota: '/modules/administrativo/funcionarios', icone: '👥', ordem: 2 },
+    { codigo: 'ADM-006', modulo: 'ADMINISTRATIVO', nome: 'DEPARTAMENTOS', rota: '/modules/administrativo/departamentos', icone: '🏛️', ordem: 6 },
+    { codigo: 'FIN-001', modulo: 'FINANCEIRO', nome: 'PLANO DE CONTAS', rota: '/modules/modelos-plano/plano-contas', icone: '📊', ordem: 1 },
+    { codigo: 'FIN-002', modulo: 'FINANCEIRO', nome: 'TIPOS DE DRE', rota: '/modules/modelos-plano/planos-padroes', icone: '📈', ordem: 2 },
+    { codigo: 'FIN-003', modulo: 'FINANCEIRO', nome: 'ESTRUTURA DRE', rota: '/modules/modelos-plano/estrutura-dre', icone: '🎯', ordem: 3 },
+    { codigo: 'PAR-001', modulo: 'PARCEIROS', nome: 'CADASTRO DE PARCEIROS', rota: '/modules/parceiros/cadastro', icone: '🤝', ordem: 1 },
+    { codigo: 'OBJ-001', modulo: 'OBJETIVOS', nome: 'OBJETIVOS TRIMESTRAIS', rota: '/modules/objetivos/trimestrais', icone: '🎯', ordem: 1 },
+    { codigo: 'OBJ-002', modulo: 'OBJETIVOS', nome: 'METAS SEMANAIS', rota: '/modules/objetivos/semanais', icone: '📅', ordem: 2 },
+    { codigo: 'IMP-001', modulo: 'IMPORTACAO', nome: 'IMPORTACAO DE EXTRATOS', rota: '/modules/importacao/extratos', icone: '📥', ordem: 1 },
+    { codigo: 'IMP-002', modulo: 'IMPORTACAO', nome: 'IMPORTACAO XML NF-E', rota: '/modules/importacao/xml-nfe', icone: '📄', ordem: 2 },
+    { codigo: 'IND-001', modulo: 'INDICADORES', nome: 'INDICADORES CUSTOMIZAVEIS', rota: '/modules/indicadores/customizaveis', icone: '📊', ordem: 1 },
+    { codigo: 'HOME-001', modulo: 'GERAL', nome: 'PAGINA INICIAL', rota: '/dashboard', icone: '🏠', ordem: 0 },
+  ];
 
-  // FATURAMENTO
-  { codigo_tela: 'FAT_CLIENTES', nome_tela: 'CADASTRO DE CLIENTES', modulo: 'FATURAMENTO', caminho_tela: '/modules/faturamento/clientes', icone: 'UserCheck', ordem_exibicao: 30 },
-  { codigo_tela: 'FAT_NOTAS_FISCAIS', nome_tela: 'NOTAS FISCAIS DE VENDA', modulo: 'FATURAMENTO', caminho_tela: '/modules/faturamento/notas-fiscais', icone: 'FileText', ordem_exibicao: 31 },
-  { codigo_tela: 'FAT_COBRANCAS', nome_tela: 'CONTAS A RECEBER', modulo: 'FATURAMENTO', caminho_tela: '/modules/faturamento/cobrancas', icone: 'DollarSign', ordem_exibicao: 32 },
+  const existentes = await turso.execute('SELECT codigo FROM adm_telas');
+  const codigosExistentes = existentes.rows?.map(row => row.codigo) || [];
 
-  // COMPRAS
-  { codigo_tela: 'COM_FORNECEDORES', nome_tela: 'CADASTRO DE FORNECEDORES', modulo: 'COMPRAS', caminho_tela: '/modules/compras/fornecedores', icone: 'Truck', ordem_exibicao: 40 },
-  { codigo_tela: 'COM_NOTAS_FISCAIS', nome_tela: 'NOTAS FISCAIS DE COMPRA', modulo: 'COMPRAS', caminho_tela: '/modules/compras/notas-fiscais', icone: 'FileText', ordem_exibicao: 41 },
-  { codigo_tela: 'COM_PAGAMENTOS', nome_tela: 'CONTAS A PAGAR', modulo: 'COMPRAS', caminho_tela: '/modules/compras/pagamentos', icone: 'DollarSign', ordem_exibicao: 42 },
-
-  // TABELAS DE PREÇOS
-  { codigo_tela: 'TAB_PRECOS', nome_tela: 'TABELAS DE PRECOS', modulo: 'TABELAS', caminho_tela: '/modules/tabelas-precos/cadastro', icone: 'Tag', ordem_exibicao: 50 },
-
-  // OBJETIVOS
-  { codigo_tela: 'OBJ_TRIMESTRAL', nome_tela: 'OBJETIVOS TRIMESTRAIS', modulo: 'OBJETIVOS', caminho_tela: '/modules/objetivos/trimestral', icone: 'Target', ordem_exibicao: 60 },
-
-  // RELATÓRIOS
-  { codigo_tela: 'REL_DRE', nome_tela: 'DRE - DEMONSTRATIVO DE RESULTADO', modulo: 'RELATORIOS', caminho_tela: '/modules/relatorios/dre', icone: 'BarChart', ordem_exibicao: 70 },
-  { codigo_tela: 'REL_FLUXO_CAIXA', nome_tela: 'FLUXO DE CAIXA', modulo: 'RELATORIOS', caminho_tela: '/modules/relatorios/fluxo-caixa', icone: 'TrendingUp', ordem_exibicao: 71 },
-];
-
-export async function GET() {
-  try {
-    const result = await turso.execute({
-      sql: `SELECT * FROM adm_telas WHERE ativo = 1 ORDER BY modulo, ordem_exibicao`,
-      args: []
-    });
-
-    return Response.json(result.rows);
-  } catch (error) {
-    console.error('Erro ao buscar telas:', error);
-    return Response.json({ error: 'Erro ao buscar telas' }, { status: 500 });
+  for (const tela of telasPadroes) {
+    if (!codigosExistentes.includes(tela.codigo)) {
+      await turso.execute({
+        sql: 'INSERT INTO adm_telas (codigo, modulo, nome, rota, icone, ordem, ativo) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        args: [tela.codigo, tela.modulo, tela.nome, tela.rota, tela.icone, tela.ordem, 1]
+      });
+    }
   }
 }
 
-// Endpoint para inicializar telas do sistema
-export async function POST() {
+export async function GET(request) {
   try {
-    let inserted = 0;
-    let updated = 0;
+    await garantirTabelaTelas();
+    const { searchParams } = new URL(request.url);
+    const codigo = searchParams.get('codigo');
 
-    for (const tela of telasDoSistema) {
-      // Verificar se já existe
-      const existe = await turso.execute({
-        sql: `SELECT id FROM adm_telas WHERE codigo_tela = ?`,
-        args: [tela.codigo_tela]
+    if (codigo) {
+      const result = await turso.execute({
+        sql: 'SELECT * FROM adm_telas WHERE codigo = ? AND ativo = 1',
+        args: [codigo]
       });
-
-      if (existe.rows.length > 0) {
-        // Atualizar
-        await turso.execute({
-          sql: `
-            UPDATE adm_telas
-            SET nome_tela = ?,
-                modulo = ?,
-                caminho_tela = ?,
-                icone = ?,
-                ordem_exibicao = ?,
-                atualizado_em = CURRENT_TIMESTAMP
-            WHERE codigo_tela = ?
-          `,
-          args: [
-            tela.nome_tela,
-            tela.modulo,
-            tela.caminho_tela,
-            tela.icone,
-            tela.ordem_exibicao,
-            tela.codigo_tela
-          ]
-        });
-        updated++;
-      } else {
-        // Inserir
-        await turso.execute({
-          sql: `
-            INSERT INTO adm_telas (
-              codigo_tela, nome_tela, modulo, caminho_tela, icone, ordem_exibicao
-            ) VALUES (?, ?, ?, ?, ?, ?)
-          `,
-          args: [
-            tela.codigo_tela,
-            tela.nome_tela,
-            tela.modulo,
-            tela.caminho_tela,
-            tela.icone,
-            tela.ordem_exibicao
-          ]
-        });
-        inserted++;
-      }
+      return Response.json(result.rows[0] || null);
     }
 
-    return Response.json({
-      success: true,
-      message: `Telas sincronizadas: ${inserted} inseridas, ${updated} atualizadas`,
-      inserted,
-      updated
-    });
+    const result = await turso.execute('SELECT * FROM adm_telas WHERE ativo = 1 ORDER BY ordem ASC');
+    return Response.json(serializeRows(result.rows));
   } catch (error) {
-    console.error('Erro ao inicializar telas:', error);
-    return Response.json({ error: 'Erro ao inicializar telas: ' + error.message }, { status: 500 });
+    console.error('Erro ao buscar telas:', error);
+    return Response.json({ error: 'Erro ao buscar telas' }, { status: 500 });
   }
 }

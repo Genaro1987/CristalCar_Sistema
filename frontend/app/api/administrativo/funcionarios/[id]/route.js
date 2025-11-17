@@ -16,9 +16,19 @@ async function garantirColunaEmpresa() {
   }
 }
 
+async function garantirColunaDepartamento() {
+  const info = await turso.execute('PRAGMA table_info(adm_funcionarios)');
+  const possuiDepartamentoId = info.rows?.some((c) => c.name === 'departamento_id');
+  if (!possuiDepartamentoId) {
+    await turso.execute('ALTER TABLE adm_funcionarios ADD COLUMN departamento_id INTEGER');
+    await turso.execute('CREATE INDEX IF NOT EXISTS idx_funcionarios_departamento ON adm_funcionarios(departamento_id)');
+  }
+}
+
 export async function PUT(request, { params }) {
   try {
     await garantirColunaEmpresa();
+    await garantirColunaDepartamento();
     const { id } = params;
     const data = await request.json();
     const existente = await turso.execute({
@@ -31,7 +41,6 @@ export async function PUT(request, { params }) {
     const endereco = data.endereco ? normalizarTexto(data.endereco) : null;
     const cidade = data.cidade ? normalizarTexto(data.cidade) : null;
     const cargo = data.cargo ? normalizarTexto(data.cargo) : null;
-    const departamento = data.departamento ? normalizarTexto(data.departamento) : null;
     const observacoes = data.observacoes ? normalizarTexto(data.observacoes) : null;
 
     await turso.execute({
@@ -50,7 +59,7 @@ export async function PUT(request, { params }) {
           estado = ?,
           cep = ?,
           cargo = ?,
-          departamento = ?,
+          departamento_id = ?,
           data_admissao = ?,
           data_demissao = ?,
           salario = ?,
@@ -74,7 +83,7 @@ export async function PUT(request, { params }) {
         data.estado || null,
         data.cep || null,
         cargo,
-        departamento,
+        data.departamento_id || null,
         data.data_admissao || null,
         data.data_demissao || null,
         data.salario || null,

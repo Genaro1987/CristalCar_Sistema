@@ -91,6 +91,7 @@ export default function Sidebar() {
           submenu: [
             { name: 'Cadastro da Empresa', href: '/modules/administrativo/empresa', code: 'ADM-001' },
             { name: 'Funcionários', href: '/modules/administrativo/funcionarios', code: 'ADM-002' },
+            { name: 'Departamentos', href: '/modules/administrativo/departamentos', code: 'ADM-006' },
             { name: 'Layouts de Importação', href: '/modules/administrativo/layouts', code: 'ADM-003' },
             { name: 'Configuração de Backup', href: '/modules/administrativo/backup', code: 'ADM-004' },
             { name: 'Registro de Log', href: '/modules/administrativo/logs', code: 'ADM-005' },
@@ -136,6 +137,22 @@ export default function Sidebar() {
         },
       ]
     },
+    {
+      id: 'objetivos',
+      name: 'Objetivos',
+      icon: '🎯',
+      submenu: [
+        {
+          id: 'objetivos-metas',
+          name: 'Objetivos e Metas',
+          icon: '📈',
+          submenu: [
+            { name: 'Objetivos Trimestrais', href: '/modules/objetivos/trimestrais', code: 'OBJ-001' },
+            { name: 'Metas Semanais', href: '/modules/objetivos/semanais', code: 'OBJ-002' },
+          ]
+        },
+      ]
+    },
   ];
 
   const toggleModule = (moduleId) => {
@@ -174,30 +191,28 @@ export default function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 h-screen w-80 bg-gradient-to-b from-secondary-800 to-secondary-900 text-white shadow-xl flex flex-col">
       {/* Logo */}
-      <div className="flex-shrink-0 p-6 border-b border-secondary-700">
-        <div className="flex flex-col items-center space-y-3 text-center">
-          <div className="w-80 h-80 flex items-center justify-center overflow-hidden">
+      <div className="flex-shrink-0 pt-2 pb-4 border-b border-secondary-700">
+        <div className="flex flex-col items-center">
+          <div className="w-56 h-20 flex items-center justify-center">
             {empresa?.logo_path ? (
               <img
                 src={empresa.logo_path}
-                alt={`Logo ${empresa.nome_fantasia || 'empresa'}`}
-                className="w-full h-full object-contain"
+                alt="Logo empresa"
+                className="max-w-full max-h-full object-contain"
+                style={{ margin: 0, padding: 0 }}
               />
             ) : (
               <span className="text-6xl font-bold text-white">
-                {empresa?.nome_fantasia ? empresa.nome_fantasia.substring(0, 2).toUpperCase() : ''}
+                {(empresa?.nome_fantasia || 'ERP').substring(0, 2).toUpperCase()}
               </span>
             )}
-          </div>
-          <div>
-            <p className="text-lg font-semibold text-white">Sistema ERP</p>
           </div>
         </div>
       </div>
 
-        {/* Menu - com rolagem */}
-        <nav className="flex-1 overflow-y-auto p-4">
-          <ul className="space-y-2">
+        {/* Menu - com rolagem e espaçamento aumentado */}
+        <nav className="flex-1 overflow-y-auto p-4" style={{ marginTop: '1cm' }}>
+          <ul className="space-y-3">
             {menuItems.map((item) => (
               <li key={item.id}>
                 {/* Item Principal - Nível 1 */}
@@ -210,8 +225,8 @@ export default function Sidebar() {
                         : 'hover:bg-secondary-700 text-secondary-300 hover:text-white'
                     }`}
                   >
-                    <span className="text-xl">{item.icon}</span>
-                    <span className="font-medium text-base">{item.name}</span>
+                    <span className="text-2xl">{item.icon}</span>
+                    <span className="font-medium text-lg">{item.name}</span>
                   </Link>
                 ) : (
                   <>
@@ -220,8 +235,8 @@ export default function Sidebar() {
                       className="w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 hover:bg-secondary-700 text-secondary-300 hover:text-white"
                     >
                       <div className="flex items-center space-x-3">
-                        <span className="text-xl">{item.icon}</span>
-                        <span className="font-medium text-base">{item.name}</span>
+                        <span className="text-2xl">{item.icon}</span>
+                        <span className="font-medium text-lg">{item.name}</span>
                       </div>
                       <svg
                         className={`w-4 h-4 transition-transform duration-200 ${
@@ -237,17 +252,17 @@ export default function Sidebar() {
 
                     {/* Submenu Nível 2 */}
                     {expandedModule === item.id && (
-                      <ul className="mt-2 ml-3 space-y-1 border-l-2 border-secondary-700 pl-2">
+                      <ul className="mt-2 ml-0 space-y-1 pl-2">
                         {item.submenu.map((subitem) => (
                           <li key={subitem.id}>
                             <div>
                               <button
                                 onClick={() => toggleSubmodule(subitem.id)}
-                                className="w-full cursor-pointer px-3 py-2.5 rounded-lg text-sm font-medium text-secondary-300 hover:bg-secondary-700 hover:text-white transition-all duration-200"
+                                className="w-full cursor-pointer px-3 py-2.5 rounded-lg text-base font-medium text-secondary-300 hover:bg-secondary-700 hover:text-white transition-all duration-200 text-left"
                               >
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center space-x-2">
-                                    <span className="text-base">{subitem.icon}</span>
+                                    <span className="text-lg">{subitem.icon}</span>
                                     <span>{subitem.name}</span>
                                   </div>
                                   <svg
@@ -263,12 +278,12 @@ export default function Sidebar() {
 
                               {/* Submenu Nível 3 */}
                               {expandedSubmodules.has(subitem.id) && (
-                                <ul className="mt-1 ml-2 space-y-0.5 border-l-2 border-secondary-700/50 pl-3">
+                                <ul className="mt-1 ml-0 space-y-0.5 pl-6">
                                   {subitem.submenu.map((subsubitem, idx) => (
                                     <li key={idx}>
                                       <Link
                                         href={subsubitem.href}
-                                        className={`block px-3 py-2 rounded-lg text-xs transition-all duration-200 ${
+                                        className={`block px-3 py-2 rounded-lg text-sm transition-all duration-200 text-left ${
                                           isActive(subsubitem.href)
                                             ? 'bg-primary-500 text-white font-semibold shadow-md'
                                             : 'text-secondary-400 hover:bg-secondary-700 hover:text-white'
