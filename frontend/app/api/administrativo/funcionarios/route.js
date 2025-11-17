@@ -1,5 +1,6 @@
 import { createClient } from '@libsql/client';
 import { normalizarTexto } from '@/lib/text-utils';
+import { registrarLogAcao } from '@/lib/log-utils';
 
 const turso = createClient({
   url: process.env.TURSO_DATABASE_URL,
@@ -82,6 +83,16 @@ export async function POST(request) {
         observacoes,
         data.empresa_id || null,
       ]
+    });
+
+    await registrarLogAcao({
+      modulo: 'ADMINISTRATIVO',
+      tela: 'FUNCIONARIOS',
+      acao: 'INCLUIR',
+      registroId: Number(result.lastInsertRowid),
+      dadosNovos: data,
+      ipAddress: request.headers.get('x-forwarded-for') || null,
+      userAgent: request.headers.get('user-agent') || null,
     });
 
     return Response.json({ success: true, id: Number(result.lastInsertRowid) });

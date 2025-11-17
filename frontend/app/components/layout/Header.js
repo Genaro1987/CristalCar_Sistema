@@ -12,6 +12,7 @@ export default function Header({ screenCode = '', screenName = '', onShowHelp })
   const [showResults, setShowResults] = useState(false);
   const [empresas, setEmpresas] = useState([]);
   const [empresaSelecionada, setEmpresaSelecionada] = useState(null);
+  const empresaAtiva = empresas.find(emp => emp.id === empresaSelecionada);
 
   // Todas as telas do sistema
   const allScreens = [
@@ -122,6 +123,14 @@ export default function Header({ screenCode = '', screenName = '', onShowHelp })
                   <span className="text-gray-300">•</span>
                   <span className="text-xs text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded">
                     {screenCode}
+                  </span>
+                </>
+              )}
+              {empresaAtiva && (
+                <>
+                  <span className="text-gray-300">•</span>
+                  <span className="text-xs font-semibold text-orange-800 bg-orange-50 border border-orange-200 px-2 py-1 rounded">
+                    Empresa ativa: {empresaAtiva.nome_fantasia || empresaAtiva.razao_social}
                   </span>
                 </>
               )}

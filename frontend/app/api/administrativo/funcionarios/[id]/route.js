@@ -1,5 +1,6 @@
 import { createClient } from '@libsql/client';
 import { normalizarTexto } from '@/lib/text-utils';
+import { registrarLogAcao } from '@/lib/log-utils';
 
 const turso = createClient({
   url: process.env.TURSO_DATABASE_URL,
@@ -20,6 +21,10 @@ export async function PUT(request, { params }) {
     await garantirColunaEmpresa();
     const { id } = params;
     const data = await request.json();
+    const existente = await turso.execute({
+      sql: 'SELECT * FROM adm_funcionarios WHERE id = ?',
+      args: [id],
+    });
 
     // Normalizar campos de texto (MAIÚSCULO sem acentos)
     const nome_completo = normalizarTexto(data.nome_completo);
@@ -80,6 +85,17 @@ export async function PUT(request, { params }) {
       ]
     });
 
+    await registrarLogAcao({
+      modulo: 'ADMINISTRATIVO',
+      tela: 'FUNCIONARIOS',
+      acao: 'EDITAR',
+      registroId: Number(id),
+      dadosAnteriores: existente.rows?.[0] || null,
+      dadosNovos: data,
+      ipAddress: request.headers.get('x-forwarded-for') || null,
+      userAgent: request.headers.get('user-agent') || null,
+    });
+
     return Response.json({ success: true });
   } catch (error) {
     console.error('Erro ao atualizar funcionário:', error);
@@ -90,10 +106,23 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const { id } = params;
-
+    const existente = await turso.execute({
+      sql: 'SELECT * FROM adm_funcionarios WHERE id = ?',
+      args: [id],
+    });
     await turso.execute({
       sql: 'DELETE FROM adm_funcionarios WHERE id = ?',
       args: [id]
+    });
+
+    await registrarLogAcao({
+      modulo: 'ADMINISTRATIVO',
+      tela: 'FUNCIONARIOS',
+      acao: 'EXCLUIR',
+      registroId: Number(id),
+      dadosAnteriores: existente.rows?.[0] || null,
+      ipAddress: request.headers.get('x-forwarded-for') || null,
+      userAgent: request.headers.get('user-agent') || null,
     });
 
     return Response.json({ success: true });
