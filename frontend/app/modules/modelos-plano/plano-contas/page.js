@@ -26,14 +26,23 @@ export default function PlanoContasPage() {
     status: 'ATIVO',
     observacoes: ''
   });
+  const [empresaId, setEmpresaId] = useState(null);
+
+  useEffect(() => {
+    const salva = localStorage.getItem('empresaSelecionadaId');
+    if (salva) {
+      setEmpresaId(Number(salva));
+    }
+  }, []);
 
   useEffect(() => {
     loadContas();
-  }, []);
+  }, [empresaId]);
 
   const loadContas = async () => {
     try {
-      const response = await fetch('/api/plano-contas');
+      const url = empresaId ? `/api/plano-contas?empresa_id=${empresaId}` : '/api/plano-contas';
+      const response = await fetch(url);
       const data = await response.json();
 
       if (data.success) {
@@ -122,6 +131,7 @@ export default function PlanoContasPage() {
       const payload = {
         ...formData,
         compoe_dre: !!formData.compoe_dre,
+        empresa_id: empresaId,
       };
 
       if (editingId) {

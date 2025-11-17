@@ -6,8 +6,32 @@ const turso = createClient({
   authToken: process.env.TURSO_AUTH_TOKEN,
 });
 
+async function garantirTabelasCondicoes() {
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS fin_condicoes_pagamento (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      codigo VARCHAR(20) UNIQUE NOT NULL,
+      nome VARCHAR(200) NOT NULL,
+      descricao TEXT,
+      tipo VARCHAR(20) NOT NULL,
+      forma_pagamento_id INTEGER,
+      quantidade_parcelas INTEGER DEFAULT 1,
+      dias_primeira_parcela INTEGER DEFAULT 0,
+      dias_entre_parcelas INTEGER DEFAULT 30,
+      percentual_desconto DECIMAL(10,2) DEFAULT 0,
+      percentual_acrescimo DECIMAL(10,2) DEFAULT 0,
+      status VARCHAR(20) DEFAULT 'ATIVO',
+      observacoes TEXT,
+      criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+      atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (forma_pagamento_id) REFERENCES fin_formas_pagamento(id)
+    )
+  `);
+}
+
 export async function PUT(request, { params }) {
   try {
+    await garantirTabelasCondicoes();
     const data = await request.json();
     const { id } = params;
 
@@ -60,6 +84,7 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
+    await garantirTabelasCondicoes();
     const { id } = params;
 
     // TODO: Verificar se a condição está sendo usada quando tabelas de vendas/compras forem implementadas

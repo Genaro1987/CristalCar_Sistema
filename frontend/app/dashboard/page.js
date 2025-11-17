@@ -52,31 +52,26 @@ export default function DashboardPage() {
     <DashboardLayout title="Painel de Controle">
       <div className="space-y-6">
         {/* Boas-vindas */}
-        <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-lg shadow-lg p-8 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-3xl font-bold mb-2">
-                {getGreeting()}, Administrador! 👋
-              </h2>
-              <p className="text-primary-100 text-lg">
-                Bem-vindo ao sistema {empresaData?.nome_fantasia || 'Cristal Car'}
-              </p>
-              <p className="text-primary-200 text-sm mt-2">
-                {currentTime.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} - {currentTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-              </p>
+        <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-lg shadow-lg p-10 text-white">
+          <div className="flex flex-col items-center text-center space-y-4">
+            <div className="text-sm text-primary-100">
+              {currentTime.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} · {currentTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
             </div>
-            {/* Logo da Empresa */}
-            <div className="hidden md:block">
-              <div className="w-32 h-32 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center border-2 border-white/20">
-                {empresaData?.logo_path ? (
-                  <img src={empresaData.logo_path} alt="Logo" className="w-full h-full object-contain p-4" />
-                ) : (
-                  <div className="text-center">
-                    <div className="text-5xl mb-2">🚗</div>
-                    <div className="text-xs text-primary-200">Cristal Car</div>
-                  </div>
-                )}
-              </div>
+            <h2 className="text-4xl font-bold">
+              {getGreeting()}, Administrador! 👋
+            </h2>
+            <p className="text-primary-100 text-lg">
+              Bem-vindo ao sistema {empresaData?.nome_fantasia || 'Cristal Car'}
+            </p>
+            <div className="w-48 h-48 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center">
+              {empresaData?.logo_path ? (
+                <img src={empresaData.logo_path} alt="Logo" className="w-full h-full object-contain p-4" />
+              ) : (
+                <div className="text-center">
+                  <div className="text-6xl mb-2">🚗</div>
+                  <div className="text-sm text-primary-200">Cristal Car</div>
+                </div>
+              )}
             </div>
           </div>
         </div>

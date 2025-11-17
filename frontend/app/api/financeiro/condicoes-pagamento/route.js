@@ -7,8 +7,32 @@ const turso = createClient({
   authToken: process.env.TURSO_AUTH_TOKEN,
 });
 
+async function garantirTabelasCondicoes() {
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS fin_condicoes_pagamento (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      codigo VARCHAR(20) UNIQUE NOT NULL,
+      nome VARCHAR(200) NOT NULL,
+      descricao TEXT,
+      tipo VARCHAR(20) NOT NULL,
+      forma_pagamento_id INTEGER,
+      quantidade_parcelas INTEGER DEFAULT 1,
+      dias_primeira_parcela INTEGER DEFAULT 0,
+      dias_entre_parcelas INTEGER DEFAULT 30,
+      percentual_desconto DECIMAL(10,2) DEFAULT 0,
+      percentual_acrescimo DECIMAL(10,2) DEFAULT 0,
+      status VARCHAR(20) DEFAULT 'ATIVO',
+      observacoes TEXT,
+      criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+      atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (forma_pagamento_id) REFERENCES fin_formas_pagamento(id)
+    )
+  `);
+}
+
 export async function GET() {
   try {
+    await garantirTabelasCondicoes();
     const result = await turso.execute(`
       SELECT * FROM fin_condicoes_pagamento
       ORDER BY status DESC, nome ASC
@@ -23,6 +47,7 @@ export async function GET() {
 
 export async function POST(request) {
   try {
+    await garantirTabelasCondicoes();
     const data = await request.json();
 
     // Normalizar campos de texto (MAIÚSCULO sem acentos)

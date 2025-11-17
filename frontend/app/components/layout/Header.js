@@ -24,7 +24,8 @@ export default function Header({ screenCode = '', screenName = '', onShowHelp })
 
     // Modelos de Plano
     { code: 'FIN-001', name: 'Plano de Contas', path: '/modules/modelos-plano/plano-contas', module: 'Modelos de Plano' },
-    { code: 'FIN-002', name: 'Estrutura DRE', path: '/modules/modelos-plano/estrutura-dre', module: 'Modelos de Plano' },
+    { code: 'FIN-002', name: 'Tipos de DRE', path: '/modules/modelos-plano/planos-padroes', module: 'Modelos de Plano' },
+    { code: 'FIN-003', name: 'Estrutura DRE', path: '/modules/modelos-plano/estrutura-dre', module: 'Modelos de Plano' },
 
     // Financeiro
     { code: 'FIN-010', name: 'Formas de Pagamento', path: '/modules/financeiro/formas-pagamento', module: 'Financeiro' },
@@ -103,7 +104,7 @@ export default function Header({ screenCode = '', screenName = '', onShowHelp })
   return (
     <header className="bg-white shadow-sm border-b border-gray-200">
       <div className="px-6 py-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           {/* Título da Tela */}
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{screenName || 'Dashboard'}</h1>

@@ -19,21 +19,38 @@ async function garantirColunaModelo() {
   }
 }
 
+async function garantirColunaEmpresa() {
+  const info = await turso.execute('PRAGMA table_info(fin_estrutura_dre)');
+  const possuiEmpresa = info.rows?.some((c) => c.name === 'empresa_id');
+  if (!possuiEmpresa) {
+    await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN empresa_id INTEGER');
+    await turso.execute('CREATE INDEX IF NOT EXISTS idx_estrutura_dre_empresa ON fin_estrutura_dre(empresa_id)');
+  }
+}
+
 // GET - Listar estrutura do DRE
 export async function GET(request) {
   try {
     await garantirColunaModelo();
+    await garantirColunaEmpresa();
 
     const { searchParams } = new URL(request.url);
     const modeloId = searchParams.get("modelo_id");
+    const empresaId = searchParams.get('empresa_id');
 
     const sql = `
       SELECT * FROM fin_estrutura_dre
-      ${modeloId ? "WHERE IFNULL(modelo_dre_id, 0) = ?" : ""}
+      WHERE codigo != '0'
+      ${empresaId ? "AND IFNULL(empresa_id, 0) = ?" : ""}
+      ${modeloId ? "AND IFNULL(modelo_dre_id, 0) = ?" : ""}
       ORDER BY ordem_exibicao
     `;
 
-    const result = await turso.execute({ sql, args: modeloId ? [modeloId] : [] });
+    const args = [];
+    if (empresaId) args.push(Number(empresaId));
+    if (modeloId) args.push(modeloId);
+
+    const result = await turso.execute({ sql, args });
 
     const dados = serializeRows(result.rows);
 
@@ -55,6 +72,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     await garantirColunaModelo();
+    await garantirColunaEmpresa();
     const dados = await request.json();
 
     let {
@@ -104,8 +122,8 @@ export async function POST(request) {
 
     const result = await turso.execute({
       sql: `INSERT INTO fin_estrutura_dre
-            (codigo, descricao, nivel, tipo, ordem_exibicao, formula, exibir_negativo, negrito, modelo_dre_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            (codigo, descricao, nivel, tipo, ordem_exibicao, formula, exibir_negativo, negrito, modelo_dre_id, empresa_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       ,
       args: [
         codigo,
@@ -117,6 +135,7 @@ export async function POST(request) {
         exibir_negativo ? 1 : 0,
         negrito ? 1 : 0,
         dados.modelo_dre_id || null,
+        dados.empresa_id || null,
       ],
     });
 
@@ -169,6 +188,7 @@ export async function PUT(request) {
           "exibir_negativo",
           "negrito",
           "modelo_dre_id",
+          "empresa_id",
         ].includes(key)
       ) {
         updates.push(`${key} = ?`);

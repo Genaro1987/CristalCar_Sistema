@@ -11,6 +11,7 @@ export default function EstruturaDREPage() {
   const [modeloSelecionado, setModeloSelecionado] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [empresaId, setEmpresaId] = useState(null);
   const [formData, setFormData] = useState({
     codigo: '',
     descricao: '',
@@ -57,9 +58,14 @@ export default function EstruturaDREPage() {
   ];
 
   useEffect(() => {
+    const salva = localStorage.getItem('empresaSelecionadaId');
+    if (salva) setEmpresaId(Number(salva));
+  }, []);
+
+  useEffect(() => {
     loadItens();
     carregarModelos();
-  }, []);
+  }, [empresaId]);
 
   useEffect(() => {
     if (modeloSelecionado) {
@@ -90,8 +96,11 @@ export default function EstruturaDREPage() {
 
   const loadItens = async (modeloId = modeloSelecionado) => {
     try {
-      const query = modeloId ? `?modelo_id=${modeloId}` : '';
-      const response = await fetch(`/api/estrutura-dre${query}`);
+      const params = new URLSearchParams();
+      if (modeloId) params.append('modelo_id', modeloId);
+      if (empresaId) params.append('empresa_id', empresaId);
+      const query = params.toString();
+      const response = await fetch(`/api/estrutura-dre${query ? `?${query}` : ''}`);
       const data = await response.json();
 
       if (data.success) {
@@ -150,6 +159,7 @@ export default function EstruturaDREPage() {
         exibir_negativo: formData.exibir_negativo,
         negrito: formData.negrito,
         modelo_dre_id: modeloSelecionado || null,
+        empresa_id: empresaId,
       };
 
       if (editingId) {
