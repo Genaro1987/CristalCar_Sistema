@@ -27,10 +27,13 @@ export default function ImportacaoExtratosPage() {
       const response = await fetch('/api/importacao/extratos?tipo=extratos');
       if (response.ok) {
         const data = await response.json();
-        setExtratos(data);
+        setExtratos(Array.isArray(data) ? data : []);
+      } else {
+        setExtratos([]);
       }
     } catch (error) {
       console.error('Erro ao carregar extratos:', error);
+      setExtratos([]);
     }
   };
 
@@ -39,10 +42,13 @@ export default function ImportacaoExtratosPage() {
       const response = await fetch('/api/importacao/extratos?tipo=layouts');
       if (response.ok) {
         const data = await response.json();
-        setLayouts(data);
+        setLayouts(Array.isArray(data) ? data : []);
+      } else {
+        setLayouts([]);
       }
     } catch (error) {
       console.error('Erro ao carregar layouts:', error);
+      setLayouts([]);
     }
   };
 

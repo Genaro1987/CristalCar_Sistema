@@ -2,6 +2,8 @@ import { createClient } from '@libsql/client';
 import { normalizarTexto } from '@/lib/text-utils';
 import { serializeRows, serializeValue } from '@/lib/db-utils';
 
+export const dynamic = 'force-dynamic';
+
 const turso = createClient({
   url: process.env.TURSO_DATABASE_URL,
   authToken: process.env.TURSO_AUTH_TOKEN,

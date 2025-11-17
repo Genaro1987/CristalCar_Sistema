@@ -33,10 +33,13 @@ export default function ImportacaoXMLNFePage() {
       const response = await fetch('/api/importacao/xml-nfe');
       if (response.ok) {
         const data = await response.json();
-        setNfes(data);
+        setNfes(Array.isArray(data) ? data : []);
+      } else {
+        setNfes([]);
       }
     } catch (error) {
       console.error('Erro ao carregar NF-es:', error);
+      setNfes([]);
     }
   };
 

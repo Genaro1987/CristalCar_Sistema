@@ -2,6 +2,8 @@ import { createClient } from '@libsql/client';
 import { normalizarTexto } from '@/lib/text-utils';
 import { serializeRows, serializeValue } from '@/lib/db-utils';
 
+export const dynamic = 'force-dynamic';
+
 const turso = createClient({
   url: process.env.TURSO_DATABASE_URL,
   authToken: process.env.TURSO_AUTH_TOKEN,
@@ -27,6 +29,72 @@ async function garantirTabelasEstruturaDRE() {
       FOREIGN KEY (pai_id) REFERENCES fin_estrutura_dre(id) ON DELETE CASCADE
     )
   `);
+
+  // Migrações: garantir que colunas essenciais existem
+  try {
+    const tableInfo = await turso.execute('PRAGMA table_info(fin_estrutura_dre)');
+    const colunas = tableInfo.rows?.map(row => row.name) || [];
+
+    if (!colunas.includes('tipo_dre_id')) {
+      console.log('Adicionando coluna tipo_dre_id à fin_estrutura_dre');
+      await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN tipo_dre_id INTEGER');
+    }
+    if (!colunas.includes('nome')) {
+      console.log('Adicionando coluna nome à fin_estrutura_dre');
+      await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN nome VARCHAR(200)');
+      await turso.execute('UPDATE fin_estrutura_dre SET nome = codigo WHERE nome IS NULL');
+    }
+    if (!colunas.includes('codigo')) {
+      console.log('Adicionando coluna codigo à fin_estrutura_dre');
+      await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN codigo VARCHAR(20)');
+      const linhas = await turso.execute('SELECT id FROM fin_estrutura_dre WHERE codigo IS NULL');
+      for (const linha of linhas.rows) {
+        await turso.execute({
+          sql: 'UPDATE fin_estrutura_dre SET codigo = ? WHERE id = ?',
+          args: [`LIN-${linha.id}`, linha.id]
+        });
+      }
+    }
+    if (!colunas.includes('nivel')) {
+      console.log('Adicionando coluna nivel à fin_estrutura_dre');
+      await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN nivel INTEGER DEFAULT 1');
+    }
+    if (!colunas.includes('tipo_linha')) {
+      console.log('Adicionando coluna tipo_linha à fin_estrutura_dre');
+      await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN tipo_linha VARCHAR(20) DEFAULT "TITULO"');
+    }
+    if (!colunas.includes('pai_id')) {
+      console.log('Adicionando coluna pai_id à fin_estrutura_dre');
+      await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN pai_id INTEGER');
+    }
+    if (!colunas.includes('ordem')) {
+      console.log('Adicionando coluna ordem à fin_estrutura_dre');
+      await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN ordem INTEGER DEFAULT 999');
+    }
+    if (!colunas.includes('formula')) {
+      console.log('Adicionando coluna formula à fin_estrutura_dre');
+      await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN formula TEXT');
+    }
+    if (!colunas.includes('negativo')) {
+      console.log('Adicionando coluna negativo à fin_estrutura_dre');
+      await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN negativo BOOLEAN DEFAULT 0');
+    }
+
+    // Migração especial: se descricao existe com NOT NULL, precisamos recri-la
+    if (colunas.includes('descricao')) {
+      console.log('Removendo coluna descricao (será recriada como nullable se necessário)');
+      // SQLite não suporta DROP COLUMN antes da versão 3.35.0
+      // Vamos apenas garantir que novos inserts não falhem
+      try {
+        await turso.execute('UPDATE fin_estrutura_dre SET descricao = nome WHERE descricao IS NULL');
+      } catch (e) {
+        console.log('Coluna descricao já preenchida ou não existe');
+      }
+    }
+  } catch (error) {
+    console.error('Erro na migração estrutura DRE:', error);
+    throw error;
+  }
 
   // Criar tabela de vínculos com plano de contas
   await turso.execute(`
@@ -112,12 +180,36 @@ export async function POST(request) {
     }
 
     const nome = normalizarTexto(data.nome);
+    const descricao = data.descricao ? normalizarTexto(data.descricao) : nome;
 
-    const result = await turso.execute({
-      sql: `INSERT INTO fin_estrutura_dre
-            (tipo_dre_id, codigo, nome, nivel, pai_id, ordem, tipo_linha, formula, negativo)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      args: [
+    // Verificar se a coluna descricao existe na tabela
+    const tableInfo = await turso.execute('PRAGMA table_info(fin_estrutura_dre)');
+    const colunas = tableInfo.rows?.map(row => row.name) || [];
+    const temDescricao = colunas.includes('descricao');
+
+    let sql, args;
+
+    if (temDescricao) {
+      sql = `INSERT INTO fin_estrutura_dre
+             (tipo_dre_id, codigo, nome, descricao, nivel, pai_id, ordem, tipo_linha, formula, negativo)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      args = [
+        data.tipo_dre_id,
+        data.codigo || `LIN-${Date.now()}`,
+        nome,
+        descricao,
+        data.nivel || 1,
+        data.pai_id || null,
+        data.ordem || 999,
+        data.tipo_linha || 'TITULO',
+        data.formula || null,
+        data.negativo ? 1 : 0
+      ];
+    } else {
+      sql = `INSERT INTO fin_estrutura_dre
+             (tipo_dre_id, codigo, nome, nivel, pai_id, ordem, tipo_linha, formula, negativo)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      args = [
         data.tipo_dre_id,
         data.codigo || `LIN-${Date.now()}`,
         nome,
@@ -127,8 +219,10 @@ export async function POST(request) {
         data.tipo_linha || 'TITULO',
         data.formula || null,
         data.negativo ? 1 : 0
-      ]
-    });
+      ];
+    }
+
+    const result = await turso.execute({ sql, args });
 
     return Response.json({
       success: true,

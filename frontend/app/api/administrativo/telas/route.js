@@ -1,6 +1,8 @@
 import { createClient } from '@libsql/client';
 import { serializeRows, serializeValue } from '@/lib/db-utils';
 
+export const dynamic = 'force-dynamic';
+
 const turso = createClient({
   url: process.env.TURSO_DATABASE_URL,
   authToken: process.env.TURSO_AUTH_TOKEN,
@@ -92,6 +94,19 @@ async function garantirTabelaTelas() {
     { codigo_tela: 'HOME-001', modulo: 'GERAL', nome_tela: 'PAGINA INICIAL', caminho_tela: '/dashboard', icone: '🏠', ordem_exibicao: 0 },
   ];
 
+  // Limpar registros inválidos ou duplicados
+  const codigosValidos = telasPadroes.map(t => t.codigo);
+  try {
+    // Remover telas que não estão na lista de códigos válidos
+    const placeholders = codigosValidos.map(() => '?').join(',');
+    await turso.execute({
+      sql: `DELETE FROM adm_telas WHERE codigo NOT IN (${placeholders})`,
+      args: codigosValidos
+    });
+  } catch (error) {
+    console.log('Erro ao limpar telas inválidas:', error.message);
+  }
+
   let codigosExistentes = [];
   try {
     const existentes = await turso.execute('SELECT codigo_tela FROM adm_telas WHERE codigo_tela IS NOT NULL');
@@ -108,6 +123,12 @@ async function garantirTabelaTelas() {
           codigo_tela, modulo, nome_tela, caminho_tela, icone, ordem_exibicao, exibir_menu, exibir_favoritos, ativo
         ) VALUES (?, ?, ?, ?, ?, ?, 1, 1, 1)`,
         args: [tela.codigo_tela, tela.modulo, tela.nome_tela, tela.caminho_tela, tela.icone, tela.ordem_exibicao]
+      });
+    } else {
+      // Atualizar tela existente para garantir dados corretos
+      await turso.execute({
+        sql: 'UPDATE adm_telas SET modulo = ?, nome = ?, rota = ?, icone = ?, ordem = ? WHERE codigo = ?',
+        args: [tela.modulo, tela.nome, tela.rota, tela.icone, tela.ordem, tela.codigo]
       });
     }
   }
