@@ -6,8 +6,18 @@ const turso = createClient({
   authToken: process.env.TURSO_AUTH_TOKEN,
 });
 
+async function garantirColunaEmpresa() {
+  const info = await turso.execute('PRAGMA table_info(adm_funcionarios)');
+  const possuiEmpresa = info.rows?.some((c) => c.name === 'empresa_id');
+  if (!possuiEmpresa) {
+    await turso.execute('ALTER TABLE adm_funcionarios ADD COLUMN empresa_id INTEGER');
+    await turso.execute('CREATE INDEX IF NOT EXISTS idx_funcionarios_empresa ON adm_funcionarios(empresa_id)');
+  }
+}
+
 export async function PUT(request, { params }) {
   try {
+    await garantirColunaEmpresa();
     const { id } = params;
     const data = await request.json();
 
@@ -41,6 +51,7 @@ export async function PUT(request, { params }) {
           salario = ?,
           status = ?,
           observacoes = ?,
+          empresa_id = ?,
           atualizado_em = CURRENT_TIMESTAMP
         WHERE id = ?
       `,
@@ -64,6 +75,7 @@ export async function PUT(request, { params }) {
         data.salario || null,
         data.status || 'ATIVO',
         observacoes,
+        data.empresa_id || null,
         id
       ]
     });

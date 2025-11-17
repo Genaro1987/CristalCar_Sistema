@@ -6,12 +6,29 @@ const turso = createClient({
   authToken: process.env.TURSO_AUTH_TOKEN,
 });
 
-export async function GET() {
+async function garantirColunaEmpresa() {
+  const info = await turso.execute('PRAGMA table_info(adm_funcionarios)');
+  const possuiEmpresa = info.rows?.some((c) => c.name === 'empresa_id');
+  if (!possuiEmpresa) {
+    await turso.execute('ALTER TABLE adm_funcionarios ADD COLUMN empresa_id INTEGER');
+    await turso.execute('CREATE INDEX IF NOT EXISTS idx_funcionarios_empresa ON adm_funcionarios(empresa_id)');
+  }
+}
+
+export async function GET(request) {
   try {
-    const result = await turso.execute(`
-      SELECT * FROM adm_funcionarios
-      ORDER BY nome_completo ASC
-    `);
+    await garantirColunaEmpresa();
+    const { searchParams } = new URL(request.url);
+    const empresaId = searchParams.get('empresa_id');
+
+    const result = await turso.execute({
+      sql: `
+        SELECT * FROM adm_funcionarios
+        ${empresaId ? 'WHERE IFNULL(empresa_id, 0) = IFNULL(?, 0)' : ''}
+        ORDER BY nome_completo ASC
+      `,
+      args: empresaId ? [Number(empresaId)] : [],
+    });
 
     return Response.json(result.rows);
   } catch (error) {
@@ -22,6 +39,7 @@ export async function GET() {
 
 export async function POST(request) {
   try {
+    await garantirColunaEmpresa();
     const data = await request.json();
 
     // Normalizar campos de texto (MAIÚSCULO sem acentos)
@@ -39,8 +57,8 @@ export async function POST(request) {
           telefone, celular, email,
           endereco, cidade, estado, cep,
           cargo, departamento, data_admissao, data_demissao,
-          salario, status, observacoes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          salario, status, observacoes, empresa_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       args: [
         data.codigo_unico,
@@ -61,7 +79,8 @@ export async function POST(request) {
         data.data_demissao || null,
         data.salario || null,
         data.status || 'ATIVO',
-        observacoes
+        observacoes,
+        data.empresa_id || null,
       ]
     });
 

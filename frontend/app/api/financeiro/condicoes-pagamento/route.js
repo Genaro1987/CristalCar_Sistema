@@ -34,8 +34,10 @@ export async function GET() {
   try {
     await garantirTabelasCondicoes();
     const result = await turso.execute(`
-      SELECT * FROM fin_condicoes_pagamento
-      ORDER BY status DESC, nome ASC
+      SELECT cp.*, fp.nome AS forma_pagamento_nome
+      FROM fin_condicoes_pagamento cp
+      LEFT JOIN fin_formas_pagamento fp ON fp.id = cp.forma_pagamento_id
+      ORDER BY cp.status DESC, cp.nome ASC
     `);
 
     return Response.json(serializeRows(result.rows));
