@@ -8,24 +8,43 @@ const turso = createClient({
 });
 
 const tiposPadrao = [
+  // Componentes do Modelo Oficial
   { codigo: 'RECEITA_BRUTA', nome: 'Receita Bruta', ordem: 1 },
-  { codigo: 'DEDUCOES', nome: 'Deduções', ordem: 2 },
+  { codigo: 'DEDUCOES', nome: 'Deduções e Impostos', ordem: 2 },
   { codigo: 'RECEITA_LIQUIDA', nome: 'Receita Líquida', ordem: 3 },
-  { codigo: 'CPV', nome: 'Custo dos Produtos Vendidos (CPV)', ordem: 4 },
+  { codigo: 'CPV', nome: 'Custo dos Produtos Vendidos (CPV/CMV)', ordem: 4 },
   { codigo: 'LUCRO_BRUTO', nome: 'Lucro Bruto', ordem: 5 },
   { codigo: 'DESPESAS_OPERACIONAIS', nome: 'Despesas Operacionais', ordem: 6 },
   { codigo: 'DESPESAS_FINANCEIRAS', nome: 'Despesas Financeiras', ordem: 7 },
   { codigo: 'RECEITAS_FINANCEIRAS', nome: 'Receitas Financeiras', ordem: 8 },
-  { codigo: 'OUTRAS_RECEITAS', nome: 'Outras Receitas', ordem: 9 },
-  { codigo: 'RESULTADO_ANTES_IR', nome: 'Resultado Antes do IR', ordem: 10 },
-  { codigo: 'IR_CSLL', nome: 'IR e CSLL', ordem: 11 },
-  { codigo: 'LUCRO_LIQUIDO', nome: 'Lucro Líquido', ordem: 12 },
-  { codigo: 'EBITDA', nome: 'EBITDA', ordem: 13 },
-  { codigo: 'DESPESAS_VENDAS', nome: 'Despesas com Vendas', ordem: 14 },
-  { codigo: 'DESPESAS_ADMIN', nome: 'Despesas Administrativas', ordem: 15 },
-  { codigo: 'RESULTADO_FINANCEIRO', nome: 'Resultado Financeiro', ordem: 16 },
-  { codigo: 'OUTRAS_DESPESAS', nome: 'Outras Despesas', ordem: 17 },
-  { codigo: 'LUCRO_OPERACIONAL', nome: 'Lucro Operacional', ordem: 18 },
+  { codigo: 'OUTRAS_RECEITAS', nome: 'Outras Receitas Operacionais', ordem: 9 },
+  { codigo: 'RESULTADO_ANTES_IR', nome: 'Resultado Antes do IRPJ e CSLL', ordem: 10 },
+  { codigo: 'IR_CSLL', nome: 'IRPJ e CSLL', ordem: 11 },
+  { codigo: 'LUCRO_LIQUIDO', nome: 'Lucro Líquido do Exercício', ordem: 12 },
+
+  // Componentes adicionais do Modelo EBITDA
+  { codigo: 'MARGEM_BRUTA', nome: 'Margem Bruta', ordem: 13 },
+  { codigo: 'DESPESAS_VARIAVEIS', nome: 'Despesas Variáveis', ordem: 14 },
+  { codigo: 'MARGEM_CONTRIBUICAO', nome: 'Margem de Contribuição', ordem: 15 },
+  { codigo: 'GASTOS_PESSOAL', nome: 'Gastos com Pessoal', ordem: 16 },
+  { codigo: 'EBITDA', nome: 'EBITDA', ordem: 17 },
+  { codigo: 'DEPRECIACAO_AMORTIZACAO', nome: 'Depreciação, Amortização ou Exaustão', ordem: 18 },
+  { codigo: 'OUTRAS_RECEITAS_DESPESAS', nome: 'Outras Receitas e Despesas', ordem: 19 },
+  { codigo: 'RESULTADO_LIQUIDO', nome: 'Resultado Líquido', ordem: 20 },
+
+  // Componentes adicionais do Modelo Custeio Variável
+  { codigo: 'RECEITA_VENDAS', nome: 'Receita de Vendas', ordem: 21 },
+  { codigo: 'CUSTOS_VARIAVEIS', nome: 'Custos Variáveis', ordem: 22 },
+  { codigo: 'MARGEM_CONTRIBUICAO_TOTAL', nome: 'Margem de Contribuição Total', ordem: 23 },
+  { codigo: 'CUSTOS_FIXOS', nome: 'Custos Fixos', ordem: 24 },
+  { codigo: 'DESPESAS_FIXAS', nome: 'Despesas Fixas', ordem: 25 },
+
+  // Outros componentes úteis
+  { codigo: 'DESPESAS_VENDAS', nome: 'Despesas com Vendas', ordem: 26 },
+  { codigo: 'DESPESAS_ADMIN', nome: 'Despesas Administrativas', ordem: 27 },
+  { codigo: 'RESULTADO_FINANCEIRO', nome: 'Resultado Financeiro', ordem: 28 },
+  { codigo: 'OUTRAS_DESPESAS', nome: 'Outras Despesas', ordem: 29 },
+  { codigo: 'LUCRO_OPERACIONAL', nome: 'Lucro Operacional', ordem: 30 },
 ];
 
 async function garantirTabela() {

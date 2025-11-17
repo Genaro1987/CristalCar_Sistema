@@ -46,6 +46,105 @@ async function garantirColunaTipoDRE() {
   }
 }
 
+async function garantirModelosPadrao() {
+  try {
+    // Buscar os 3 tipos de DRE fixos
+    const tiposDRE = await turso.execute('SELECT id, codigo FROM fin_tipos_dre WHERE fixo = 1 ORDER BY ordem');
+
+    if (!tiposDRE.rows || tiposDRE.rows.length === 0) return;
+
+    // Buscar tipos de estrutura para mapear códigos para IDs
+    const tiposEstrutura = await turso.execute('SELECT id, codigo FROM fin_tipos_estrutura_dre');
+    const estruturaMap = {};
+    tiposEstrutura.rows?.forEach(row => {
+      estruturaMap[row.codigo] = row.id;
+    });
+
+    // Verificar se já existem dados para cada tipo
+    for (const tipoDRE of tiposDRE.rows) {
+      const existentes = await turso.execute({
+        sql: 'SELECT COUNT(*) as total FROM fin_estrutura_dre WHERE tipo_dre_id = ?',
+        args: [tipoDRE.id]
+      });
+
+      if (existentes.rows[0].total > 0) continue; // Já populado
+
+      // Popular estrutura baseado no tipo
+      let estruturas = [];
+
+      if (tipoDRE.codigo === 'OFICIAL') {
+        estruturas = [
+          { codigo: 'OF-01', descricao: 'RECEITA BRUTA', tipo_estrutura_codigo: 'RECEITA_BRUTA', tipo: 'ANALITICA', nivel: 1, ordem: 1 },
+          { codigo: 'OF-02', descricao: 'DEDUCOES E IMPOSTOS', tipo_estrutura_codigo: 'DEDUCOES', tipo: 'ANALITICA', nivel: 1, ordem: 2 },
+          { codigo: 'OF-03', descricao: 'RECEITA LIQUIDA', tipo_estrutura_codigo: 'RECEITA_LIQUIDA', tipo: 'CALCULADA', nivel: 1, ordem: 3, formula: 'OF-01 - OF-02', negrito: 1 },
+          { codigo: 'OF-04', descricao: 'CPV/CMV', tipo_estrutura_codigo: 'CPV', tipo: 'ANALITICA', nivel: 1, ordem: 4 },
+          { codigo: 'OF-05', descricao: 'LUCRO BRUTO', tipo_estrutura_codigo: 'LUCRO_BRUTO', tipo: 'CALCULADA', nivel: 1, ordem: 5, formula: 'OF-03 - OF-04', negrito: 1 },
+          { codigo: 'OF-06', descricao: 'DESPESAS OPERACIONAIS', tipo_estrutura_codigo: 'DESPESAS_OPERACIONAIS', tipo: 'ANALITICA', nivel: 1, ordem: 6 },
+          { codigo: 'OF-07', descricao: 'DESPESAS FINANCEIRAS', tipo_estrutura_codigo: 'DESPESAS_FINANCEIRAS', tipo: 'ANALITICA', nivel: 1, ordem: 7 },
+          { codigo: 'OF-08', descricao: 'RECEITAS FINANCEIRAS', tipo_estrutura_codigo: 'RECEITAS_FINANCEIRAS', tipo: 'ANALITICA', nivel: 1, ordem: 8 },
+          { codigo: 'OF-09', descricao: 'OUTRAS RECEITAS OPERACIONAIS', tipo_estrutura_codigo: 'OUTRAS_RECEITAS', tipo: 'ANALITICA', nivel: 1, ordem: 9 },
+          { codigo: 'OF-10', descricao: 'RESULTADO ANTES DO IRPJ E CSLL', tipo_estrutura_codigo: 'RESULTADO_ANTES_IR', tipo: 'CALCULADA', nivel: 1, ordem: 10, formula: 'OF-05 - OF-06 - OF-07 + OF-08 + OF-09', negrito: 1 },
+          { codigo: 'OF-11', descricao: 'IRPJ E CSLL', tipo_estrutura_codigo: 'IR_CSLL', tipo: 'ANALITICA', nivel: 1, ordem: 11 },
+          { codigo: 'OF-12', descricao: 'LUCRO LIQUIDO DO EXERCICIO', tipo_estrutura_codigo: 'LUCRO_LIQUIDO', tipo: 'CALCULADA', nivel: 1, ordem: 12, formula: 'OF-10 - OF-11', negrito: 1 },
+        ];
+      } else if (tipoDRE.codigo === 'EBITDA') {
+        estruturas = [
+          { codigo: 'EB-01', descricao: 'RECEITA DE VENDAS', tipo_estrutura_codigo: 'RECEITA_VENDAS', tipo: 'ANALITICA', nivel: 1, ordem: 1 },
+          { codigo: 'EB-02', descricao: 'DEDUCOES E IMPOSTOS', tipo_estrutura_codigo: 'DEDUCOES', tipo: 'ANALITICA', nivel: 1, ordem: 2 },
+          { codigo: 'EB-03', descricao: 'RECEITA LIQUIDA', tipo_estrutura_codigo: 'RECEITA_LIQUIDA', tipo: 'CALCULADA', nivel: 1, ordem: 3, formula: 'EB-01 - EB-02', negrito: 1 },
+          { codigo: 'EB-04', descricao: 'CUSTO VARIAVEL (CPV OU CMV)', tipo_estrutura_codigo: 'CPV', tipo: 'ANALITICA', nivel: 1, ordem: 4 },
+          { codigo: 'EB-05', descricao: 'MARGEM BRUTA', tipo_estrutura_codigo: 'MARGEM_BRUTA', tipo: 'CALCULADA', nivel: 1, ordem: 5, formula: 'EB-03 - EB-04', negrito: 1 },
+          { codigo: 'EB-06', descricao: 'DESPESAS VARIAVEIS', tipo_estrutura_codigo: 'DESPESAS_VARIAVEIS', tipo: 'ANALITICA', nivel: 1, ordem: 6 },
+          { codigo: 'EB-07', descricao: 'MARGEM DE CONTRIBUICAO', tipo_estrutura_codigo: 'MARGEM_CONTRIBUICAO', tipo: 'CALCULADA', nivel: 1, ordem: 7, formula: 'EB-05 - EB-06', negrito: 1 },
+          { codigo: 'EB-08', descricao: 'GASTOS COM PESSOAL', tipo_estrutura_codigo: 'GASTOS_PESSOAL', tipo: 'ANALITICA', nivel: 1, ordem: 8 },
+          { codigo: 'EB-09', descricao: 'DESPESAS OPERACIONAIS', tipo_estrutura_codigo: 'DESPESAS_OPERACIONAIS', tipo: 'ANALITICA', nivel: 1, ordem: 9 },
+          { codigo: 'EB-10', descricao: 'EBITDA', tipo_estrutura_codigo: 'EBITDA', tipo: 'CALCULADA', nivel: 1, ordem: 10, formula: 'EB-07 - EB-08 - EB-09', negrito: 1 },
+          { codigo: 'EB-11', descricao: 'DEPRECIACAO, AMORTIZACAO OU EXAUSTAO', tipo_estrutura_codigo: 'DEPRECIACAO_AMORTIZACAO', tipo: 'ANALITICA', nivel: 1, ordem: 11 },
+          { codigo: 'EB-12', descricao: 'OUTRAS RECEITAS E DESPESAS', tipo_estrutura_codigo: 'OUTRAS_RECEITAS_DESPESAS', tipo: 'ANALITICA', nivel: 1, ordem: 12 },
+          { codigo: 'EB-13', descricao: 'RESULTADO ANTES DO IRPJ E CSLL', tipo_estrutura_codigo: 'RESULTADO_ANTES_IR', tipo: 'CALCULADA', nivel: 1, ordem: 13, formula: 'EB-10 - EB-11 + EB-12', negrito: 1 },
+          { codigo: 'EB-14', descricao: 'IRPJ E CSLL', tipo_estrutura_codigo: 'IR_CSLL', tipo: 'ANALITICA', nivel: 1, ordem: 14 },
+          { codigo: 'EB-15', descricao: 'RESULTADO LIQUIDO', tipo_estrutura_codigo: 'RESULTADO_LIQUIDO', tipo: 'CALCULADA', nivel: 1, ordem: 15, formula: 'EB-13 - EB-14', negrito: 1 },
+        ];
+      } else if (tipoDRE.codigo === 'CUSTEIO_VARIAVEL') {
+        estruturas = [
+          { codigo: 'CV-01', descricao: 'RECEITA DE VENDAS', tipo_estrutura_codigo: 'RECEITA_VENDAS', tipo: 'ANALITICA', nivel: 1, ordem: 1 },
+          { codigo: 'CV-02', descricao: 'CUSTOS VARIAVEIS', tipo_estrutura_codigo: 'CUSTOS_VARIAVEIS', tipo: 'ANALITICA', nivel: 1, ordem: 2 },
+          { codigo: 'CV-03', descricao: 'DESPESAS VARIAVEIS', tipo_estrutura_codigo: 'DESPESAS_VARIAVEIS', tipo: 'ANALITICA', nivel: 1, ordem: 3 },
+          { codigo: 'CV-04', descricao: 'MARGEM DE CONTRIBUICAO TOTAL', tipo_estrutura_codigo: 'MARGEM_CONTRIBUICAO_TOTAL', tipo: 'CALCULADA', nivel: 1, ordem: 4, formula: 'CV-01 - CV-02 - CV-03', negrito: 1 },
+          { codigo: 'CV-05', descricao: 'CUSTOS FIXOS', tipo_estrutura_codigo: 'CUSTOS_FIXOS', tipo: 'ANALITICA', nivel: 1, ordem: 5 },
+          { codigo: 'CV-06', descricao: 'DESPESAS FIXAS', tipo_estrutura_codigo: 'DESPESAS_FIXAS', tipo: 'ANALITICA', nivel: 1, ordem: 6 },
+          { codigo: 'CV-07', descricao: 'LUCRO LIQUIDO', tipo_estrutura_codigo: 'LUCRO_LIQUIDO', tipo: 'CALCULADA', nivel: 1, ordem: 7, formula: 'CV-04 - CV-05 - CV-06', negrito: 1 },
+        ];
+      }
+
+      // Inserir estruturas
+      for (const est of estruturas) {
+        const tipo_estrutura_id = estruturaMap[est.tipo_estrutura_codigo] || null;
+
+        await turso.execute({
+          sql: `INSERT INTO fin_estrutura_dre (codigo, descricao, nivel, tipo, ordem_exibicao, formula, exibir_negativo, negrito, tipo_dre_id, tipo_estrutura_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          args: [
+            est.codigo,
+            est.descricao,
+            est.nivel,
+            est.tipo,
+            est.ordem,
+            est.formula || null,
+            0, // exibir_negativo
+            est.negrito || 0,
+            tipoDRE.id,
+            tipo_estrutura_id
+          ]
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Erro ao garantir modelos padrão:', error);
+    // Não lançar erro para não quebrar a aplicação
+  }
+}
+
 // GET - Listar estrutura do DRE
 export async function GET(request) {
   try {
@@ -53,6 +152,7 @@ export async function GET(request) {
     await garantirColunaEmpresa();
     await garantirColunaTipoEstrutura();
     await garantirColunaTipoDRE();
+    await garantirModelosPadrao(); // Popular os 3 modelos fixos se ainda não existirem
 
     const { searchParams } = new URL(request.url);
     const modeloId = searchParams.get("modelo_id");

@@ -38,6 +38,7 @@ async function garantirTabelasCondicoes() {
     { nome: 'descricao', ddl: 'ALTER TABLE fin_condicoes_pagamento ADD COLUMN descricao TEXT' },
     { nome: 'observacoes', ddl: 'ALTER TABLE fin_condicoes_pagamento ADD COLUMN observacoes TEXT' },
     { nome: 'empresa_id', ddl: 'ALTER TABLE fin_condicoes_pagamento ADD COLUMN empresa_id INTEGER' },
+    { nome: 'forma_pagamento_id', ddl: 'ALTER TABLE fin_condicoes_pagamento ADD COLUMN forma_pagamento_id INTEGER' },
   ];
 
   for (const coluna of colunasObrigatorias) {

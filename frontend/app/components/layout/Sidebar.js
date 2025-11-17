@@ -175,8 +175,8 @@ export default function Sidebar() {
     <aside className="fixed left-0 top-0 h-screen w-80 bg-gradient-to-b from-secondary-800 to-secondary-900 text-white shadow-xl flex flex-col">
       {/* Logo */}
       <div className="flex-shrink-0 p-6 border-b border-secondary-700">
-        <div className="flex flex-col items-center space-y-2 text-center">
-          <div className="w-20 h-20 rounded-full flex items-center justify-center overflow-hidden bg-secondary-800">
+        <div className="flex flex-col items-center space-y-3 text-center">
+          <div className="w-80 h-80 flex items-center justify-center overflow-hidden">
             {empresa?.logo_path ? (
               <img
                 src={empresa.logo_path}
@@ -184,16 +184,13 @@ export default function Sidebar() {
                 className="w-full h-full object-contain"
               />
             ) : (
-              <span className="text-2xl font-bold text-white">
-                {(empresa?.nome_fantasia || 'CristalCar').substring(0, 2).toUpperCase()}
+              <span className="text-6xl font-bold text-white">
+                {empresa?.nome_fantasia ? empresa.nome_fantasia.substring(0, 2).toUpperCase() : ''}
               </span>
             )}
           </div>
           <div>
-            <h1 className="text-xl font-bold text-white leading-tight">
-              {empresa?.nome_fantasia || 'CristalCar'}
-            </h1>
-            <p className="text-xs text-secondary-300">Sistema ERP</p>
+            <p className="text-lg font-semibold text-white">Sistema ERP</p>
           </div>
         </div>
       </div>
