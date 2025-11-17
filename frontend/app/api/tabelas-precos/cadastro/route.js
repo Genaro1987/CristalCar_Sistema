@@ -109,27 +109,38 @@ export async function POST(request) {
     // Garantir código único exigido pelo schema
     const codigo = data.codigo || `TAB${Date.now()}`;
 
+    // Verificar se existe coluna nome_tabela (coluna legado)
+    const tableInfo = await turso.execute('PRAGMA table_info(tab_tabelas_precos)');
+    const colunas = tableInfo?.rows?.map((row) => row.name) || [];
+    const temNomeTabela = colunas.includes('nome_tabela');
+
+    // Construir INSERT dinamicamente
+    let colunasSql = 'codigo, nome, descricao, tipo_ajuste, valor_ajuste, data_inicio, data_fim, tipo_tabela, empresa_id, observacoes, ativo';
+    let placeholders = '?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?';
+    let args = [
+      codigo,
+      data.nome,
+      data.descricao || null,
+      data.tipo_ajuste,
+      data.valor_ajuste,
+      data.data_inicio || null,
+      data.data_fim || null,
+      data.tipo_tabela || 'VENDA',
+      data.empresa_id || null,
+      data.observacoes || null,
+      data.ativo ? 1 : 0
+    ];
+
+    // Se existe nome_tabela, incluir no INSERT
+    if (temNomeTabela) {
+      colunasSql += ', nome_tabela';
+      placeholders += ', ?';
+      args.push(data.tipo_tabela || 'VENDA');
+    }
+
     const result = await turso.execute({
-      sql: `
-        INSERT INTO tab_tabelas_precos (
-          codigo, nome, descricao, tipo_ajuste, valor_ajuste,
-          data_inicio, data_fim, tipo_tabela, empresa_id,
-          observacoes, ativo
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `,
-      args: [
-        codigo,
-        data.nome,
-        data.descricao || null,
-        data.tipo_ajuste,
-        data.valor_ajuste,
-        data.data_inicio || null,
-        data.data_fim || null,
-        data.tipo_tabela || 'VENDA',
-        data.empresa_id || null,
-        data.observacoes || null,
-        data.ativo ? 1 : 0
-      ]
+      sql: `INSERT INTO tab_tabelas_precos (${colunasSql}) VALUES (${placeholders})`,
+      args: args
     });
 
     return Response.json({ success: true, id: serializeValue(result.lastInsertRowid) });
