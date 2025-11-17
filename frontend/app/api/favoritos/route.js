@@ -1,4 +1,5 @@
 import { createClient } from '@libsql/client';
+import { serializeRows, serializeValue } from '@/lib/db-utils';
 
 const turso = createClient({
   url: process.env.TURSO_DATABASE_URL,
@@ -17,7 +18,7 @@ export async function GET() {
       args: [1]
     });
 
-    return Response.json(result.rows);
+    return Response.json(serializeRows(result.rows));
   } catch (error) {
     console.error('Erro ao buscar favoritos:', error);
     return Response.json({ error: 'Erro ao buscar favoritos' }, { status: 500 });
@@ -53,7 +54,7 @@ export async function POST(request) {
       ]
     });
 
-    return Response.json({ success: true, id: result.lastInsertRowid });
+    return Response.json({ success: true, id: serializeValue(result.lastInsertRowid) });
   } catch (error) {
     console.error('Erro ao criar favorito:', error);
     return Response.json({ error: 'Erro ao criar favorito' }, { status: 500 });

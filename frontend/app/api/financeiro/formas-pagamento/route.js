@@ -1,5 +1,6 @@
 import { createClient } from '@libsql/client';
 import { normalizarTexto } from '@/lib/text-utils';
+import { serializeRows, serializeValue } from '@/lib/db-utils';
 
 const turso = createClient({
   url: process.env.TURSO_DATABASE_URL,
@@ -13,7 +14,7 @@ export async function GET() {
       ORDER BY status DESC, descricao ASC
     `);
 
-    return Response.json(result.rows);
+    return Response.json(serializeRows(result.rows));
   } catch (error) {
     console.error('Erro ao buscar formas de pagamento:', error);
     return Response.json({ error: 'Erro ao buscar formas de pagamento' }, { status: 500 });
@@ -46,7 +47,7 @@ export async function POST(request) {
       ]
     });
 
-    return Response.json({ success: true, id: Number(result.lastInsertRowid) });
+    return Response.json({ success: true, id: serializeValue(result.lastInsertRowid) });
   } catch (error) {
     console.error('Erro ao criar forma de pagamento:', error);
     return Response.json({ error: 'Erro ao criar forma de pagamento: ' + error.message }, { status: 500 });

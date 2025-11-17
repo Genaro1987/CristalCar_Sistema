@@ -1,4 +1,5 @@
 import { createClient } from '@libsql/client';
+import { serializeRows, serializeValue } from '@/lib/db-utils';
 
 const turso = createClient({
   url: process.env.TURSO_DATABASE_URL,
@@ -17,7 +18,7 @@ export async function GET() {
       ORDER BY t.nome ASC
     `);
 
-    return Response.json(result.rows);
+    return Response.json(serializeRows(result.rows));
   } catch (error) {
     console.error('Erro ao buscar tabelas:', error);
     return Response.json({ error: 'Erro ao buscar tabelas' }, { status: 500 });
@@ -28,15 +29,19 @@ export async function POST(request) {
   try {
     const data = await request.json();
 
+    // Garantir código único exigido pelo schema
+    const codigo = data.codigo || `TAB${Date.now()}`;
+
     const result = await turso.execute({
       sql: `
         INSERT INTO tab_tabelas_precos (
-          nome, descricao, tipo_ajuste, valor_ajuste,
+          codigo, nome, descricao, tipo_ajuste, valor_ajuste,
           data_inicio, data_fim,
           observacoes, ativo
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       args: [
+        codigo,
         data.nome,
         data.descricao || null,
         data.tipo_ajuste,
@@ -48,7 +53,7 @@ export async function POST(request) {
       ]
     });
 
-    return Response.json({ success: true, id: result.lastInsertRowid });
+    return Response.json({ success: true, id: serializeValue(result.lastInsertRowid) });
   } catch (error) {
     console.error('Erro ao criar tabela:', error);
     return Response.json({ error: 'Erro ao criar tabela' }, { status: 500 });

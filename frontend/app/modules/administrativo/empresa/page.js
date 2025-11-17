@@ -48,13 +48,13 @@ export default function CadastroEmpresaPage() {
             id: data.id,
             razao_social: data.razao_social || '',
             nome_fantasia: data.nome_fantasia || '',
-            cnpj: data.cpf_cnpj || '',
+            cnpj: data.cnpj || data.cpf_cnpj || '',
             inscricao_estadual: data.inscricao_estadual || '',
             inscricao_municipal: data.inscricao_municipal || '',
             telefone: data.telefone || '',
             celular: data.celular || '',
             email: data.email || '',
-            website: data.site || '',
+            website: data.website || data.site || '',
             endereco: data.endereco || '',
             numero: data.numero || '',
             complemento: data.complemento || '',
@@ -67,6 +67,9 @@ export default function CadastroEmpresaPage() {
             logo_path: data.logo_path || '',
             observacoes: data.observacoes || ''
           });
+          if (data.logo_path) {
+            setLogoPreview(data.logo_path);
+          }
         }
       }
     } catch (error) {
@@ -89,11 +92,9 @@ export default function CadastroEmpresaPage() {
       const reader = new FileReader();
       reader.onloadend = () => {
         setLogoPreview(reader.result);
+        setFormData(prev => ({ ...prev, logo_path: reader.result }));
       };
       reader.readAsDataURL(file);
-
-      // TODO: Implementar upload do arquivo
-      // setFormData(prev => ({ ...prev, logo_path: file.name }));
     }
   };
 

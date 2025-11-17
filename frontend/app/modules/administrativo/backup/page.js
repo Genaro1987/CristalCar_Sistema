@@ -61,8 +61,8 @@ export default function ConfiguracaoBackupPage() {
         const data = await response.json();
         setConfig({
           id: data.id,
-          ativo: data.backup_automatico === 1,
           tipo_backup: data.tipo_backup || 'LOCAL',
+          ativo: data.backup_automatico === 1 && (data.tipo_backup || 'LOCAL') !== 'LOCAL',
           diretorio_local: data.diretorio_local || '',
           google_drive_folder_id: data.google_drive_folder_id || '',
           frequencia: data.frequencia || 'DIARIA',
@@ -96,6 +96,16 @@ export default function ConfiguracaoBackupPage() {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
+    if (name === 'tipo_backup') {
+      const novoTipo = value;
+      setConfig(prev => ({
+        ...prev,
+        tipo_backup: novoTipo,
+        ativo: novoTipo === 'LOCAL' ? false : prev.ativo
+      }));
+      return;
+    }
+
     setConfig(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
@@ -134,7 +144,7 @@ export default function ConfiguracaoBackupPage() {
           dia_semana: config.dia_semana,
           dia_mes: config.dia_mes,
           quantidade_manter: config.manter_ultimos,
-          backup_automatico: config.ativo
+          backup_automatico: config.tipo_backup === 'LOCAL' ? false : config.ativo
         })
       });
 
@@ -215,6 +225,8 @@ export default function ConfiguracaoBackupPage() {
       : 'bg-red-100 text-red-800';
   };
 
+  const backupLocal = config.tipo_backup === 'LOCAL';
+
   return (
     <DashboardLayout screenCode="ADM-004">
       <div className="space-y-6">
@@ -278,6 +290,7 @@ export default function ConfiguracaoBackupPage() {
                     name="ativo"
                     checked={config.ativo}
                     onChange={handleInputChange}
+                    disabled={backupLocal}
                     className="w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                   />
                   <label htmlFor="ativo" className="flex-1 cursor-pointer">
@@ -288,7 +301,14 @@ export default function ConfiguracaoBackupPage() {
                   </label>
                 </div>
 
-                {config.ativo && (
+                {backupLocal && (
+                  <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-sm">
+                    Para armazenamento local o backup precisa ser solicitado manualmente e salvo na pasta escolhida.
+                    Use o botão "Executar Backup agora" para gerar o arquivo.
+                  </div>
+                )}
+
+                {config.ativo && !backupLocal && (
                   <>
                     {/* Tipo de Backup */}
                     <div>

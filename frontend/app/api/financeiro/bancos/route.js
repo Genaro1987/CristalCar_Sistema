@@ -1,5 +1,6 @@
 import { createClient } from '@libsql/client';
 import { normalizarTexto } from '@/lib/text-utils';
+import { serializeRows, serializeValue } from '@/lib/db-utils';
 
 const turso = createClient({
   url: process.env.TURSO_DATABASE_URL,
@@ -13,7 +14,7 @@ export async function GET() {
       ORDER BY status DESC, nome_banco ASC
     `);
 
-    return Response.json(result.rows);
+    return Response.json(serializeRows(result.rows));
   } catch (error) {
     console.error('Erro ao buscar bancos:', error);
     return Response.json({ error: 'Erro ao buscar bancos' }, { status: 500 });
@@ -27,6 +28,10 @@ export async function POST(request) {
     // Normalizar campos de texto (MAIÚSCULO sem acentos)
     const nome_banco = normalizarTexto(data.nome_banco || data.nome);
     const observacoes = data.observacoes ? normalizarTexto(data.observacoes) : null;
+
+    if (!data.agencia || !data.conta) {
+      return Response.json({ error: 'Informe agência e conta do banco.' }, { status: 400 });
+    }
 
     const result = await turso.execute({
       sql: `
@@ -51,7 +56,7 @@ export async function POST(request) {
       ]
     });
 
-    return Response.json({ success: true, id: result.lastInsertRowid });
+    return Response.json({ success: true, id: serializeValue(result.lastInsertRowid) });
   } catch (error) {
     console.error('Erro ao criar banco:', error);
     return Response.json({ error: 'Erro ao criar banco: ' + error.message }, { status: 500 });

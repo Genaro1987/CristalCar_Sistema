@@ -9,6 +9,7 @@ export default function TabelasPrecosPage() {
   const [mostrarModal, setMostrarModal] = useState(false);
   const [mostrarModalVinculos, setMostrarModalVinculos] = useState(false);
   const [mostrarAjuda, setMostrarAjuda] = useState(false);
+  const [salvando, setSalvando] = useState(false);
   const [modoEdicao, setModoEdicao] = useState(false);
   const [termoPesquisa, setTermoPesquisa] = useState('');
   const [filtroStatus, setFiltroStatus] = useState('TODOS');
@@ -110,6 +111,7 @@ export default function TabelasPrecosPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSalvando(true);
 
     try {
       const url = modoEdicao
@@ -126,9 +128,15 @@ export default function TabelasPrecosPage() {
         carregarTabelas();
         setMostrarModal(false);
         resetForm();
+      } else {
+        const erro = await response.json();
+        alert(erro.error || 'Não foi possível salvar a tabela.');
       }
     } catch (error) {
       console.error('Erro ao salvar tabela:', error);
+      alert('Erro ao salvar tabela de preços.');
+    } finally {
+      setSalvando(false);
     }
   };
 
@@ -483,9 +491,10 @@ export default function TabelasPrecosPage() {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
+                    disabled={salvando}
+                    className={`px-4 py-2 text-white rounded-lg ${salvando ? 'bg-orange-300 cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600'}`}
                   >
-                    {modoEdicao ? '💾 Salvar' : '➕ Cadastrar'}
+                    {salvando ? 'Salvando...' : modoEdicao ? '💾 Salvar' : '➕ Cadastrar'}
                   </button>
                 </div>
               </form>

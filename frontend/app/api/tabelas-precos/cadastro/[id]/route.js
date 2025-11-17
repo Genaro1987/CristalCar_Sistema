@@ -21,7 +21,7 @@ export async function PUT(request, { params }) {
             data_fim = ?,
             observacoes = ?,
             ativo = ?,
-            updated_at = CURRENT_TIMESTAMP
+            atualizado_em = CURRENT_TIMESTAMP
         WHERE id = ?
       `,
       args: [
