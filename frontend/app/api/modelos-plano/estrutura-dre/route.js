@@ -2,6 +2,8 @@ import { createClient } from '@libsql/client';
 import { normalizarTexto } from '@/lib/text-utils';
 import { serializeRows, serializeValue } from '@/lib/db-utils';
 
+export const dynamic = 'force-dynamic';
+
 const turso = createClient({
   url: process.env.TURSO_DATABASE_URL,
   authToken: process.env.TURSO_AUTH_TOKEN,
@@ -34,19 +36,38 @@ async function garantirTabelasEstruturaDRE() {
     const colunas = tableInfo.rows?.map(row => row.name) || [];
 
     if (!colunas.includes('nome')) {
+      console.log('Adicionando coluna nome à fin_estrutura_dre');
       await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN nome VARCHAR(200)');
+      // Preencher valores existentes com valor padrão
+      await turso.execute('UPDATE fin_estrutura_dre SET nome = codigo WHERE nome IS NULL');
     }
     if (!colunas.includes('codigo')) {
+      console.log('Adicionando coluna codigo à fin_estrutura_dre');
       await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN codigo VARCHAR(20)');
+      // Gerar códigos para linhas existentes
+      const linhas = await turso.execute('SELECT id FROM fin_estrutura_dre WHERE codigo IS NULL');
+      for (const linha of linhas.rows) {
+        await turso.execute({
+          sql: 'UPDATE fin_estrutura_dre SET codigo = ? WHERE id = ?',
+          args: [`LIN-${linha.id}`, linha.id]
+        });
+      }
     }
     if (!colunas.includes('nivel')) {
+      console.log('Adicionando coluna nivel à fin_estrutura_dre');
       await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN nivel INTEGER DEFAULT 1');
     }
     if (!colunas.includes('tipo_linha')) {
-      await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN tipo_linha VARCHAR(20) DEFAULT "CONTA"');
+      console.log('Adicionando coluna tipo_linha à fin_estrutura_dre');
+      await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN tipo_linha VARCHAR(20) DEFAULT "TITULO"');
+    }
+    if (!colunas.includes('tipo_dre_id')) {
+      console.log('Adicionando coluna tipo_dre_id à fin_estrutura_dre');
+      await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN tipo_dre_id INTEGER');
     }
   } catch (error) {
-    console.log('Migração estrutura DRE:', error.message);
+    console.error('Erro na migração estrutura DRE:', error);
+    throw error; // Re-lançar o erro para debug
   }
 
   // Criar tabela de vínculos com plano de contas
