@@ -459,121 +459,140 @@ export default function EstruturaDREPage() {
       <div className="space-y-6">
         {!showForm ? (
           <>
-            {/* Ações */}
             <Card>
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    Demonstração do Resultado do Exercício (DRE)
-                  </h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Configure a estrutura e formatação do relatório DRE
-                  </p>
-                </div>
-                <div className="flex flex-col md:flex-row md:items-center gap-3">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Modelo de DRE</label>
-                    <select
-                      value={modeloSelecionado || ''}
-                      onChange={(e) => setModeloSelecionado(e.target.value ? Number(e.target.value) : null)}
-                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    >
-                      <option value="">Sem filtro</option>
-                      {modelos.map((modelo) => (
-                        <option key={modelo.id} value={modelo.id}>
-                          {modelo.nome_modelo} {modelo.padrao ? '• Padrão' : ''}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <Button variant="primary" onClick={() => setShowForm(true)}>
-                    + Novo Item
-                  </Button>
-                </div>
-              </div>
-            </Card>
-
-            {/* Preview da Estrutura DRE */}
-            <Card title="Preview da Estrutura DRE" subtitle="Como será exibido no relatório">
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <div className="space-y-2">
-                  {itens.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between py-2 hover:bg-gray-50 rounded px-2 group"
-                    >
-                      {/* Preview */}
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          {item.codigo && (
-                            <span className="text-[11px] px-2 py-0.5 rounded bg-gray-100 text-gray-700 font-mono border border-gray-200">
-                              {item.codigo}
-                            </span>
-                          )}
-                          <span style={getPreviewStyle(item)} className="text-sm">
-                            {item.descricao || 'Sem descrição'}
-                          </span>
-                        </div>
-                        {item.eh_totalizadora && (
-                          <span className="ml-2 text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded">
-                            Totalizadora
-                          </span>
-                        )}
-                        {item.formula && (
-                          <span className="ml-2 text-xs text-gray-500 font-mono">
-                            {item.formula}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Ações */}
-                      <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={() => moveUp(item.id)}
-                          className="p-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
-                          title="Mover para cima"
-                        >
-                          ▲
-                        </button>
-                        <button
-                          onClick={() => moveDown(item.id)}
-                          className="p-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
-                          title="Mover para baixo"
-                        >
-                          ▼
-                        </button>
-                        <button
-                          onClick={() => handleEdit(item)}
-                          className="px-2 py-1 text-xs text-primary-600 hover:bg-primary-50 rounded"
-                        >
-                          Editar
-                        </button>
-                        <button
-                          onClick={() => handleDelete(item.id)}
-                          className="px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
-                        >
-                          Excluir
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-
-                  {itens.length === 0 && (
-                    <div className="text-center py-8 text-gray-500">
-                      Nenhum item configurado. Clique em "+ Novo Item" para começar.
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <h4 className="text-sm font-semibold text-blue-900 mb-2">Fórmulas:</h4>
-                <p className="text-sm text-blue-800">
-                  Use <code className="bg-blue-100 px-1 rounded">{`{TIPO}`}</code> para referenciar valores de outros itens.
-                  Exemplo: <code className="bg-blue-100 px-1 rounded">{`{RECEITA_BRUTA} - {DEDUCOES}`}</code>
+              <div className="flex flex-col gap-2">
+                <h3 className="text-lg font-semibold text-gray-900">Estruture o DRE por modelo</h3>
+                <p className="text-sm text-gray-600">
+                  Cadastre a árvore de referência (Receita, Despesa e demais linhas) selecionando um modelo para visualizar e editar sua hierarquia.
                 </p>
               </div>
             </Card>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <Card
+                title="Modelos cadastrados"
+                subtitle="Escolha o modelo para carregar a estrutura"
+                actions={(
+                  <Button variant="outline" onClick={() => window.location.href = '/modules/modelos-plano/planos-padroes'}>
+                    Gerenciar modelos
+                  </Button>
+                )}
+              >
+                <div className="space-y-3">
+                  {modelos.length === 0 && (
+                    <p className="text-sm text-gray-500">Nenhum modelo encontrado. Cadastre em "Tipos de DRE".</p>
+                  )}
+                  {modelos.map((modelo) => {
+                    const ativo = Number(modeloSelecionado) === Number(modelo.id);
+                    return (
+                      <button
+                        key={modelo.id}
+                        onClick={() => setModeloSelecionado(Number(modelo.id))}
+                        className={`w-full text-left rounded-lg border px-4 py-3 transition ${ativo ? 'border-primary-200 bg-primary-50' : 'border-gray-200 hover:border-primary-200'}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-semibold text-gray-900">{modelo.nome_modelo}</p>
+                            <p className="text-xs text-gray-500">{modelo.descricao || 'Sem descrição'}</p>
+                          </div>
+                          {ativo && <span className="text-xs px-2 py-1 rounded-full bg-white text-primary-700 border border-primary-200">Selecionado</span>}
+                        </div>
+                        <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
+                          <span className="px-2 py-1 rounded-full bg-gray-100">{modelo.tipo_modelo}</span>
+                          {modelo.padrao && <span className="px-2 py-1 rounded-full bg-amber-100 text-amber-800">Padrão</span>}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </Card>
+
+              <Card
+                title="Árvore do modelo selecionado"
+                subtitle="Visualize e ajuste a hierarquia"
+                actions={(
+                  <Button variant="primary" onClick={() => setShowForm(true)}>
+                    + Novo Item
+                  </Button>
+                )}
+              >
+                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                  <div className="space-y-2">
+                    {itens.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center justify-between py-2 hover:bg-gray-50 rounded px-2 group"
+                      >
+                        {/* Preview */}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            {item.codigo && (
+                              <span className="text-[11px] px-2 py-0.5 rounded bg-gray-100 text-gray-700 font-mono border border-gray-200">
+                                {item.codigo}
+                              </span>
+                            )}
+                            <span style={getPreviewStyle(item)} className="text-sm">
+                              {item.descricao || 'Sem descrição'}
+                            </span>
+                          </div>
+                          {item.eh_totalizadora && (
+                            <span className="ml-2 text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded">
+                              Totalizadora
+                            </span>
+                          )}
+                          {item.formula && (
+                            <span className="ml-2 text-xs text-gray-500 font-mono">
+                              {item.formula}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Ações */}
+                        <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => moveUp(item.id)}
+                            className="p-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
+                            title="Mover para cima"
+                          >
+                            ▲
+                          </button>
+                          <button
+                            onClick={() => moveDown(item.id)}
+                            className="p-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
+                            title="Mover para baixo"
+                          >
+                            ▼
+                          </button>
+                          <button
+                            onClick={() => handleEdit(item)}
+                            className="px-2 py-1 text-xs text-primary-600 hover:bg-primary-50 rounded"
+                          >
+                            Editar
+                          </button>
+                          <button
+                            onClick={() => handleDelete(item.id)}
+                            className="px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
+                          >
+                            Excluir
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+
+                    {itens.length === 0 && (
+                      <div className="text-center py-10 text-gray-500 text-sm">
+                        Nenhum item cadastrado para este modelo.
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-4 bg-orange-50 border border-orange-200 text-orange-900 rounded-lg p-4 text-sm">
+                    <p className="font-semibold">Monte sua árvore de referência</p>
+                    <p className="mt-1 text-orange-800">Organize Receitas e Despesas em níveis hierárquicos. Utilize a ordem de exibição para manter o fluxo correto.</p>
+                  </div>
+                </div>
+              </Card>
+            </div>
           </>
         ) : (
           /* Formulário */

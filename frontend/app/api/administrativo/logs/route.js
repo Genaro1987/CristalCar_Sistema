@@ -7,6 +7,8 @@ const turso = createClient({
   authToken: process.env.TURSO_AUTH_TOKEN,
 });
 
+export const dynamic = 'force-dynamic';
+
 async function ensureTables() {
   await turso.execute(`
     CREATE TABLE IF NOT EXISTS adm_configuracao_log (
