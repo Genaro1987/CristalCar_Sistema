@@ -6,11 +6,51 @@ const turso = createClient({
   authToken: process.env.TURSO_AUTH_TOKEN,
 });
 
+async function garantirTabelasPrecos() {
+  try {
+    await turso.execute(`
+      CREATE TABLE IF NOT EXISTS tab_tabelas_precos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        codigo VARCHAR(20) UNIQUE NOT NULL,
+        nome VARCHAR(200) NOT NULL,
+        descricao TEXT,
+        tipo_ajuste VARCHAR(20) NOT NULL,
+        valor_ajuste DECIMAL(15,2) NOT NULL,
+        data_inicio DATE,
+        data_fim DATE,
+        ativo BOOLEAN DEFAULT 1,
+        observacoes TEXT,
+        criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+        atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await turso.execute(`
+      CREATE TABLE IF NOT EXISTS tab_tabelas_precos_parceiros (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        tabela_preco_id INTEGER NOT NULL,
+        parceiro_id INTEGER NOT NULL,
+        data_inicio DATE,
+        data_fim DATE,
+        ativo BOOLEAN DEFAULT 1,
+        criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (tabela_preco_id) REFERENCES tab_tabelas_precos(id) ON DELETE CASCADE,
+        FOREIGN KEY (parceiro_id) REFERENCES par_parceiros(id) ON DELETE CASCADE,
+        UNIQUE(tabela_preco_id, parceiro_id)
+      )
+    `);
+  } catch (error) {
+    console.error('Erro ao garantir tabelas de preços:', error);
+    throw error;
+  }
+}
+
 export async function GET() {
   try {
+    await garantirTabelasPrecos();
     const result = await turso.execute(`
       SELECT
-        t.*,
+        t.*, 
         COUNT(tp.parceiro_id) as parceiros_count
       FROM tab_tabelas_precos t
       LEFT JOIN tab_tabelas_precos_parceiros tp ON t.id = tp.tabela_preco_id
@@ -27,6 +67,7 @@ export async function GET() {
 
 export async function POST(request) {
   try {
+    await garantirTabelasPrecos();
     const data = await request.json();
 
     // Garantir código único exigido pelo schema
@@ -56,6 +97,6 @@ export async function POST(request) {
     return Response.json({ success: true, id: serializeValue(result.lastInsertRowid) });
   } catch (error) {
     console.error('Erro ao criar tabela:', error);
-    return Response.json({ error: 'Erro ao criar tabela' }, { status: 500 });
+    return Response.json({ error: 'Erro ao criar tabela: ' + error.message }, { status: 500 });
   }
 }
