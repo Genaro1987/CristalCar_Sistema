@@ -8,12 +8,11 @@ const turso = createClient({
   authToken: process.env.TURSO_AUTH_TOKEN,
 });
 
-// GET - Listar estrutura DRE
+// GET - Listar estrutura do DRE
 export async function GET(request) {
   try {
     const sql = `
-      SELECT *
-      FROM fin_estrutura_dre
+      SELECT * FROM fin_estrutura_dre
       ORDER BY ordem_exibicao
     `;
 
@@ -27,13 +26,13 @@ export async function GET(request) {
   } catch (error) {
     console.error("Erro ao buscar estrutura DRE:", error);
     return NextResponse.json(
-      { success: false, error: "Erro ao buscar estrutura DRE" },
+      { success: false, error: "Erro ao buscar estrutura DRE: " + error.message },
       { status: 500 }
     );
   }
 }
 
-// POST - Criar novo item
+// POST - Criar novo item da estrutura DRE
 export async function POST(request) {
   try {
     const dados = await request.json();
@@ -50,11 +49,12 @@ export async function POST(request) {
     } = dados;
 
     // Normalizar texto: MAIÚSCULO sem acentos
+    codigo = normalizarTexto(codigo);
     descricao = normalizarTexto(descricao);
-    tipo = normalizarTexto(tipo);
+    if (tipo) tipo = normalizarTexto(tipo);
 
     // Validações
-    if (!codigo || !descricao || !tipo) {
+    if (!codigo || !descricao || !nivel || !tipo || !ordem_exibicao) {
       return NextResponse.json(
         { success: false, error: "Campos obrigatórios não preenchidos" },
         { status: 400 }
@@ -74,15 +74,6 @@ export async function POST(request) {
       );
     }
 
-    // Se ordem_exibicao não fornecida, usar a próxima disponível
-    if (!ordem_exibicao) {
-      const maxOrdem = await turso.execute({
-        sql: "SELECT COALESCE(MAX(ordem_exibicao), 0) as max_ordem FROM fin_estrutura_dre",
-        args: [],
-      });
-      ordem_exibicao = (maxOrdem.rows[0]?.max_ordem || 0) + 1;
-    }
-
     console.log('Inserindo estrutura DRE:', {
       codigo,
       descricao,
@@ -98,7 +89,7 @@ export async function POST(request) {
       args: [
         codigo,
         descricao,
-        nivel || 1,
+        nivel,
         tipo,
         ordem_exibicao,
         formula || null,
@@ -107,24 +98,24 @@ export async function POST(request) {
       ],
     });
 
-    console.log('Item DRE criado com ID:', result.lastInsertRowid);
+    console.log('Estrutura DRE criada com ID:', result.lastInsertRowid);
 
     return NextResponse.json({
       success: true,
       id: result.lastInsertRowid,
-      message: "Item DRE criado com sucesso",
+      message: "Estrutura DRE criada com sucesso",
     });
   } catch (error) {
-    console.error("Erro ao criar item DRE:", error);
+    console.error("Erro ao criar estrutura DRE:", error);
     console.error("Stack trace:", error.stack);
     return NextResponse.json(
-      { success: false, error: "Erro ao criar item DRE: " + error.message },
+      { success: false, error: "Erro ao criar estrutura DRE: " + error.message },
       { status: 500 }
     );
   }
 }
 
-// PUT - Atualizar item
+// PUT - Atualizar estrutura DRE
 export async function PUT(request) {
   try {
     const dados = await request.json();
@@ -137,16 +128,12 @@ export async function PUT(request) {
       );
     }
 
+    // Normalizar campos de texto
+    if (campos.descricao) campos.descricao = normalizarTexto(campos.descricao);
+    if (campos.tipo) campos.tipo = normalizarTexto(campos.tipo);
+
     const updates = [];
     const args = [];
-
-    // Normalizar campos de texto se fornecidos
-    if (campos.descricao) {
-      campos.descricao = normalizarTexto(campos.descricao);
-    }
-    if (campos.tipo) {
-      campos.tipo = normalizarTexto(campos.tipo);
-    }
 
     Object.entries(campos).forEach(([key, value]) => {
       if (
@@ -161,7 +148,13 @@ export async function PUT(request) {
         ].includes(key)
       ) {
         updates.push(`${key} = ?`);
-        args.push(value);
+
+        // Converter booleans para INTEGER (0 ou 1)
+        if (key === 'exibir_negativo' || key === 'negrito') {
+          args.push(value ? 1 : 0);
+        } else {
+          args.push(value);
+        }
       }
     });
 
@@ -181,18 +174,18 @@ export async function PUT(request) {
 
     return NextResponse.json({
       success: true,
-      message: "Item DRE atualizado com sucesso",
+      message: "Estrutura DRE atualizada com sucesso",
     });
   } catch (error) {
-    console.error("Erro ao atualizar item DRE:", error);
+    console.error("Erro ao atualizar estrutura DRE:", error);
     return NextResponse.json(
-      { success: false, error: "Erro ao atualizar item DRE" },
+      { success: false, error: "Erro ao atualizar estrutura DRE: " + error.message },
       { status: 500 }
     );
   }
 }
 
-// DELETE - Excluir item
+// DELETE - Excluir estrutura DRE
 export async function DELETE(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -205,7 +198,23 @@ export async function DELETE(request) {
       );
     }
 
-    // Excluir item
+    // Verificar se tem vínculos com plano de contas
+    const temVinculos = await turso.execute({
+      sql: "SELECT COUNT(*) as total FROM fin_dre_plano_contas WHERE estrutura_dre_id = ?",
+      args: [id],
+    });
+
+    if (temVinculos.rows[0].total > 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Não é possível excluir estrutura com vínculos ao plano de contas",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Excluir estrutura
     await turso.execute({
       sql: "DELETE FROM fin_estrutura_dre WHERE id = ?",
       args: [id],
@@ -213,12 +222,12 @@ export async function DELETE(request) {
 
     return NextResponse.json({
       success: true,
-      message: "Item DRE excluído com sucesso",
+      message: "Estrutura DRE excluída com sucesso",
     });
   } catch (error) {
-    console.error("Erro ao excluir item DRE:", error);
+    console.error("Erro ao excluir estrutura DRE:", error);
     return NextResponse.json(
-      { success: false, error: "Erro ao excluir item DRE" },
+      { success: false, error: "Erro ao excluir estrutura DRE: " + error.message },
       { status: 500 }
     );
   }

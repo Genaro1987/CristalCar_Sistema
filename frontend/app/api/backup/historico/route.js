@@ -9,7 +9,7 @@ export async function GET() {
   try {
     const result = await turso.execute({
       sql: `
-        SELECT * FROM adm_backup_historico
+        SELECT * FROM adm_historico_backup
         ORDER BY data_backup DESC
         LIMIT 50
       `,
