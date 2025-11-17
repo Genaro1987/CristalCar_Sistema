@@ -56,6 +56,9 @@ async function garantirTabelasObjetivos() {
     if (!colunas.includes('valor_objetivo')) {
       await turso.execute('ALTER TABLE obj_objetivos_trimestrais ADD COLUMN valor_objetivo DECIMAL(15,2)');
     }
+    if (!colunas.includes('descricao')) {
+      await turso.execute('ALTER TABLE obj_objetivos_trimestrais ADD COLUMN descricao TEXT');
+    }
 
     // Migração 4: adicionar coluna codigo se não existir
     if (!colunas.includes('codigo')) {

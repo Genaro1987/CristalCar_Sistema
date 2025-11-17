@@ -35,16 +35,18 @@ async function garantirTabelasEstruturaDRE() {
     const tableInfo = await turso.execute('PRAGMA table_info(fin_estrutura_dre)');
     const colunas = tableInfo.rows?.map(row => row.name) || [];
 
+    if (!colunas.includes('tipo_dre_id')) {
+      console.log('Adicionando coluna tipo_dre_id à fin_estrutura_dre');
+      await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN tipo_dre_id INTEGER');
+    }
     if (!colunas.includes('nome')) {
       console.log('Adicionando coluna nome à fin_estrutura_dre');
       await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN nome VARCHAR(200)');
-      // Preencher valores existentes com valor padrão
       await turso.execute('UPDATE fin_estrutura_dre SET nome = codigo WHERE nome IS NULL');
     }
     if (!colunas.includes('codigo')) {
       console.log('Adicionando coluna codigo à fin_estrutura_dre');
       await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN codigo VARCHAR(20)');
-      // Gerar códigos para linhas existentes
       const linhas = await turso.execute('SELECT id FROM fin_estrutura_dre WHERE codigo IS NULL');
       for (const linha of linhas.rows) {
         await turso.execute({
@@ -61,13 +63,25 @@ async function garantirTabelasEstruturaDRE() {
       console.log('Adicionando coluna tipo_linha à fin_estrutura_dre');
       await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN tipo_linha VARCHAR(20) DEFAULT "TITULO"');
     }
-    if (!colunas.includes('tipo_dre_id')) {
-      console.log('Adicionando coluna tipo_dre_id à fin_estrutura_dre');
-      await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN tipo_dre_id INTEGER');
+    if (!colunas.includes('pai_id')) {
+      console.log('Adicionando coluna pai_id à fin_estrutura_dre');
+      await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN pai_id INTEGER');
+    }
+    if (!colunas.includes('ordem')) {
+      console.log('Adicionando coluna ordem à fin_estrutura_dre');
+      await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN ordem INTEGER DEFAULT 999');
+    }
+    if (!colunas.includes('formula')) {
+      console.log('Adicionando coluna formula à fin_estrutura_dre');
+      await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN formula TEXT');
+    }
+    if (!colunas.includes('negativo')) {
+      console.log('Adicionando coluna negativo à fin_estrutura_dre');
+      await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN negativo BOOLEAN DEFAULT 0');
     }
   } catch (error) {
     console.error('Erro na migração estrutura DRE:', error);
-    throw error; // Re-lançar o erro para debug
+    throw error;
   }
 
   // Criar tabela de vínculos com plano de contas
