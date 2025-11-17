@@ -169,6 +169,9 @@ export default function MetasSemanaisPage() {
                 }}
                 className="w-full px-3 py-2 border rounded-lg"
               >
+                {objetivos.length === 0 && (
+                  <option value="">Nenhum objetivo cadastrado</option>
+                )}
                 {objetivos.map(obj => (
                   <option key={obj.id} value={obj.id}>
                     {obj.conta_codigo} - {obj.conta_nome}

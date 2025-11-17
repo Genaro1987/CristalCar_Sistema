@@ -208,6 +208,8 @@ export async function PUT(request) {
 
 export async function DELETE(request) {
   try {
+    await garantirTabelaDepartamentos();
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
@@ -215,16 +217,23 @@ export async function DELETE(request) {
       return Response.json({ error: 'ID não fornecido' }, { status: 400 });
     }
 
-    // Verificar se tem funcionários vinculados
-    const funcionarios = await turso.execute({
-      sql: 'SELECT COUNT(*) as total FROM adm_funcionarios WHERE departamento_id = ?',
-      args: [id]
-    });
+    // Verificar se a tabela adm_funcionarios existe
+    const temTabelaFuncionarios = await turso.execute(`
+      SELECT name FROM sqlite_master WHERE type='table' AND name='adm_funcionarios'
+    `);
 
-    if (funcionarios.rows[0].total > 0) {
-      return Response.json({
-        error: 'Não é possível excluir departamento com funcionários vinculados'
-      }, { status: 400 });
+    // Verificar se tem funcionários vinculados (apenas se a tabela existir)
+    if (temTabelaFuncionarios.rows.length > 0) {
+      const funcionarios = await turso.execute({
+        sql: 'SELECT COUNT(*) as total FROM adm_funcionarios WHERE departamento_id = ?',
+        args: [id]
+      });
+
+      if (funcionarios.rows[0].total > 0) {
+        return Response.json({
+          error: 'Não é possível excluir departamento com funcionários vinculados'
+        }, { status: 400 });
+      }
     }
 
     await turso.execute({

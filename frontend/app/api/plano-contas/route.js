@@ -24,6 +24,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const tipo = searchParams.get("tipo"); // RECEITA ou DESPESA
     const apenasLancaveis = searchParams.get("lancaveis") === "true";
+    const utilizadoObjetivo = searchParams.get("utilizado_objetivo");
     const status = searchParams.get("status") || "ATIVO";
     const empresaId = searchParams.get('empresa_id');
 
@@ -58,6 +59,10 @@ export async function GET(request) {
 
     if (apenasLancaveis) {
       sql += " AND pc.aceita_lancamento = 1";
+    }
+
+    if (utilizadoObjetivo === "true" || utilizadoObjetivo === "1") {
+      sql += " AND pc.utilizado_objetivo = 1";
     }
 
     if (status) {
