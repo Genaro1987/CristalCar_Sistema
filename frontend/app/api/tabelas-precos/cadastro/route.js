@@ -28,15 +28,19 @@ export async function POST(request) {
   try {
     const data = await request.json();
 
+    // Garantir código único exigido pelo schema
+    const codigo = data.codigo || `TAB${Date.now()}`;
+
     const result = await turso.execute({
       sql: `
         INSERT INTO tab_tabelas_precos (
-          nome, descricao, tipo_ajuste, valor_ajuste,
+          codigo, nome, descricao, tipo_ajuste, valor_ajuste,
           data_inicio, data_fim,
           observacoes, ativo
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       args: [
+        codigo,
         data.nome,
         data.descricao || null,
         data.tipo_ajuste,

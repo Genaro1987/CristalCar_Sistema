@@ -64,7 +64,12 @@ export default function EstruturaDREPage() {
       const data = await response.json();
 
       if (data.success) {
-        setItens(data.data || []);
+        const normalizados = (data.data || []).map((item) => ({
+          ...item,
+          descricao: (item.descricao || '').trim(),
+          codigo: (item.codigo || '').toString().trim(),
+        }));
+        setItens(normalizados);
       }
     } catch (error) {
       console.error('Erro ao carregar estrutura DRE:', error);
@@ -358,9 +363,16 @@ export default function EstruturaDREPage() {
                     >
                       {/* Preview */}
                       <div className="flex-1">
-                        <span style={getPreviewStyle(item)} className="text-sm">
-                          {item.descricao}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          {item.codigo && (
+                            <span className="text-[11px] px-2 py-0.5 rounded bg-gray-100 text-gray-700 font-mono border border-gray-200">
+                              {item.codigo}
+                            </span>
+                          )}
+                          <span style={getPreviewStyle(item)} className="text-sm">
+                            {item.descricao || 'Sem descrição'}
+                          </span>
+                        </div>
                         {item.eh_totalizadora && (
                           <span className="ml-2 text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded">
                             Totalizadora

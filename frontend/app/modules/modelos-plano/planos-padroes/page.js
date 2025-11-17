@@ -1,0 +1,360 @@
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import DashboardLayout from '@/app/components/layout/DashboardLayout';
+import Card from '@/app/components/ui/Card';
+import Button from '@/app/components/ui/Button';
+
+const tiposModelo = [
+  { value: 'OFICIAL', label: 'Modelo Oficial' },
+  { value: 'GERENCIAL', label: 'Modelo Gerencial (com EBITDA)' },
+  { value: 'CUSTEIO_VARIAVEL', label: 'Custeio Variável' },
+  { value: 'PERSONALIZADO', label: 'Personalizado' },
+];
+
+const estruturasBase = [
+  { value: 'PADRAO', label: 'Padrão' },
+  { value: 'GERENCIAL', label: 'Gerencial' },
+  { value: 'CUSTO_VARIAVEL', label: 'Custeio Variável' },
+  { value: 'CUSTOM', label: 'Estrutura própria' },
+];
+
+export default function PlanosPadroesPage() {
+  const [modelos, setModelos] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [busca, setBusca] = useState('');
+  const [filtroStatus, setFiltroStatus] = useState('TODOS');
+  const [formData, setFormData] = useState({
+    nome_modelo: '',
+    tipo_modelo: 'OFICIAL',
+    estrutura_tipo: 'PADRAO',
+    descricao: '',
+    padrao: false,
+    ativo: true,
+  });
+
+  useEffect(() => {
+    carregarModelos();
+  }, []);
+
+  const carregarModelos = async () => {
+    try {
+      const response = await fetch('/api/modelos-dre');
+      if (response.ok) {
+        const data = await response.json();
+        const normalizados = (data || []).map((item) => ({
+          ...item,
+          padrao: item.padrao === 1 || item.padrao === true,
+          ativo: item.ativo === 1 || item.ativo === true || item.status === 'ATIVO',
+        }));
+        setModelos(normalizados);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar modelos de DRE:', error);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const payload = {
+      ...formData,
+      status: formData.ativo ? 'ATIVO' : 'INATIVO',
+    };
+
+    try {
+      const url = editingId ? '/api/modelos-dre' : '/api/modelos-dre';
+      const response = await fetch(url, {
+        method: editingId ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editingId ? { ...payload, id: editingId } : payload),
+      });
+
+      if (response.ok) {
+        carregarModelos();
+        resetForm();
+        setShowForm(false);
+      } else {
+        const erro = await response.json();
+        alert(erro.error || 'Não foi possível salvar o modelo.');
+      }
+    } catch (error) {
+      console.error('Erro ao salvar modelo:', error);
+      alert('Erro ao salvar modelo padrão.');
+    }
+  };
+
+  const handleEditar = (modelo) => {
+    setFormData({
+      nome_modelo: modelo.nome_modelo,
+      tipo_modelo: modelo.tipo_modelo,
+      estrutura_tipo: modelo.estrutura_tipo,
+      descricao: modelo.descricao || '',
+      padrao: !!modelo.padrao,
+      ativo: !!modelo.ativo,
+    });
+    setEditingId(modelo.id);
+    setShowForm(true);
+  };
+
+  const handleExcluir = async (id) => {
+    if (!confirm('Confirma a exclusão deste modelo padrão?')) return;
+
+    try {
+      const response = await fetch(`/api/modelos-dre?id=${id}`, { method: 'DELETE' });
+      if (response.ok) {
+        carregarModelos();
+      }
+    } catch (error) {
+      console.error('Erro ao excluir modelo:', error);
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      nome_modelo: '',
+      tipo_modelo: 'OFICIAL',
+      estrutura_tipo: 'PADRAO',
+      descricao: '',
+      padrao: false,
+      ativo: true,
+    });
+    setEditingId(null);
+  };
+
+  const modelosFiltrados = useMemo(() => {
+    return modelos.filter((modelo) => {
+      const matchBusca =
+        busca.trim() === '' ||
+        modelo.nome_modelo?.toLowerCase().includes(busca.toLowerCase()) ||
+        modelo.descricao?.toLowerCase().includes(busca.toLowerCase());
+
+      const matchStatus =
+        filtroStatus === 'TODOS' ||
+        (filtroStatus === 'ATIVO' && modelo.ativo) ||
+        (filtroStatus === 'INATIVO' && !modelo.ativo);
+
+      return matchBusca && matchStatus;
+    });
+  }, [modelos, busca, filtroStatus]);
+
+  return (
+    <DashboardLayout screenCode="FIN-013">
+      <div className="space-y-6">
+        <Card>
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Pesquisar modelo</label>
+                <input
+                  type="text"
+                  value={busca}
+                  onChange={(e) => setBusca(e.target.value)}
+                  placeholder="Buscar por nome ou descrição..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select
+                  value={filtroStatus}
+                  onChange={(e) => setFiltroStatus(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="TODOS">Todos</option>
+                  <option value="ATIVO">Ativos</option>
+                  <option value="INATIVO">Inativos</option>
+                </select>
+              </div>
+            </div>
+            <Button variant="primary" onClick={() => setShowForm(true)}>
+              + Novo Modelo Padrão
+            </Button>
+          </div>
+        </Card>
+
+        <Card title="Modelos padrão para estrutura do DRE" subtitle="Cadastre visões oficiais e gerenciais">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Modelo</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estrutura</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Padrão</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {modelosFiltrados.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="px-6 py-6 text-center text-gray-500">
+                      Nenhum modelo cadastrado. Clique em "Novo Modelo Padrão" para começar.
+                    </td>
+                  </tr>
+                ) : (
+                  modelosFiltrados.map((modelo) => (
+                    <tr key={modelo.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        <div className="font-semibold text-gray-900">{modelo.nome_modelo}</div>
+                        {modelo.descricao && (
+                          <div className="text-sm text-gray-600">{modelo.descricao}</div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {tiposModelo.find((t) => t.value === modelo.tipo_modelo)?.label || modelo.tipo_modelo}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {estruturasBase.find((e) => e.value === modelo.estrutura_tipo)?.label || modelo.estrutura_tipo}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {modelo.padrao ? (
+                          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Padrão</span>
+                        ) : (
+                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">Alternativo</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                            modelo.ativo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}
+                        >
+                          {modelo.ativo ? 'Ativo' : 'Inativo'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
+                        <button onClick={() => handleEditar(modelo)} className="text-primary-600 hover:text-primary-800">
+                          Editar
+                        </button>
+                        <button onClick={() => handleExcluir(modelo.id)} className="text-red-600 hover:text-red-800">
+                          Excluir
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+
+        {showForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    {editingId ? 'Editar modelo padrão' : 'Novo modelo padrão'}
+                  </h2>
+                  <p className="text-sm text-gray-600">Defina diferentes estruturas de referência para o DRE.</p>
+                </div>
+                <button onClick={() => { setShowForm(false); resetForm(); }} className="text-gray-500 hover:text-gray-700">✕</button>
+              </div>
+
+              <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Modelo *</label>
+                    <input
+                      type="text"
+                      required
+                      name="nome_modelo"
+                      value={formData.nome_modelo}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                      placeholder="Ex: DRE Oficial, Gerencial com EBITDA, Custeio Variável"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Tipo *</label>
+                    <select
+                      name="tipo_modelo"
+                      value={formData.tipo_modelo}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                    >
+                      {tiposModelo.map((tipo) => (
+                        <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Estrutura Base *</label>
+                    <select
+                      name="estrutura_tipo"
+                      value={formData.estrutura_tipo}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                    >
+                      {estruturasBase.map((estrutura) => (
+                        <option key={estrutura.value} value={estrutura.value}>{estrutura.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                    <textarea
+                      name="descricao"
+                      value={formData.descricao}
+                      onChange={handleInputChange}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                      placeholder="Breve descrição sobre quando usar este modelo"
+                    />
+                  </div>
+
+                  <div className="flex items-center space-x-4 md:col-span-2">
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        name="padrao"
+                        checked={formData.padrao}
+                        onChange={handleInputChange}
+                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                      />
+                      <span className="text-sm text-gray-700">Marcar como modelo padrão</span>
+                    </label>
+
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        name="ativo"
+                        checked={formData.ativo}
+                        onChange={handleInputChange}
+                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                      />
+                      <span className="text-sm text-gray-700">Ativo</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                  <Button type="button" variant="outline" onClick={() => { setShowForm(false); resetForm(); }}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" variant="primary">
+                    {editingId ? 'Salvar alterações' : 'Cadastrar modelo'}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
+    </DashboardLayout>
+  );
+}

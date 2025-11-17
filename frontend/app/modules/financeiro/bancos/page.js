@@ -142,7 +142,22 @@ export default function BancosPage() {
       const response = await fetch('/api/financeiro/bancos');
       if (response.ok) {
         const data = await response.json();
-        setBancos(data);
+        const normalizados = (data || []).map((item) => ({
+          id: item.id,
+          codigo: item.codigo || item.codigo_banco || '',
+          nome: item.nome || item.nome_banco || '',
+          nome_completo: item.nome_completo || item.nome_banco || '',
+          site: item.site || '',
+          telefone: item.telefone || '',
+          agencia: item.agencia || '',
+          conta: item.conta || '',
+          tipo_conta: item.tipo_conta || 'CORRENTE',
+          permite_ofx: item.permite_ofx === 1 || item.permite_ofx === true,
+          config_ofx: item.config_ofx || null,
+          observacoes: item.observacoes || '',
+          ativo: item.ativo === 1 || item.ativo === true || item.status === 'ATIVO'
+        }));
+        setBancos(normalizados);
       }
     } catch (error) {
       console.error('Erro ao carregar bancos:', error);
@@ -155,6 +170,9 @@ export default function BancosPage() {
     try {
       const dadosParaSalvar = {
         ...formData,
+        codigo_banco: formData.codigo || formData.codigo_banco,
+        nome_banco: formData.nome || formData.nome_banco,
+        status: formData.ativo ? 'ATIVO' : 'INATIVO',
         config_ofx: formData.permite_ofx ? JSON.stringify(configOFX) : null
       };
 
@@ -172,14 +190,23 @@ export default function BancosPage() {
         carregarBancos();
         setMostrarModal(false);
         resetForm();
+      } else {
+        const erro = await response.json();
+        alert(erro.error || 'Não foi possível salvar o banco.');
       }
     } catch (error) {
       console.error('Erro ao salvar banco:', error);
+      alert('Falha ao salvar banco. Confira os dados e tente novamente.');
     }
   };
 
   const handleEditar = (banco) => {
-    setFormData(banco);
+    setFormData({
+      ...banco,
+      codigo: banco.codigo,
+      nome: banco.nome,
+      ativo: banco.ativo,
+    });
     if (banco.config_ofx) {
       try {
         setConfigOFX(JSON.parse(banco.config_ofx));
