@@ -111,6 +111,13 @@ export async function POST(request) {
     await garantirTabelasPrecos();
     const data = await request.json();
 
+    // Validação: Data de início da vigência é obrigatória
+    if (!data.data_inicio) {
+      return Response.json({
+        error: 'Data de início da vigência é obrigatória'
+      }, { status: 400 });
+    }
+
     // Gerar código sequencial se não fornecido
     let codigo = data.codigo;
     if (!codigo) {
