@@ -136,7 +136,7 @@ export default function TiposDREListaPage() {
   };
 
   return (
-    <DashboardLayout screenCode="FIN-002" title="Tipos de DRE">
+    <DashboardLayout screenCode="DRE-001" title="Tipos de DRE">
       <div className="p-6">
         {/* Cabeçalho */}
         <div className="flex justify-between items-center mb-6">

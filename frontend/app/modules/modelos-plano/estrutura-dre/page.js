@@ -455,7 +455,7 @@ export default function EstruturaDREPage() {
     : tiposDRE.map((tipo) => ({ id: tipo.value, codigo: tipo.value, nome: tipo.label }));
 
   return (
-    <DashboardLayout screenCode="FIN-002">
+    <DashboardLayout screenCode="DRE-002" title="Estrutura DRE">
       <div className="space-y-6">
         {!showForm ? (
           <>

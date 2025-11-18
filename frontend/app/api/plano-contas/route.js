@@ -267,11 +267,13 @@ export async function PUT(request) {
   }
 }
 
-// DELETE - Inativar conta (soft delete)
+// DELETE - Excluir conta permanentemente
 export async function DELETE(request) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
+
+    console.log('[API DELETE Plano Contas] ID recebido:', id);
 
     if (!id) {
       return NextResponse.json(
@@ -286,6 +288,8 @@ export async function DELETE(request) {
       args: [id],
     });
 
+    console.log('[API DELETE Plano Contas] Lançamentos encontrados:', temLancamentos.rows[0].total);
+
     if (temLancamentos.rows[0].total > 0) {
       return NextResponse.json(
         {
@@ -296,20 +300,49 @@ export async function DELETE(request) {
       );
     }
 
-    // Inativar conta
-    await turso.execute({
-      sql: "UPDATE fin_plano_contas SET status = 'INATIVO', atualizado_em = CURRENT_TIMESTAMP WHERE id = ?",
+    // Verificar se tem contas filhas
+    const temFilhas = await turso.execute({
+      sql: "SELECT COUNT(*) as total FROM fin_plano_contas WHERE conta_pai_id = ?",
       args: [id],
     });
 
+    console.log('[API DELETE Plano Contas] Contas filhas encontradas:', temFilhas.rows[0].total);
+
+    if (temFilhas.rows[0].total > 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Não é possível excluir conta que possui contas filhas",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Excluir vínculos com DRE antes de deletar a conta
+    await turso.execute({
+      sql: "DELETE FROM fin_dre_plano_contas WHERE plano_contas_id = ?",
+      args: [id],
+    });
+
+    console.log('[API DELETE Plano Contas] Vínculos DRE removidos');
+
+    // Excluir conta permanentemente
+    const result = await turso.execute({
+      sql: "DELETE FROM fin_plano_contas WHERE id = ?",
+      args: [id],
+    });
+
+    console.log('[API DELETE Plano Contas] Conta excluída permanentemente. Rows affected:', result.rowsAffected);
+
     return NextResponse.json({
       success: true,
-      message: "Conta inativada com sucesso",
+      message: "Conta excluída com sucesso",
+      id: Number(id)
     });
   } catch (error) {
-    console.error("Erro ao inativar conta:", error);
+    console.error("[API DELETE Plano Contas] Erro ao excluir conta:", error);
     return NextResponse.json(
-      { success: false, error: "Erro ao inativar conta" },
+      { success: false, error: "Erro ao excluir conta: " + error.message },
       { status: 500 }
     );
   }

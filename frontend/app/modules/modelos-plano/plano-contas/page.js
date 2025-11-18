@@ -275,8 +275,8 @@ export default function PlanoContasPage() {
   };
 
   const handleDelete = async (id) => {
-    if (confirm('Tem certeza que deseja inativar esta conta?')) {
-      console.log('[Frontend Plano Contas] Iniciando inativação da conta ID:', id);
+    if (confirm('Tem certeza que deseja EXCLUIR PERMANENTEMENTE esta conta? Esta ação não pode ser desfeita!')) {
+      console.log('[Frontend Plano Contas] Iniciando exclusão da conta ID:', id);
       try {
         const url = `/api/plano-contas?id=${id}`;
         console.log('[Frontend Plano Contas] URL:', url);
@@ -301,7 +301,7 @@ export default function PlanoContasPage() {
                 </svg>
               </div>
               <div class="ml-3">
-                <p class="text-sm font-medium">Conta inativada com sucesso!</p>
+                <p class="text-sm font-medium">Conta excluída com sucesso!</p>
               </div>
             </div>
           `;
@@ -310,10 +310,10 @@ export default function PlanoContasPage() {
           await loadContas();
           console.log('[Frontend Plano Contas] Lista recarregada');
         } else {
-          throw new Error(data.error || 'Erro ao inativar conta');
+          throw new Error(data.error || 'Erro ao excluir conta');
         }
       } catch (error) {
-        console.error('[Frontend Plano Contas] Erro ao inativar conta:', error);
+        console.error('[Frontend Plano Contas] Erro ao excluir conta:', error);
         const mensagem = document.createElement('div');
         mensagem.className = 'fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-lg z-50';
         mensagem.innerHTML = `

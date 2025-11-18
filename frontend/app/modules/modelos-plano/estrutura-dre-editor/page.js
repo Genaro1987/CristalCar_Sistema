@@ -186,7 +186,7 @@ function EditorContent() {
 
   if (!tipoId) {
     return (
-      <DashboardLayout screenCode="FIN-003" title="Editor de Estrutura DRE">
+      <DashboardLayout screenCode="DRE-004" title="Editor de Estrutura DRE">
         <div className="p-6 text-center">
           <p className="text-gray-500">Tipo DRE não especificado</p>
         </div>
@@ -195,7 +195,7 @@ function EditorContent() {
   }
 
   return (
-    <DashboardLayout screenCode="FIN-003" title="Editor de Estrutura DRE">
+    <DashboardLayout screenCode="DRE-004" title="Editor de Estrutura DRE">
       <div className="p-6">
         {/* Cabeçalho */}
         <div className="flex justify-between items-center mb-6">

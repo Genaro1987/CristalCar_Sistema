@@ -209,7 +209,7 @@ export default function PlanosPadroesPage() {
   }, [modelos, busca, filtroStatus]);
 
   return (
-    <DashboardLayout screenCode="FIN-002">
+    <DashboardLayout screenCode="DRE-003" title="Modelos de Plano de Contas">
       <div className="space-y-6">
         {mensagem && (
           <div className={`p-4 rounded-lg ${mensagem.type === 'success' ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-red-50 border border-red-200 text-red-800'}`}>
