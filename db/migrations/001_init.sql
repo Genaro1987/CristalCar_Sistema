@@ -1,1 +1,1 @@
--- teste conexão
+-- ajuste de conexão supabase
