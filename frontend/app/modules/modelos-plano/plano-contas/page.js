@@ -41,7 +41,9 @@ export default function PlanoContasPage() {
 
   const loadContas = async () => {
     try {
-      const url = empresaId ? `/api/plano-contas?empresa_id=${empresaId}` : '/api/plano-contas';
+      const url = empresaId
+        ? `/api/financeiro/plano-contas?empresa_id=${empresaId}`
+        : '/api/financeiro/plano-contas';
       const response = await fetch(url);
       const data = await response.json();
 
@@ -136,7 +138,7 @@ export default function PlanoContasPage() {
 
       if (editingId) {
         // Atualizar conta existente
-        const response = await fetch('/api/plano-contas', {
+        const response = await fetch('/api/financeiro/plano-contas', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ...payload, id: editingId })
@@ -166,7 +168,7 @@ export default function PlanoContasPage() {
         }
       } else {
         // Criar nova conta
-        const response = await fetch('/api/plano-contas', {
+        const response = await fetch('/api/financeiro/plano-contas', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -278,7 +280,7 @@ export default function PlanoContasPage() {
     if (confirm('Tem certeza que deseja EXCLUIR PERMANENTEMENTE esta conta? Esta ação não pode ser desfeita!')) {
       console.log('[Frontend Plano Contas] Iniciando exclusão da conta ID:', id);
       try {
-        const url = `/api/plano-contas?id=${id}`;
+        const url = `/api/financeiro/plano-contas?id=${id}`;
         console.log('[Frontend Plano Contas] URL:', url);
 
         const response = await fetch(url, {

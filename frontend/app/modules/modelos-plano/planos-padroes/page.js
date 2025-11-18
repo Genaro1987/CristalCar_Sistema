@@ -63,7 +63,7 @@ export default function PlanosPadroesPage() {
 
   const carregarTiposEstrutura = async () => {
     try {
-      const response = await fetch('/api/tipos-estrutura-dre');
+      const response = await fetch('/api/modelos-plano/tipos-dre');
       if (response.ok) {
         const data = await response.json();
         setTiposEstrutura(data || []);
@@ -154,7 +154,7 @@ export default function PlanosPadroesPage() {
 
     try {
       setSalvandoTipoEstrutura(true);
-      const response = await fetch('/api/tipos-estrutura-dre', {
+      const response = await fetch('/api/modelos-plano/tipos-dre', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

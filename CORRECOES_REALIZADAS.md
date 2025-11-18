@@ -24,7 +24,7 @@
 **Causa:** O front-end não chamava a API - apenas manipulava estado local
 
 **Solução:**
-- Implementado `loadContas()` que busca dados da API `/api/plano-contas`
+- Implementado `loadContas()` que busca dados da API `/api/financeiro/plano-contas`
 - Implementado `buildTree()` para construir hierarquia de contas
 - Corrigido `handleSubmit()` para fazer POST/PUT na API
 - Corrigido `handleDelete()` para fazer DELETE na API
@@ -144,7 +144,7 @@ Todas as mensagens do sistema agora seguem o mesmo padrão visual:
 
 ### APIs Corrigidas
 1. `/frontend/app/api/administrativo/empresa/route.js` - Corrigido campo cpf_cnpj
-2. `/frontend/app/api/estrutura-dre/route.js` - **NOVA API CRIADA**
+2. `/frontend/app/api/modelos-plano/estrutura-dre/route.js` - **NOVA API CRIADA** (alias legado em `/frontend/app/api/estrutura-dre/route.js`)
 
 ### Front-end Corrigido
 1. `/frontend/app/modules/modelos-plano/plano-contas/page.js` - Implementado carregamento e salvamento

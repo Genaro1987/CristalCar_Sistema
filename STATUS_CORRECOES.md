@@ -99,7 +99,7 @@
 **CAUSA RAIZ:** API não existia! Apenas havia API de relatório (GET do DRE), mas nenhuma API para CRUD da estrutura.
 
 **SOLUÇÃO IMPLEMENTADA:**
-- ✅ Criada `/frontend/app/api/estrutura-dre/route.js` completa (GET, POST, PUT, DELETE)
+- ✅ Criada `/frontend/app/api/modelos-plano/estrutura-dre/route.js` completa (GET, POST, PUT, DELETE) e alias legado em `/frontend/app/api/estrutura-dre/route.js`
 - ✅ Criada `/frontend/app/api/dre-plano-contas/route.js` para vínculos
 - ✅ Validações: código único, campos obrigatórios, verificação de vínculos
 - ✅ Normalização de texto aplicada

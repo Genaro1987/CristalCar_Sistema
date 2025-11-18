@@ -1,5 +1,8 @@
 # 🗄️ Guia Rápido: Inicialização do Banco de Dados
 
+> 📌 **Atualização:** o schema foi otimizado para alinhar com as APIs/telas atuais.
+> Consulte `ANALISE_BANCO_DADOS_v2.md` para o resumo das mudanças.
+
 ## ⚡ Inicializar Schema no Turso
 
 ### Opção 1: Via Script NPM (Recomendado)
