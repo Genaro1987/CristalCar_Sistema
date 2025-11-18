@@ -371,7 +371,7 @@ async function seedDatabase() {
     for (const conta of planoContas) {
       const result = await turso.execute({
         sql: `INSERT INTO fin_plano_contas
-              (codigo_conta, descricao, tipo, nivel, conta_pai_id, considera_resultado, tipo_gasto, aceita_lancamento, status)
+              (codigo_conta, descricao, tipo, nivel, conta_pai_id, compoe_dre, tipo_gasto, aceita_lancamento, status)
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ATIVO')`,
         args: [
           conta.codigo,
@@ -414,7 +414,7 @@ async function seedDatabase() {
 
     for (const tipo of tiposDrePadrao) {
       await turso.execute({
-        sql: `INSERT INTO fin_tipos_estrutura_dre (codigo, nome, descricao)
+      sql: `INSERT INTO fin_tipos_dre (codigo, nome, descricao)
               VALUES (?, ?, ?)
               ON CONFLICT(codigo) DO UPDATE SET nome = excluded.nome, descricao = excluded.descricao`,
         args: [tipo.codigo, tipo.nome, tipo.descricao],
@@ -424,7 +424,7 @@ async function seedDatabase() {
     const tiposMap = {};
     const tiposRows = (
       await turso.execute({
-        sql: "SELECT id, codigo FROM fin_tipos_estrutura_dre WHERE codigo IN ('DRE-OFICIAL','DRE-EBITDA','DRE-CUSTEIO')",
+      sql: "SELECT id, codigo FROM fin_tipos_dre WHERE codigo IN ('DRE-OFICIAL','DRE-EBITDA','DRE-CUSTEIO')",
       })
     ).rows;
     for (const row of tiposRows) {
@@ -794,14 +794,14 @@ async function seedDatabase() {
       if (!tipoId) continue;
 
       await turso.execute({
-        sql: "DELETE FROM fin_estrutura_dre WHERE tipo_estrutura_id = ?",
+        sql: "DELETE FROM fin_estrutura_dre WHERE tipo_dre_id = ?",
         args: [tipoId],
       });
 
       for (const linha of estrutura.linhas) {
         await turso.execute({
           sql: `INSERT INTO fin_estrutura_dre
-                (codigo, descricao, nivel, tipo, tipo_estrutura_id, ordem_exibicao, formula, exibir_negativo, negrito)
+                (codigo, nome, nivel, tipo_linha, tipo_dre_id, ordem, formula, negativo, editavel)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           args: [
             linha.codigo,
@@ -812,7 +812,7 @@ async function seedDatabase() {
             linha.ordem,
             linha.formula,
             linha.negativo,
-            linha.negrito,
+            1,
           ],
         });
       }
@@ -825,7 +825,7 @@ async function seedDatabase() {
     const dreIds = {};
     const linhasOficiais = (
       await turso.execute({
-        sql: "SELECT id, codigo FROM fin_estrutura_dre WHERE tipo_estrutura_id = ?",
+        sql: "SELECT id, codigo FROM fin_estrutura_dre WHERE tipo_dre_id = ?",
         args: [tiposMap["DRE-OFICIAL"]],
       })
     ).rows;
@@ -848,7 +848,7 @@ async function seedDatabase() {
       for (const codigoConta of vinculo.contas) {
         if (contasIds[codigoConta] && dreIds[vinculo.dre]) {
           await turso.execute({
-            sql: `INSERT INTO fin_dre_plano_contas (estrutura_dre_id, plano_contas_id) VALUES (?, ?)`,
+            sql: `INSERT INTO fin_dre_plano_contas (estrutura_id, plano_contas_id) VALUES (?, ?)`,
             args: [dreIds[vinculo.dre], contasIds[codigoConta]],
           });
           vinculosCount++;

@@ -38,13 +38,13 @@ export async function GET(request) {
         pc.descricao as conta_descricao,
         b.nome_banco,
         b.conta as conta_bancaria,
-        cc.descricao as centro_custo,
+        COALESCE(cc.nome, cc.descricao) as centro_custo,
         fp.descricao as forma_pagamento,
         m.criado_em
       FROM mov_financeiro m
       INNER JOIN fin_plano_contas pc ON m.plano_contas_id = pc.id
       LEFT JOIN fin_bancos b ON m.banco_id = b.id
-      LEFT JOIN fin_centro_custo cc ON m.centro_custo_id = cc.id
+      LEFT JOIN adm_departamentos cc ON m.centro_custo_id = cc.id
       LEFT JOIN fin_formas_pagamento fp ON m.forma_pagamento_id = fp.id
       WHERE 1=1
     `;

@@ -229,10 +229,10 @@ O DRE segue a estrutura clássica:
 - `POST /api/auth/login` - Login de usuário
 
 ### Plano de Contas
-- `GET /api/plano-contas` - Listar contas
-- `POST /api/plano-contas` - Criar conta
-- `PUT /api/plano-contas` - Atualizar conta
-- `DELETE /api/plano-contas` - Inativar conta
+- `GET /api/financeiro/plano-contas` - Listar contas
+- `POST /api/financeiro/plano-contas` - Criar conta
+- `PUT /api/financeiro/plano-contas` - Atualizar conta
+- `DELETE /api/financeiro/plano-contas` - Inativar conta
 
 ### Movimentação Financeira
 - `GET /api/movimentacao` - Listar movimentações
