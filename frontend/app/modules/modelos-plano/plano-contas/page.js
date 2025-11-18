@@ -276,12 +276,19 @@ export default function PlanoContasPage() {
 
   const handleDelete = async (id) => {
     if (confirm('Tem certeza que deseja inativar esta conta?')) {
+      console.log('[Frontend Plano Contas] Iniciando inativação da conta ID:', id);
       try {
-        const response = await fetch(`/api/plano-contas?id=${id}`, {
+        const url = `/api/plano-contas?id=${id}`;
+        console.log('[Frontend Plano Contas] URL:', url);
+
+        const response = await fetch(url, {
           method: 'DELETE'
         });
 
+        console.log('[Frontend Plano Contas] Status:', response.status, response.statusText);
+
         const data = await response.json();
+        console.log('[Frontend Plano Contas] Resposta da API:', data);
 
         if (data.success) {
           const mensagem = document.createElement('div');
@@ -300,12 +307,13 @@ export default function PlanoContasPage() {
           `;
           document.body.appendChild(mensagem);
           setTimeout(() => mensagem.remove(), 5000);
-          loadContas();
+          await loadContas();
+          console.log('[Frontend Plano Contas] Lista recarregada');
         } else {
           throw new Error(data.error || 'Erro ao inativar conta');
         }
       } catch (error) {
-        console.error('Erro ao inativar conta:', error);
+        console.error('[Frontend Plano Contas] Erro ao inativar conta:', error);
         const mensagem = document.createElement('div');
         mensagem.className = 'fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-lg z-50';
         mensagem.innerHTML = `
