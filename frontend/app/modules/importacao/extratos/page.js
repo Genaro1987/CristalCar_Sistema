@@ -208,7 +208,7 @@ export default function ImportacaoExtratosPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {extratos.map((ext) => (
+              {Array.isArray(extratos) && extratos.map((ext) => (
                 <tr key={ext.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 text-sm font-medium text-gray-900">
                     {ext.codigo}
@@ -274,7 +274,7 @@ export default function ImportacaoExtratosPage() {
                     className="w-full px-3 py-2 border rounded-lg"
                   >
                     <option value="">Selecione um layout</option>
-                    {layouts.map(layout => (
+                    {Array.isArray(layouts) && layouts.map(layout => (
                       <option key={layout.id} value={layout.id}>
                         {layout.nome} ({layout.formato})
                       </option>
