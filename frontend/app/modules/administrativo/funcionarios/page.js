@@ -471,25 +471,6 @@ export default function FuncionariosPage() {
                   />
                 </div>
 
-                {/* Empresa */}
-                <div className="w-full md:w-60">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Empresa
-                  </label>
-                  <select
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    value={empresaSelecionada || ''}
-                    onChange={(e) => handleEmpresaChange(e.target.value)}
-                  >
-                    <option value="">Todas</option>
-                    {empresas.map((emp) => (
-                      <option key={emp.id} value={emp.id}>
-                        {emp.nome_fantasia || emp.razao_social}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
                 {/* Filtro de Status */}
                 <div className="w-full md:w-48">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
