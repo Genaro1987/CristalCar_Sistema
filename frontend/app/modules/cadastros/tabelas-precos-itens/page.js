@@ -110,8 +110,21 @@ export default function TabelasPrecosItensPage() {
   const salvar = async (e) => {
     e.preventDefault();
 
-    if (!formData.produto_id || !formData.preco_venda) {
-      setMensagem({ tipo: 'error', texto: 'Produto e Preço de Venda são obrigatórios' });
+    if (!formData.produto_id) {
+      setMensagem({ tipo: 'error', texto: 'Produto é obrigatório' });
+      return;
+    }
+
+    // Validar campos obrigatórios baseados no tipo da tabela
+    const tipoTabela = tabelaSelecionada?.tipo_tabela || 'VENDA';
+
+    if (tipoTabela === 'COMPRAS' && !formData.preco_custo) {
+      setMensagem({ tipo: 'error', texto: 'Preço de Custo é obrigatório para tabelas de COMPRAS' });
+      return;
+    }
+
+    if ((tipoTabela === 'VENDA' || !tipoTabela) && !formData.preco_venda) {
+      setMensagem({ tipo: 'error', texto: 'Preço de Venda é obrigatório para tabelas de VENDA' });
       return;
     }
 
@@ -171,11 +184,7 @@ export default function TabelasPrecosItensPage() {
     }
   };
 
-  const calcularMargem = (precoVenda, precoCusto) => {
-    if (!precoCusto || precoCusto === 0) return '-';
-    const margem = ((precoVenda - precoCusto) / precoCusto) * 100;
-    return margem.toFixed(2) + '%';
-  };
+  // Função removida - margem de lucro não é mais exibida
 
   const produtosFiltrados = searchTerm
     ? produtos.filter(p =>
@@ -220,7 +229,7 @@ export default function TabelasPrecosItensPage() {
             <option value="">Selecione uma tabela...</option>
             {tabelas.map(t => (
               <option key={t.id} value={t.id}>
-                {t.codigo} - {t.nome} ({t.tipo_ajuste}: {t.valor_ajuste}%)
+                {t.codigo} - {t.nome} ({t.tipo_tabela || 'VENDA'})
               </option>
             ))}
           </select>
@@ -258,15 +267,16 @@ export default function TabelasPrecosItensPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Tipo
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                    Preço Custo
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                    Preço Venda
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                    Margem
-                  </th>
+                  {(tabelaSelecionada?.tipo_tabela === 'COMPRAS' || tabelaSelecionada?.tipo_tabela === 'AMBOS') && (
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                      Preço Custo
+                    </th>
+                  )}
+                  {(tabelaSelecionada?.tipo_tabela === 'VENDA' || tabelaSelecionada?.tipo_tabela === 'AMBOS' || !tabelaSelecionada?.tipo_tabela) && (
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                      Preço Venda
+                    </th>
+                  )}
                   <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">
                     Status
                   </th>
@@ -293,31 +303,24 @@ export default function TabelasPrecosItensPage() {
                         {item.produto_tipo}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500">
-                      {item.preco_custo
-                        ? Number(item.preco_custo).toLocaleString('pt-BR', {
-                            style: 'currency',
-                            currency: 'BRL'
-                          })
-                        : '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900">
-                      {Number(item.preco_venda).toLocaleString('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL'
-                      })}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        item.margem_lucro > 0
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-600'
-                      }`}>
-                        {item.margem_lucro
-                          ? Number(item.margem_lucro).toFixed(2) + '%'
+                    {(tabelaSelecionada?.tipo_tabela === 'COMPRAS' || tabelaSelecionada?.tipo_tabela === 'AMBOS') && (
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900">
+                        {item.preco_custo
+                          ? Number(item.preco_custo).toLocaleString('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL'
+                            })
                           : '-'}
-                      </span>
-                    </td>
+                      </td>
+                    )}
+                    {(tabelaSelecionada?.tipo_tabela === 'VENDA' || tabelaSelecionada?.tipo_tabela === 'AMBOS' || !tabelaSelecionada?.tipo_tabela) && (
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900">
+                        {Number(item.preco_venda || 0).toLocaleString('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL'
+                        })}
+                      </td>
+                    )}
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <span className={`px-2 py-1 text-xs rounded-full ${
                         item.ativo
@@ -417,51 +420,44 @@ export default function TabelasPrecosItensPage() {
                     )}
                   </div>
 
-                  {/* Preços */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Preço de Custo
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={formData.preco_custo}
-                        onChange={(e) => setFormData({...formData, preco_custo: e.target.value})}
-                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
-                        placeholder="0.00"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Preço de Venda *
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={formData.preco_venda}
-                        onChange={(e) => setFormData({...formData, preco_venda: e.target.value})}
-                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
-                        placeholder="0.00"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  {/* Margem calculada */}
-                  {formData.preco_venda && formData.preco_custo && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-blue-900">
-                          Margem de Lucro:
-                        </span>
-                        <span className="text-lg font-bold text-blue-900">
-                          {calcularMargem(Number(formData.preco_venda), Number(formData.preco_custo))}
-                        </span>
+                  {/* Preços - Condicional baseado no tipo da tabela */}
+                  <div className={`grid gap-4 ${
+                    tabelaSelecionada?.tipo_tabela === 'AMBOS' ? 'grid-cols-2' : 'grid-cols-1'
+                  }`}>
+                    {(tabelaSelecionada?.tipo_tabela === 'COMPRAS' || tabelaSelecionada?.tipo_tabela === 'AMBOS') && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Preço de Custo {tabelaSelecionada?.tipo_tabela === 'COMPRAS' ? '*' : ''}
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={formData.preco_custo}
+                          onChange={(e) => setFormData({...formData, preco_custo: e.target.value})}
+                          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                          placeholder="0.00"
+                          required={tabelaSelecionada?.tipo_tabela === 'COMPRAS'}
+                        />
                       </div>
-                    </div>
-                  )}
+                    )}
+
+                    {(tabelaSelecionada?.tipo_tabela === 'VENDA' || tabelaSelecionada?.tipo_tabela === 'AMBOS' || !tabelaSelecionada?.tipo_tabela) && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Preço de Venda {(tabelaSelecionada?.tipo_tabela === 'VENDA' || !tabelaSelecionada?.tipo_tabela) ? '*' : ''}
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={formData.preco_venda}
+                          onChange={(e) => setFormData({...formData, preco_venda: e.target.value})}
+                          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                          placeholder="0.00"
+                          required={tabelaSelecionada?.tipo_tabela === 'VENDA' || !tabelaSelecionada?.tipo_tabela}
+                        />
+                      </div>
+                    )}
+                  </div>
 
                   {/* Status */}
                   <div className="flex items-center">
