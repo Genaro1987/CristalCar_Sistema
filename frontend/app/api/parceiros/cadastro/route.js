@@ -1,105 +1,102 @@
-import { createClient } from '@libsql/client';
-import { normalizarDadosParceiro } from '@/lib/text-utils';
+import { createClient } from '@supabase/supabase-js'
+import { normalizarDadosParceiro } from '@/lib/text-utils'
 
-export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic'
 
-const turso = createClient({
-  url: process.env.TURSO_DATABASE_URL,
-  authToken: process.env.TURSO_AUTH_TOKEN,
-});
+function getSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Configuração do Supabase ausente. Defina NEXT_PUBLIC_SUPABASE_URL e a chave (service ou anon).')
+  }
+
+  return createClient(supabaseUrl, supabaseKey, {
+    auth: { persistSession: false },
+  })
+}
 
 export async function GET(request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const empresaId = searchParams.get('empresa_id');
+    const supabase = getSupabaseClient()
+    const { searchParams } = new URL(request.url)
+    const empresaId = searchParams.get('empresa_id')
 
-    let sql = `SELECT * FROM par_parceiros`;
-    const args = [];
+    const query = supabase.from('par_parceiros').select('*')
 
     if (empresaId) {
-      sql += ` WHERE (empresa_id = ? OR empresa_id IS NULL)`;
-      args.push(Number(empresaId));
+      query.or(`empresa_id.eq.${Number(empresaId)},empresa_id.is.null`)
     }
 
-    sql += ` ORDER BY status DESC, nome_fantasia ASC`;
+    const { data, error } = await query.order('status', { ascending: false }).order('nome_fantasia', { ascending: true })
+    if (error) throw error
 
-    const result = args.length > 0
-      ? await turso.execute({ sql, args })
-      : await turso.execute({ sql, args: [] });
-
-    return Response.json(result.rows);
+    return Response.json(data || [])
   } catch (error) {
-    console.error('Erro ao buscar parceiros:', error);
-    return Response.json({ error: 'Erro ao buscar parceiros' }, { status: 500 });
+    console.error('Erro ao buscar parceiros:', error)
+    return Response.json({ error: 'Erro ao buscar parceiros' }, { status: 500 })
   }
 }
 
 export async function POST(request) {
   try {
-    const data = await request.json();
+    const supabase = getSupabaseClient()
+    const data = await request.json()
+    const normalizedData = normalizarDadosParceiro(data)
 
-    // Normalizar dados: MAIÚSCULO sem acentos
-    const normalizedData = normalizarDadosParceiro(data);
+    const codigo_unico = normalizedData.codigo_unico || normalizedData.codigo || `PAR${Date.now()}`
 
-    // Gerar código único se não fornecido
-    const codigo_unico = normalizedData.codigo_unico || normalizedData.codigo || `PAR${Date.now()}`;
-
-    // Adicionar empresa_id se não existir a coluna
-    try {
-      await turso.execute(`ALTER TABLE par_parceiros ADD COLUMN empresa_id INTEGER`);
-    } catch (e) {
-      // Coluna já existe
+    const payload = {
+      codigo_unico,
+      codigo: normalizedData.codigo || null,
+      tipo_pessoa: normalizedData.tipo_pessoa || 'JURIDICA',
+      tipo_parceiro: normalizedData.tipo_parceiro || normalizedData.tipo || 'CLIENTE',
+      nome_fantasia: normalizedData.nome_fantasia || null,
+      razao_social: normalizedData.razao_social || null,
+      nome_completo: normalizedData.nome_completo || normalizedData.nome || null,
+      cnpj: normalizedData.cnpj || (normalizedData.tipo_pessoa === 'JURIDICA' ? normalizedData.cpf_cnpj : null),
+      cpf: normalizedData.cpf || (normalizedData.tipo_pessoa === 'FISICA' ? normalizedData.cpf_cnpj : null),
+      cpf_cnpj: normalizedData.cpf_cnpj || null,
+      inscricao_estadual: normalizedData.inscricao_estadual || normalizedData.ie_rg || null,
+      inscricao_municipal: normalizedData.inscricao_municipal || null,
+      rg_inscricao_estadual: normalizedData.rg || null,
+      email: normalizedData.email || null,
+      telefone: normalizedData.telefone || null,
+      celular: normalizedData.celular || null,
+      website: normalizedData.website || normalizedData.site || null,
+      site: normalizedData.site || normalizedData.website || null,
+      cep: normalizedData.cep || null,
+      endereco: normalizedData.endereco || null,
+      numero: normalizedData.numero || null,
+      complemento: normalizedData.complemento || null,
+      bairro: normalizedData.bairro || null,
+      cidade: normalizedData.cidade || null,
+      estado: normalizedData.estado || null,
+      banco: normalizedData.banco || null,
+      agencia: normalizedData.agencia || null,
+      conta: normalizedData.conta || null,
+      tipo_conta: normalizedData.tipo_conta || null,
+      pix_chave: normalizedData.pix_chave || normalizedData.pix || null,
+      pix_tipo: normalizedData.pix_tipo || null,
+      empresa_id: normalizedData.empresa_id || null,
+      limite_credito: normalizedData.limite_credito || 0,
+      observacoes: normalizedData.observacoes || null,
+      status: normalizedData.status || (normalizedData.ativo ? 'ATIVO' : 'INATIVO'),
+      criado_em: new Date().toISOString(),
+      atualizado_em: new Date().toISOString(),
     }
 
-    const result = await turso.execute({
-      sql: `
-        INSERT INTO par_parceiros (
-          codigo_unico, tipo_pessoa, tipo_parceiro, nome_fantasia, razao_social, nome_completo,
-          cnpj, cpf, inscricao_estadual, inscricao_municipal, rg, email, telefone, celular, website,
-          cep, endereco, numero, complemento, bairro, cidade, estado,
-          banco, agencia, conta, tipo_conta, pix_chave, pix_tipo,
-          empresa_id, limite_credito, observacoes, status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `,
-      args: [
-        codigo_unico,
-        normalizedData.tipo_pessoa || 'JURIDICA',
-        normalizedData.tipo_parceiro || normalizedData.tipo || 'CLIENTE',
-        normalizedData.nome_fantasia || null,
-        normalizedData.razao_social || null,
-        normalizedData.nome_completo || normalizedData.nome || null,
-        normalizedData.cnpj || (normalizedData.tipo_pessoa === 'JURIDICA' ? normalizedData.cpf_cnpj : null),
-        normalizedData.cpf || (normalizedData.tipo_pessoa === 'FISICA' ? normalizedData.cpf_cnpj : null),
-        normalizedData.inscricao_estadual || normalizedData.ie_rg || null,
-        normalizedData.inscricao_municipal || null,
-        normalizedData.rg || null,
-        normalizedData.email || null,
-        normalizedData.telefone || null,
-        normalizedData.celular || null,
-        normalizedData.website || normalizedData.site || null,
-        normalizedData.cep || null,
-        normalizedData.endereco || null,
-        normalizedData.numero || null,
-        normalizedData.complemento || null,
-        normalizedData.bairro || null,
-        normalizedData.cidade || null,
-        normalizedData.estado || null,
-        normalizedData.banco || null,
-        normalizedData.agencia || null,
-        normalizedData.conta || null,
-        normalizedData.tipo_conta || null,
-        normalizedData.pix_chave || normalizedData.pix || null,
-        normalizedData.pix_tipo || null,
-        normalizedData.empresa_id || null,
-        normalizedData.limite_credito || 0,
-        normalizedData.observacoes || null,
-        normalizedData.status || (normalizedData.ativo ? 'ATIVO' : 'INATIVO')
-      ]
-    });
+    const { data: inserted, error } = await supabase
+      .from('par_parceiros')
+      .insert(payload)
+      .select('id')
+      .single()
 
-    return Response.json({ success: true, id: result.lastInsertRowid });
+    if (error) throw error
+
+    return Response.json({ success: true, id: inserted?.id })
   } catch (error) {
-    console.error('Erro ao criar parceiro:', error);
-    return Response.json({ error: 'Erro ao criar parceiro' }, { status: 500 });
+    console.error('Erro ao criar parceiro:', error)
+    return Response.json({ error: 'Erro ao criar parceiro' }, { status: 500 })
   }
 }
