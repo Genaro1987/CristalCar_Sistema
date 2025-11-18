@@ -80,19 +80,26 @@ async function garantirTabelasEstruturaDRE() {
       await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN negativo BOOLEAN DEFAULT 0');
     }
 
-    // Migração especial: se descricao existe com NOT NULL, precisamos recri-la
+    // Migração especial: se descricao existe com NOT NULL, preencher
     if (colunas.includes('descricao')) {
-      console.log('Removendo coluna descricao (será recriada como nullable se necessário)');
-      // SQLite não suporta DROP COLUMN antes da versão 3.35.0
-      // Vamos apenas garantir que novos inserts não falhem
       try {
         await turso.execute('UPDATE fin_estrutura_dre SET descricao = nome WHERE descricao IS NULL');
       } catch (e) {
-        console.log('Coluna descricao já preenchida ou não existe');
+        console.log('[INFO] Coluna descricao:', e.message);
+      }
+    }
+
+    // Migração: se existe coluna 'tipo' com NOT NULL, preencher com valor padrão
+    if (colunas.includes('tipo')) {
+      console.log('[MIGRAÇÃO] Coluna tipo encontrada - preenchendo valores NULL');
+      try {
+        await turso.execute("UPDATE fin_estrutura_dre SET tipo = 'TITULO' WHERE tipo IS NULL");
+      } catch (e) {
+        console.log('[INFO] Coluna tipo:', e.message);
       }
     }
   } catch (error) {
-    console.error('Erro na migração estrutura DRE:', error);
+    console.error('[ERRO] Migração estrutura DRE:', error);
     throw error;
   }
 
@@ -182,45 +189,41 @@ export async function POST(request) {
     const nome = normalizarTexto(data.nome);
     const descricao = data.descricao ? normalizarTexto(data.descricao) : nome;
 
-    // Verificar se a coluna descricao existe na tabela
+    // Verificar quais colunas existem na tabela
     const tableInfo = await turso.execute('PRAGMA table_info(fin_estrutura_dre)');
     const colunas = tableInfo.rows?.map(row => row.name) || [];
     const temDescricao = colunas.includes('descricao');
+    const temTipo = colunas.includes('tipo');
 
     let sql, args;
 
+    // Montar SQL dinamicamente baseado nas colunas que existem
+    const campos = ['tipo_dre_id', 'codigo', 'nome'];
+    const valores = [data.tipo_dre_id, data.codigo || `LIN-${Date.now()}`, nome];
+
     if (temDescricao) {
-      sql = `INSERT INTO fin_estrutura_dre
-             (tipo_dre_id, codigo, nome, descricao, nivel, pai_id, ordem, tipo_linha, formula, negativo)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-      args = [
-        data.tipo_dre_id,
-        data.codigo || `LIN-${Date.now()}`,
-        nome,
-        descricao,
-        data.nivel || 1,
-        data.pai_id || null,
-        data.ordem || 999,
-        data.tipo_linha || 'TITULO',
-        data.formula || null,
-        data.negativo ? 1 : 0
-      ];
-    } else {
-      sql = `INSERT INTO fin_estrutura_dre
-             (tipo_dre_id, codigo, nome, nivel, pai_id, ordem, tipo_linha, formula, negativo)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-      args = [
-        data.tipo_dre_id,
-        data.codigo || `LIN-${Date.now()}`,
-        nome,
-        data.nivel || 1,
-        data.pai_id || null,
-        data.ordem || 999,
-        data.tipo_linha || 'TITULO',
-        data.formula || null,
-        data.negativo ? 1 : 0
-      ];
+      campos.push('descricao');
+      valores.push(descricao);
     }
+
+    if (temTipo) {
+      campos.push('tipo');
+      valores.push(data.tipo_linha || 'TITULO'); // usar tipo_linha para preencher tipo
+    }
+
+    campos.push('nivel', 'pai_id', 'ordem', 'tipo_linha', 'formula', 'negativo');
+    valores.push(
+      data.nivel || 1,
+      data.pai_id || null,
+      data.ordem || 999,
+      data.tipo_linha || 'TITULO',
+      data.formula || null,
+      data.negativo ? 1 : 0
+    );
+
+    const placeholders = campos.map(() => '?').join(', ');
+    sql = `INSERT INTO fin_estrutura_dre (${campos.join(', ')}) VALUES (${placeholders})`;
+    args = valores;
 
     const result = await turso.execute({ sql, args });
 

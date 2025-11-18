@@ -320,7 +320,7 @@ export default function ImportacaoExtratosPage() {
                           </tr>
                         </thead>
                         <tbody>
-                          {preview.slice(0, 10).map((linha, idx) => (
+                          {Array.isArray(preview) && preview.slice(0, 10).map((linha, idx) => (
                             <tr key={idx} className="border-t">
                               <td className="px-2 py-1">{linha.data}</td>
                               <td className="px-2 py-1">{linha.descricao}</td>

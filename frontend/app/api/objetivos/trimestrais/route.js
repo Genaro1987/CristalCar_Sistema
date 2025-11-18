@@ -128,20 +128,26 @@ async function garantirTabelasObjetivos() {
       await turso.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_obj_trim_codigo ON obj_objetivos_trimestrais(codigo)');
     }
 
-    // Migração 5: tornar plano_conta_id nullable para registros existentes com NOT NULL
-    // Preencher plano_conta_id NULL com um valor padrão temporário se necessário
+    // Migração 5: verificar se existe coluna plano_contas_id (com 's') e remover
+    if (colunas.includes('plano_contas_id')) {
+      console.log('[MIGRAÇÃO] Coluna plano_contas_id (com s) encontrada - será removida');
+      // SQLite não suporta DROP COLUMN diretamente, então vamos recriar a tabela
+      // já será feito pela migração anterior se necessário
+    }
+
+    // Migração 6: verificar plano_conta_id nullable
     try {
       const registrosNulos = await turso.execute(
         'SELECT id FROM obj_objetivos_trimestrais WHERE plano_conta_id IS NULL'
       );
       if (registrosNulos.rows.length > 0) {
-        console.log('Encontrados', registrosNulos.rows.length, 'objetivos sem plano_conta_id');
+        console.log('[INFO] Encontrados', registrosNulos.rows.length, 'objetivos sem plano_conta_id');
       }
     } catch (e) {
-      console.log('Coluna plano_conta_id aceita NULL ou não existe:', e.message);
+      console.log('[INFO] Coluna plano_conta_id:', e.message);
     }
   } catch (error) {
-    console.log('Migração objetivos trimestrais:', error.message);
+    console.log('[ERRO] Migração objetivos trimestrais:', error.message);
   }
 }
 
