@@ -6,38 +6,35 @@ const turso = createClient({
 });
 
 async function ensureConfigRow(modulo, tela) {
-  await turso.execute(`
-    CREATE TABLE IF NOT EXISTS adm_configuracao_log (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      modulo VARCHAR(100) NOT NULL,
-      tela VARCHAR(100) NOT NULL,
-      registrar_log BOOLEAN DEFAULT 1,
-      registrar_visualizacao BOOLEAN DEFAULT 0,
-      registrar_inclusao BOOLEAN DEFAULT 1,
-      registrar_edicao BOOLEAN DEFAULT 1,
-      registrar_exclusao BOOLEAN DEFAULT 1,
-      criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
-      atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE(modulo, tela)
-    )
-  `);
+  // OTIMIZAÇÃO: adm_telas já contém as configurações de log
+  // Não precisa mais criar linhas separadas em adm_configuracao_log
 
-  await turso.execute({
-    sql: `INSERT OR IGNORE INTO adm_configuracao_log (modulo, tela) VALUES (?, ?)`,
+  // Garantir que a tela existe em adm_telas
+  const telaExiste = await turso.execute({
+    sql: `SELECT id FROM adm_telas WHERE modulo = ? AND nome_tela = ?`,
     args: [modulo, tela],
   });
+
+  // Se não existir, os valores padrão da tabela serão usados
+  if (telaExiste.rows.length === 0) {
+    console.log(`[AVISO] Tela ${modulo}::${tela} não encontrada em adm_telas`);
+  }
 }
 
 async function shouldLog(modulo, tela, acao) {
   await ensureConfigRow(modulo, tela);
+
+  // OTIMIZAÇÃO: Ler diretamente de adm_telas (tabela unificada)
   const result = await turso.execute({
     sql: `SELECT registrar_log, registrar_visualizacao, registrar_inclusao, registrar_edicao, registrar_exclusao
-          FROM adm_configuracao_log WHERE modulo = ? AND tela = ?`,
+          FROM adm_telas WHERE modulo = ? AND nome_tela = ?`,
     args: [modulo, tela],
   });
+
   if (result.rows.length === 0) return false;
   const cfg = result.rows[0];
   if (!cfg.registrar_log) return false;
+
   const map = {
     VISUALIZAR: cfg.registrar_visualizacao,
     INCLUIR: cfg.registrar_inclusao,
@@ -82,51 +79,28 @@ export async function registrarLogAcao({
 }
 
 export async function listarConfiguracoesLog() {
-  await turso.execute(`
-    CREATE TABLE IF NOT EXISTS adm_telas (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      codigo_tela VARCHAR(50) UNIQUE,
-      nome_tela VARCHAR(200),
-      modulo VARCHAR(100),
-      caminho_tela VARCHAR(255),
-      icone VARCHAR(50),
-      ordem_exibicao INTEGER DEFAULT 0,
-      ativo BOOLEAN DEFAULT 1
-    )
-  `);
-  await turso.execute(`
-    CREATE TABLE IF NOT EXISTS adm_configuracao_log (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      modulo VARCHAR(100) NOT NULL,
-      tela VARCHAR(100) NOT NULL,
-      registrar_log BOOLEAN DEFAULT 1,
-      registrar_visualizacao BOOLEAN DEFAULT 0,
-      registrar_inclusao BOOLEAN DEFAULT 1,
-      registrar_edicao BOOLEAN DEFAULT 1,
-      registrar_exclusao BOOLEAN DEFAULT 1,
-      criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
-      atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE(modulo, tela)
-    )
+  // OTIMIZAÇÃO: Agora usamos apenas adm_telas (unificado com configurações de log)
+  // Não precisamos mais fazer JOIN em memória entre 2 tabelas!
+
+  const telas = await turso.execute(`
+    SELECT
+      id, codigo_tela, nome_tela, modulo,
+      registrar_log, registrar_visualizacao, registrar_inclusao,
+      registrar_edicao, registrar_exclusao
+    FROM adm_telas
+    WHERE ativo = 1
+    ORDER BY ordem_exibicao ASC
   `);
 
-  const telas = await turso.execute(`SELECT id, codigo_tela, nome_tela, modulo FROM adm_telas WHERE ativo = 1`);
-  const configs = await turso.execute(`SELECT * FROM adm_configuracao_log`);
-  const configMap = new Map(configs.rows.map((c) => [`${c.modulo}::${c.tela}`, c]));
-
-  return telas.rows.map((tela) => {
-    const chave = `${tela.modulo}::${tela.nome_tela}`;
-    const existente = configMap.get(chave);
-    return {
-      id: existente?.id || tela.id,
-      modulo: tela.modulo,
-      tela: tela.nome_tela,
-      codigo: tela.codigo_tela,
-      registrar_log: existente?.registrar_log ?? false,
-      registrar_visualizacao: existente?.registrar_visualizacao ?? true,
-      registrar_inclusao: existente?.registrar_inclusao ?? true,
-      registrar_edicao: existente?.registrar_edicao ?? true,
-      registrar_exclusao: existente?.registrar_exclusao ?? true,
-    };
-  });
+  return telas.rows.map((tela) => ({
+    id: tela.id,
+    modulo: tela.modulo,
+    tela: tela.nome_tela,
+    codigo: tela.codigo_tela,
+    registrar_log: tela.registrar_log ?? 1,
+    registrar_visualizacao: tela.registrar_visualizacao ?? 0,
+    registrar_inclusao: tela.registrar_inclusao ?? 1,
+    registrar_edicao: tela.registrar_edicao ?? 1,
+    registrar_exclusao: tela.registrar_exclusao ?? 1,
+  }));
 }
