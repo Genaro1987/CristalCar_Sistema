@@ -3,16 +3,19 @@ import { normalizarTexto } from '@/lib/text-utils'
 
 export const dynamic = 'force-dynamic'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+function getSupabase() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Configuração do Supabase ausente. Defina NEXT_PUBLIC_SUPABASE_URL e a chave (service ou anon).')
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('Configuração do Supabase ausente. Defina NEXT_PUBLIC_SUPABASE_URL e a chave (service ou anon).')
+    return null
+  }
+
+  return createClient(supabaseUrl, supabaseKey, {
+    auth: { persistSession: false },
+  })
 }
-
-const supabase = createClient(supabaseUrl, supabaseKey, {
-  auth: { persistSession: false },
-})
 
 // Normalizar dados de empresa
 function normalizarDadosEmpresa(data) {
@@ -54,6 +57,11 @@ function normalizarDadosEmpresa(data) {
 
 export async function GET(request) {
   try {
+    const supabase = getSupabase()
+    if (!supabase) {
+      return Response.json({ error: 'Configuração do Supabase ausente.' }, { status: 500 })
+    }
+
     const { searchParams } = new URL(request.url)
     const listarTodas = searchParams.get('all') === 'true'
     const empresaId = searchParams.get('id')
@@ -104,6 +112,11 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
+    const supabase = getSupabase()
+    if (!supabase) {
+      return Response.json({ error: 'Configuração do Supabase ausente.' }, { status: 500 })
+    }
+
     const data = await request.json()
     const normalizedData = normalizarDadosEmpresa(data)
     normalizedData.id = normalizedData.id ? Number(normalizedData.id) : null
