@@ -3,22 +3,19 @@ import { normalizarDadosParceiro } from '@/lib/text-utils'
 
 export const dynamic = 'force-dynamic'
 
-function getSupabaseClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  if (!supabaseUrl || !supabaseKey) {
-    throw new Error('Configuração do Supabase ausente. Defina NEXT_PUBLIC_SUPABASE_URL e a chave (service ou anon).')
-  }
-
-  return createClient(supabaseUrl, supabaseKey, {
-    auth: { persistSession: false },
-  })
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error('Configuração do Supabase ausente. Defina NEXT_PUBLIC_SUPABASE_URL e a chave (service ou anon).')
 }
+
+const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: { persistSession: false },
+})
 
 export async function GET(request) {
   try {
-    const supabase = getSupabaseClient()
     const { searchParams } = new URL(request.url)
     const empresaId = searchParams.get('empresa_id')
 
@@ -40,7 +37,6 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const supabase = getSupabaseClient()
     const data = await request.json()
     const normalizedData = normalizarDadosParceiro(data)
 
