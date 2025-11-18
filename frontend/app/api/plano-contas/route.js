@@ -10,19 +10,35 @@ const turso = createClient({
   authToken: process.env.TURSO_AUTH_TOKEN,
 });
 
-async function garantirColunaEmpresa() {
+async function garantirColunasNecessarias() {
   const info = await turso.execute('PRAGMA table_info(fin_plano_contas)');
-  const possuiEmpresa = info.rows?.some((c) => c.name === 'empresa_id');
+  const colunas = info.rows || [];
+
+  // Garantir coluna empresa_id
+  const possuiEmpresa = colunas.some((c) => c.name === 'empresa_id');
   if (!possuiEmpresa) {
     await turso.execute('ALTER TABLE fin_plano_contas ADD COLUMN empresa_id INTEGER');
     await turso.execute('CREATE INDEX IF NOT EXISTS idx_plano_contas_empresa ON fin_plano_contas(empresa_id)');
+  }
+
+  // Garantir coluna compoe_dre (o schema pode ter considera_resultado)
+  const possuiCompoeDre = colunas.some((c) => c.name === 'compoe_dre');
+  const possuiConsideraResultado = colunas.some((c) => c.name === 'considera_resultado');
+
+  if (!possuiCompoeDre && !possuiConsideraResultado) {
+    // Nenhuma das duas existe, criar compoe_dre
+    await turso.execute('ALTER TABLE fin_plano_contas ADD COLUMN compoe_dre BOOLEAN DEFAULT 1');
+  } else if (!possuiCompoeDre && possuiConsideraResultado) {
+    // Existe considera_resultado mas não compoe_dre, criar alias/copiar
+    await turso.execute('ALTER TABLE fin_plano_contas ADD COLUMN compoe_dre BOOLEAN DEFAULT 1');
+    await turso.execute('UPDATE fin_plano_contas SET compoe_dre = considera_resultado WHERE compoe_dre IS NULL');
   }
 }
 
 // GET - Listar plano de contas
 export async function GET(request) {
   try {
-    await garantirColunaEmpresa();
+    await garantirColunasNecessarias();
     const { searchParams } = new URL(request.url);
     const tipo = searchParams.get("tipo"); // RECEITA ou DESPESA
     const apenasLancaveis = searchParams.get("lancaveis") === "true";
@@ -98,7 +114,7 @@ export async function GET(request) {
 // POST - Criar nova conta
 export async function POST(request) {
   try {
-    await garantirColunaEmpresa();
+    await garantirColunasNecessarias();
     const dados = await request.json();
 
     let {
@@ -187,7 +203,7 @@ export async function POST(request) {
 // PUT - Atualizar conta
 export async function PUT(request) {
   try {
-    await garantirColunaEmpresa();
+    await garantirColunasNecessarias();
     const dados = await request.json();
     const { id, ...campos } = dados;
 

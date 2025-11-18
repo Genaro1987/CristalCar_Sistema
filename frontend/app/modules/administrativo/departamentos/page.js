@@ -130,23 +130,33 @@ export default function DepartamentosPage() {
   const excluir = async (id) => {
     if (!confirm('Deseja realmente excluir este departamento?')) return;
 
+    console.log('[Frontend] Iniciando exclusão do departamento ID:', id);
+
     try {
-      const response = await fetch(`/api/administrativo/departamentos?id=${id}`, {
+      const url = `/api/administrativo/departamentos?id=${id}`;
+      console.log('[Frontend] URL de exclusão:', url);
+
+      const response = await fetch(url, {
         method: 'DELETE'
       });
+
+      console.log('[Frontend] Status da resposta:', response.status, response.statusText);
+
+      const result = await response.json();
+      console.log('[Frontend] Resultado da API:', result);
 
       if (response.ok) {
         setMensagem({ tipo: 'success', texto: 'Departamento excluído com sucesso!' });
         setTimeout(() => setMensagem(null), 3000);
-        carregarDepartamentos();
+        await carregarDepartamentos();
+        console.log('[Frontend] Lista recarregada após exclusão');
       } else {
-        const error = await response.json();
-        setMensagem({ tipo: 'error', texto: error.error || 'Erro ao excluir' });
+        setMensagem({ tipo: 'error', texto: result.error || 'Erro ao excluir' });
         setTimeout(() => setMensagem(null), 5000);
       }
     } catch (error) {
-      console.error('Erro ao excluir:', error);
-      setMensagem({ tipo: 'error', texto: 'Erro ao excluir departamento' });
+      console.error('[Frontend] Erro ao excluir:', error);
+      setMensagem({ tipo: 'error', texto: 'Erro ao excluir departamento: ' + error.message });
       setTimeout(() => setMensagem(null), 5000);
     }
   };
