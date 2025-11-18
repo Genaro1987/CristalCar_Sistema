@@ -80,19 +80,26 @@ async function garantirTabelasEstruturaDRE() {
       await turso.execute('ALTER TABLE fin_estrutura_dre ADD COLUMN negativo BOOLEAN DEFAULT 0');
     }
 
-    // Migração especial: se descricao existe com NOT NULL, precisamos recri-la
+    // Migração especial: se descricao existe com NOT NULL, preencher
     if (colunas.includes('descricao')) {
-      console.log('Removendo coluna descricao (será recriada como nullable se necessário)');
-      // SQLite não suporta DROP COLUMN antes da versão 3.35.0
-      // Vamos apenas garantir que novos inserts não falhem
       try {
         await turso.execute('UPDATE fin_estrutura_dre SET descricao = nome WHERE descricao IS NULL');
       } catch (e) {
-        console.log('Coluna descricao já preenchida ou não existe');
+        console.log('[INFO] Coluna descricao:', e.message);
+      }
+    }
+
+    // Migração: se existe coluna 'tipo' com NOT NULL, preencher com valor padrão
+    if (colunas.includes('tipo')) {
+      console.log('[MIGRAÇÃO] Coluna tipo encontrada - preenchendo valores NULL');
+      try {
+        await turso.execute("UPDATE fin_estrutura_dre SET tipo = 'TITULO' WHERE tipo IS NULL");
+      } catch (e) {
+        console.log('[INFO] Coluna tipo:', e.message);
       }
     }
   } catch (error) {
-    console.error('Erro na migração estrutura DRE:', error);
+    console.error('[ERRO] Migração estrutura DRE:', error);
     throw error;
   }
 
@@ -108,6 +115,148 @@ async function garantirTabelasEstruturaDRE() {
       UNIQUE(estrutura_dre_id, plano_conta_id)
     )
   `);
+
+  // Criar estruturas padrão para os tipos fixos
+  await criarEstruturasBaseDRE();
+}
+
+async function criarEstruturasBaseDRE() {
+  // Buscar os IDs dos tipos fixos
+  const tipoOficial = await turso.execute({
+    sql: 'SELECT id FROM fin_tipos_dre WHERE codigo = ?',
+    args: ['DRE-OFICIAL']
+  });
+
+  const tipoEBITDA = await turso.execute({
+    sql: 'SELECT id FROM fin_tipos_dre WHERE codigo = ?',
+    args: ['DRE-EBITDA']
+  });
+
+  const tipoCusteio = await turso.execute({
+    sql: 'SELECT id FROM fin_tipos_dre WHERE codigo = ?',
+    args: ['DRE-CUSTEIO']
+  });
+
+  // Verificar se estruturas já existem para cada tipo
+  if (tipoOficial.rows.length > 0) {
+    const tipoId = tipoOficial.rows[0].id;
+    const estruturasExistentes = await turso.execute({
+      sql: 'SELECT COUNT(*) as total FROM fin_estrutura_dre WHERE tipo_dre_id = ?',
+      args: [tipoId]
+    });
+
+    if (estruturasExistentes.rows[0].total === 0) {
+      console.log('[SEED] Criando estrutura base DRE OFICIAL');
+      await criarEstruturaDREOficial(tipoId);
+    }
+  }
+
+  if (tipoEBITDA.rows.length > 0) {
+    const tipoId = tipoEBITDA.rows[0].id;
+    const estruturasExistentes = await turso.execute({
+      sql: 'SELECT COUNT(*) as total FROM fin_estrutura_dre WHERE tipo_dre_id = ?',
+      args: [tipoId]
+    });
+
+    if (estruturasExistentes.rows[0].total === 0) {
+      console.log('[SEED] Criando estrutura base DRE EBITDA');
+      await criarEstruturaDREEBITDA(tipoId);
+    }
+  }
+
+  if (tipoCusteio.rows.length > 0) {
+    const tipoId = tipoCusteio.rows[0].id;
+    const estruturasExistentes = await turso.execute({
+      sql: 'SELECT COUNT(*) as total FROM fin_estrutura_dre WHERE tipo_dre_id = ?',
+      args: [tipoId]
+    });
+
+    if (estruturasExistentes.rows[0].total === 0) {
+      console.log('[SEED] Criando estrutura base DRE CUSTEIO VARIAVEL');
+      await criarEstruturaDRECusteio(tipoId);
+    }
+  }
+}
+
+async function criarEstruturaDREOficial(tipoId) {
+  const estrutura = [
+    { codigo: '1', nome: 'RECEITA BRUTA', nivel: 1, pai_id: null, ordem: 10, tipo_linha: 'CONTA', negativo: 0 },
+    { codigo: '2', nome: 'DEDUCOES E ABATIMENTOS', nivel: 1, pai_id: null, ordem: 20, tipo_linha: 'CONTA', negativo: 1 },
+    { codigo: '3', nome: 'RECEITA LIQUIDA', nivel: 1, pai_id: null, ordem: 30, tipo_linha: 'FORMULA', formula: '1 - 2', negativo: 0 },
+    { codigo: '4', nome: 'CUSTO DAS VENDAS/SERVICOS', nivel: 1, pai_id: null, ordem: 40, tipo_linha: 'CONTA', negativo: 1 },
+    { codigo: '5', nome: 'LUCRO BRUTO', nivel: 1, pai_id: null, ordem: 50, tipo_linha: 'FORMULA', formula: '3 - 4', negativo: 0 },
+    { codigo: '6', nome: 'DESPESAS OPERACIONAIS', nivel: 1, pai_id: null, ordem: 60, tipo_linha: 'TITULO', negativo: 1 },
+    { codigo: '6.1', nome: 'DESPESAS COM VENDAS', nivel: 2, pai_id: null, ordem: 61, tipo_linha: 'CONTA', negativo: 1 },
+    { codigo: '6.2', nome: 'DESPESAS ADMINISTRATIVAS', nivel: 2, pai_id: null, ordem: 62, tipo_linha: 'CONTA', negativo: 1 },
+    { codigo: '6.3', nome: 'OUTRAS DESPESAS OPERACIONAIS', nivel: 2, pai_id: null, ordem: 63, tipo_linha: 'CONTA', negativo: 1 },
+    { codigo: '7', nome: 'RESULTADO OPERACIONAL (EBIT)', nivel: 1, pai_id: null, ordem: 70, tipo_linha: 'FORMULA', formula: '5 - 6', negativo: 0 },
+    { codigo: '8', nome: 'RESULTADO FINANCEIRO', nivel: 1, pai_id: null, ordem: 80, tipo_linha: 'TITULO', negativo: 0 },
+    { codigo: '8.1', nome: 'RECEITAS FINANCEIRAS', nivel: 2, pai_id: null, ordem: 81, tipo_linha: 'CONTA', negativo: 0 },
+    { codigo: '8.2', nome: 'DESPESAS FINANCEIRAS', nivel: 2, pai_id: null, ordem: 82, tipo_linha: 'CONTA', negativo: 1 },
+    { codigo: '9', nome: 'RESULTADO ANTES IR/CSLL', nivel: 1, pai_id: null, ordem: 90, tipo_linha: 'FORMULA', formula: '7 + 8', negativo: 0 },
+    { codigo: '10', nome: 'PROVISAO PARA IR E CSLL', nivel: 1, pai_id: null, ordem: 100, tipo_linha: 'CONTA', negativo: 1 },
+    { codigo: '11', nome: 'RESULTADO LIQUIDO DO EXERCICIO', nivel: 1, pai_id: null, ordem: 110, tipo_linha: 'FORMULA', formula: '9 - 10', negativo: 0 },
+  ];
+
+  for (const linha of estrutura) {
+    await turso.execute({
+      sql: `INSERT INTO fin_estrutura_dre
+            (tipo_dre_id, codigo, nome, nivel, pai_id, ordem, tipo_linha, formula, negativo)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [tipoId, linha.codigo, linha.nome, linha.nivel, linha.pai_id, linha.ordem,
+             linha.tipo_linha, linha.formula || null, linha.negativo]
+    });
+  }
+}
+
+async function criarEstruturaDREEBITDA(tipoId) {
+  const estrutura = [
+    { codigo: '1', nome: 'RECEITA LIQUIDA', nivel: 1, pai_id: null, ordem: 10, tipo_linha: 'CONTA', negativo: 0 },
+    { codigo: '2', nome: 'CUSTO DAS VENDAS', nivel: 1, pai_id: null, ordem: 20, tipo_linha: 'CONTA', negativo: 1 },
+    { codigo: '3', nome: 'LUCRO BRUTO', nivel: 1, pai_id: null, ordem: 30, tipo_linha: 'FORMULA', formula: '1 - 2', negativo: 0 },
+    { codigo: '4', nome: 'DESPESAS OPERACIONAIS (EXCETO DEPREC.)', nivel: 1, pai_id: null, ordem: 40, tipo_linha: 'CONTA', negativo: 1 },
+    { codigo: '5', nome: 'EBITDA', nivel: 1, pai_id: null, ordem: 50, tipo_linha: 'FORMULA', formula: '3 - 4', negativo: 0 },
+    { codigo: '6', nome: 'DEPRECIACAO E AMORTIZACAO', nivel: 1, pai_id: null, ordem: 60, tipo_linha: 'CONTA', negativo: 1 },
+    { codigo: '7', nome: 'EBIT', nivel: 1, pai_id: null, ordem: 70, tipo_linha: 'FORMULA', formula: '5 - 6', negativo: 0 },
+    { codigo: '8', nome: 'RESULTADO FINANCEIRO', nivel: 1, pai_id: null, ordem: 80, tipo_linha: 'CONTA', negativo: 0 },
+    { codigo: '9', nome: 'RESULTADO ANTES IR/CSLL', nivel: 1, pai_id: null, ordem: 90, tipo_linha: 'FORMULA', formula: '7 + 8', negativo: 0 },
+    { codigo: '10', nome: 'IR E CSLL', nivel: 1, pai_id: null, ordem: 100, tipo_linha: 'CONTA', negativo: 1 },
+    { codigo: '11', nome: 'LUCRO LIQUIDO', nivel: 1, pai_id: null, ordem: 110, tipo_linha: 'FORMULA', formula: '9 - 10', negativo: 0 },
+  ];
+
+  for (const linha of estrutura) {
+    await turso.execute({
+      sql: `INSERT INTO fin_estrutura_dre
+            (tipo_dre_id, codigo, nome, nivel, pai_id, ordem, tipo_linha, formula, negativo)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [tipoId, linha.codigo, linha.nome, linha.nivel, linha.pai_id, linha.ordem,
+             linha.tipo_linha, linha.formula || null, linha.negativo]
+    });
+  }
+}
+
+async function criarEstruturaDRECusteio(tipoId) {
+  const estrutura = [
+    { codigo: '1', nome: 'RECEITA LIQUIDA', nivel: 1, pai_id: null, ordem: 10, tipo_linha: 'CONTA', negativo: 0 },
+    { codigo: '2', nome: 'CUSTOS VARIAVEIS', nivel: 1, pai_id: null, ordem: 20, tipo_linha: 'CONTA', negativo: 1 },
+    { codigo: '3', nome: 'MARGEM DE CONTRIBUICAO', nivel: 1, pai_id: null, ordem: 30, tipo_linha: 'FORMULA', formula: '1 - 2', negativo: 0 },
+    { codigo: '4', nome: 'CUSTOS FIXOS', nivel: 1, pai_id: null, ordem: 40, tipo_linha: 'CONTA', negativo: 1 },
+    { codigo: '5', nome: 'RESULTADO OPERACIONAL', nivel: 1, pai_id: null, ordem: 50, tipo_linha: 'FORMULA', formula: '3 - 4', negativo: 0 },
+    { codigo: '6', nome: 'RESULTADO FINANCEIRO', nivel: 1, pai_id: null, ordem: 60, tipo_linha: 'CONTA', negativo: 0 },
+    { codigo: '7', nome: 'RESULTADO ANTES IR/CSLL', nivel: 1, pai_id: null, ordem: 70, tipo_linha: 'FORMULA', formula: '5 + 6', negativo: 0 },
+    { codigo: '8', nome: 'IR E CSLL', nivel: 1, pai_id: null, ordem: 80, tipo_linha: 'CONTA', negativo: 1 },
+    { codigo: '9', nome: 'LUCRO LIQUIDO', nivel: 1, pai_id: null, ordem: 90, tipo_linha: 'FORMULA', formula: '7 - 8', negativo: 0 },
+  ];
+
+  for (const linha of estrutura) {
+    await turso.execute({
+      sql: `INSERT INTO fin_estrutura_dre
+            (tipo_dre_id, codigo, nome, nivel, pai_id, ordem, tipo_linha, formula, negativo)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [tipoId, linha.codigo, linha.nome, linha.nivel, linha.pai_id, linha.ordem,
+             linha.tipo_linha, linha.formula || null, linha.negativo]
+    });
+  }
 }
 
 export async function GET(request) {
@@ -182,45 +331,41 @@ export async function POST(request) {
     const nome = normalizarTexto(data.nome);
     const descricao = data.descricao ? normalizarTexto(data.descricao) : nome;
 
-    // Verificar se a coluna descricao existe na tabela
+    // Verificar quais colunas existem na tabela
     const tableInfo = await turso.execute('PRAGMA table_info(fin_estrutura_dre)');
     const colunas = tableInfo.rows?.map(row => row.name) || [];
     const temDescricao = colunas.includes('descricao');
+    const temTipo = colunas.includes('tipo');
 
     let sql, args;
 
+    // Montar SQL dinamicamente baseado nas colunas que existem
+    const campos = ['tipo_dre_id', 'codigo', 'nome'];
+    const valores = [data.tipo_dre_id, data.codigo || `LIN-${Date.now()}`, nome];
+
     if (temDescricao) {
-      sql = `INSERT INTO fin_estrutura_dre
-             (tipo_dre_id, codigo, nome, descricao, nivel, pai_id, ordem, tipo_linha, formula, negativo)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-      args = [
-        data.tipo_dre_id,
-        data.codigo || `LIN-${Date.now()}`,
-        nome,
-        descricao,
-        data.nivel || 1,
-        data.pai_id || null,
-        data.ordem || 999,
-        data.tipo_linha || 'TITULO',
-        data.formula || null,
-        data.negativo ? 1 : 0
-      ];
-    } else {
-      sql = `INSERT INTO fin_estrutura_dre
-             (tipo_dre_id, codigo, nome, nivel, pai_id, ordem, tipo_linha, formula, negativo)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-      args = [
-        data.tipo_dre_id,
-        data.codigo || `LIN-${Date.now()}`,
-        nome,
-        data.nivel || 1,
-        data.pai_id || null,
-        data.ordem || 999,
-        data.tipo_linha || 'TITULO',
-        data.formula || null,
-        data.negativo ? 1 : 0
-      ];
+      campos.push('descricao');
+      valores.push(descricao);
     }
+
+    if (temTipo) {
+      campos.push('tipo');
+      valores.push(data.tipo_linha || 'TITULO'); // usar tipo_linha para preencher tipo
+    }
+
+    campos.push('nivel', 'pai_id', 'ordem', 'tipo_linha', 'formula', 'negativo');
+    valores.push(
+      data.nivel || 1,
+      data.pai_id || null,
+      data.ordem || 999,
+      data.tipo_linha || 'TITULO',
+      data.formula || null,
+      data.negativo ? 1 : 0
+    );
+
+    const placeholders = campos.map(() => '?').join(', ');
+    sql = `INSERT INTO fin_estrutura_dre (${campos.join(', ')}) VALUES (${placeholders})`;
+    args = valores;
 
     const result = await turso.execute({ sql, args });
 

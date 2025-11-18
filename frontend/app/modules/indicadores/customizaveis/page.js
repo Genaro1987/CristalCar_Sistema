@@ -240,7 +240,7 @@ export default function IndicadoresCustomizaveisPage() {
                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
               >
                 <option value="">Todas</option>
-                {categorias.map(cat => (
+                {Array.isArray(categorias) && categorias.map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
               </select>
@@ -277,7 +277,7 @@ export default function IndicadoresCustomizaveisPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredIndicadores.map((ind) => (
+              {Array.isArray(filteredIndicadores) && filteredIndicadores.map((ind) => (
                 <tr key={ind.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {ind.codigo}
@@ -408,7 +408,7 @@ export default function IndicadoresCustomizaveisPage() {
                       onChange={(e) => setFormData({...formData, unidade: e.target.value})}
                       className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
                     >
-                      {unidades.map(u => (
+                      {Array.isArray(unidades) && unidades.map(u => (
                         <option key={u.value} value={u.value}>{u.label}</option>
                       ))}
                     </select>
@@ -424,7 +424,7 @@ export default function IndicadoresCustomizaveisPage() {
                       className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
                     >
                       <option value="">Sem categoria</option>
-                      {categorias.map(cat => (
+                      {Array.isArray(categorias) && categorias.map(cat => (
                         <option key={cat} value={cat}>{cat}</option>
                       ))}
                     </select>

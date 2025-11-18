@@ -75,29 +75,27 @@ export async function PUT(request) {
       return Response.json({ error: 'Payload inválido' }, { status: 400 });
     }
 
+    // OTIMIZAÇÃO: Atualizar diretamente em adm_telas (tabela unificada)
     for (const cfg of configs) {
       await turso.execute({
         sql: `
-          INSERT INTO adm_configuracao_log (
-            modulo, tela, registrar_log, registrar_visualizacao,
-            registrar_inclusao, registrar_edicao, registrar_exclusao
-          ) VALUES (?, ?, ?, ?, ?, ?, ?)
-          ON CONFLICT(modulo, tela) DO UPDATE SET
-            registrar_log = excluded.registrar_log,
-            registrar_visualizacao = excluded.registrar_visualizacao,
-            registrar_inclusao = excluded.registrar_inclusao,
-            registrar_edicao = excluded.registrar_edicao,
-            registrar_exclusao = excluded.registrar_exclusao,
+          UPDATE adm_telas SET
+            registrar_log = ?,
+            registrar_visualizacao = ?,
+            registrar_inclusao = ?,
+            registrar_edicao = ?,
+            registrar_exclusao = ?,
             atualizado_em = CURRENT_TIMESTAMP
+          WHERE modulo = ? AND nome_tela = ?
         `,
         args: [
-          cfg.modulo,
-          cfg.tela,
           cfg.registrar_log ? 1 : 0,
           cfg.registrar_visualizacao ? 1 : 0,
           cfg.registrar_inclusao ? 1 : 0,
           cfg.registrar_edicao ? 1 : 0,
           cfg.registrar_exclusao ? 1 : 0,
+          cfg.modulo,
+          cfg.tela,
         ],
       });
     }

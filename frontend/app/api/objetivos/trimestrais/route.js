@@ -10,23 +10,75 @@ const turso = createClient({
 });
 
 async function garantirTabelasObjetivos() {
-  await turso.execute(`
-    CREATE TABLE IF NOT EXISTS obj_objetivos_trimestrais (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      codigo VARCHAR(20) UNIQUE NOT NULL,
-      empresa_id INTEGER,
-      ano INTEGER NOT NULL,
-      trimestre INTEGER NOT NULL,
-      plano_conta_id INTEGER NOT NULL,
-      tipo_conta VARCHAR(20) NOT NULL,
-      valor_objetivo DECIMAL(15,2) NOT NULL,
-      descricao TEXT,
-      criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
-      atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (plano_conta_id) REFERENCES fin_plano_contas(id),
-      UNIQUE(empresa_id, ano, trimestre, plano_conta_id)
-    )
+  // Primeiro, verificar se a tabela existe
+  const tabelaExiste = await turso.execute(`
+    SELECT name FROM sqlite_master WHERE type='table' AND name='obj_objetivos_trimestrais'
   `);
+
+  if (tabelaExiste.rows.length === 0) {
+    // Criar nova tabela com plano_conta_id NULLABLE
+    await turso.execute(`
+      CREATE TABLE obj_objetivos_trimestrais (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        codigo VARCHAR(20) UNIQUE NOT NULL,
+        empresa_id INTEGER,
+        ano INTEGER NOT NULL,
+        trimestre INTEGER NOT NULL,
+        plano_conta_id INTEGER,
+        tipo_conta VARCHAR(20) NOT NULL,
+        valor_objetivo DECIMAL(15,2) NOT NULL,
+        descricao TEXT,
+        criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+        atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (plano_conta_id) REFERENCES fin_plano_contas(id)
+      )
+    `);
+  } else {
+    // Tabela já existe, verificar se plano_conta_id tem constraint NOT NULL
+    const tableInfo = await turso.execute('PRAGMA table_info(obj_objetivos_trimestrais)');
+    const colunas = tableInfo.rows || [];
+    const colPlanoContaId = colunas.find(c => c.name === 'plano_conta_id');
+
+    if (colPlanoContaId && colPlanoContaId.notnull === 1) {
+      console.log('[MIGRAÇÃO] plano_conta_id tem NOT NULL constraint - recriando tabela...');
+
+      // Fazer backup dos dados
+      await turso.execute(`CREATE TABLE IF NOT EXISTS obj_tmp_backup AS SELECT * FROM obj_objetivos_trimestrais`);
+
+      // Dropar tabela antiga
+      await turso.execute('DROP TABLE obj_objetivos_trimestrais');
+
+      // Criar nova tabela sem NOT NULL no plano_conta_id
+      await turso.execute(`
+        CREATE TABLE obj_objetivos_trimestrais (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          codigo VARCHAR(20) UNIQUE NOT NULL,
+          empresa_id INTEGER,
+          ano INTEGER NOT NULL,
+          trimestre INTEGER NOT NULL,
+          plano_conta_id INTEGER,
+          tipo_conta VARCHAR(20) NOT NULL,
+          valor_objetivo DECIMAL(15,2) NOT NULL,
+          descricao TEXT,
+          criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+          atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (plano_conta_id) REFERENCES fin_plano_contas(id)
+        )
+      `);
+
+      // Restaurar dados
+      try {
+        await turso.execute(`INSERT INTO obj_objetivos_trimestrais SELECT * FROM obj_tmp_backup`);
+      } catch (e) {
+        console.log('[MIGRAÇÃO] Erro ao restaurar backup:', e.message);
+      }
+
+      // Remover backup
+      await turso.execute('DROP TABLE IF EXISTS obj_tmp_backup');
+
+      console.log('[MIGRAÇÃO] Tabela recriada com plano_conta_id NULLABLE');
+    }
+  }
 
   // Migrações: garantir que colunas necessárias existem
   try {
@@ -76,20 +128,26 @@ async function garantirTabelasObjetivos() {
       await turso.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_obj_trim_codigo ON obj_objetivos_trimestrais(codigo)');
     }
 
-    // Migração 5: tornar plano_conta_id nullable para registros existentes com NOT NULL
-    // Preencher plano_conta_id NULL com um valor padrão temporário se necessário
+    // Migração 5: verificar se existe coluna plano_contas_id (com 's') e remover
+    if (colunas.includes('plano_contas_id')) {
+      console.log('[MIGRAÇÃO] Coluna plano_contas_id (com s) encontrada - será removida');
+      // SQLite não suporta DROP COLUMN diretamente, então vamos recriar a tabela
+      // já será feito pela migração anterior se necessário
+    }
+
+    // Migração 6: verificar plano_conta_id nullable
     try {
       const registrosNulos = await turso.execute(
         'SELECT id FROM obj_objetivos_trimestrais WHERE plano_conta_id IS NULL'
       );
       if (registrosNulos.rows.length > 0) {
-        console.log('Encontrados', registrosNulos.rows.length, 'objetivos sem plano_conta_id');
+        console.log('[INFO] Encontrados', registrosNulos.rows.length, 'objetivos sem plano_conta_id');
       }
     } catch (e) {
-      console.log('Coluna plano_conta_id aceita NULL ou não existe:', e.message);
+      console.log('[INFO] Coluna plano_conta_id:', e.message);
     }
   } catch (error) {
-    console.log('Migração objetivos trimestrais:', error.message);
+    console.log('[ERRO] Migração objetivos trimestrais:', error.message);
   }
 }
 

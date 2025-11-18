@@ -27,48 +27,8 @@ async function garantirTabelaDepartamentos() {
     )
   `);
 
-  // Verificar se precisa migrar dados de fin_centro_custo
-  const temCentroCusto = await turso.execute(`
-    SELECT name FROM sqlite_master WHERE type='table' AND name='fin_centro_custo'
-  `);
-
-  if (temCentroCusto.rows.length > 0) {
-    // Verificar se já migrou
-    const jaMigrou = await turso.execute('SELECT COUNT(*) as total FROM adm_departamentos');
-
-    if (jaMigrou.rows[0].total === 0) {
-      // Migrar dados de fin_centro_custo para adm_departamentos
-      await turso.execute(`
-        INSERT INTO adm_departamentos (codigo, nome, descricao, status, criado_em)
-        SELECT codigo, descricao as nome, descricao, 'ATIVO', criado_em
-        FROM fin_centro_custo
-      `);
-    }
-  }
-
-  // Garantir departamentos padrão
-  const departamentosPadrao = [
-    { codigo: 'ADM', nome: 'ADMINISTRATIVO' },
-    { codigo: 'FIN', nome: 'FINANCEIRO' },
-    { codigo: 'VND', nome: 'VENDAS' },
-    { codigo: 'CMP', nome: 'COMPRAS' },
-    { codigo: 'EST', nome: 'ESTOQUE' },
-    { codigo: 'TI', nome: 'TECNOLOGIA DA INFORMACAO' },
-    { codigo: 'RH', nome: 'RECURSOS HUMANOS' },
-    { codigo: 'DIR', nome: 'DIRETORIA' },
-  ];
-
-  const existentes = await turso.execute('SELECT codigo FROM adm_departamentos');
-  const codigosExistentes = existentes.rows?.map(row => row.codigo) || [];
-
-  for (const dep of departamentosPadrao) {
-    if (!codigosExistentes.includes(dep.codigo)) {
-      await turso.execute({
-        sql: 'INSERT INTO adm_departamentos (codigo, nome, status) VALUES (?, ?, ?)',
-        args: [dep.codigo, dep.nome, 'ATIVO']
-      });
-    }
-  }
+  // REMOVIDO: Não criar departamentos padrão automaticamente
+  // O usuário deve criar os departamentos que desejar manualmente
 }
 
 export async function GET(request) {

@@ -182,7 +182,7 @@ export default function ImportacaoXMLNFePage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {nfes.map((nfe) => (
+              {Array.isArray(nfes) && nfes.map((nfe) => (
                 <tr key={nfe.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 text-sm font-medium text-gray-900">
                     {nfe.codigo}
@@ -404,7 +404,7 @@ export default function ImportacaoXMLNFePage() {
                           </tr>
                         </thead>
                         <tbody>
-                          {nfeSelecionada.produtos.map((prod, idx) => (
+                          {Array.isArray(nfeSelecionada.produtos) && nfeSelecionada.produtos.map((prod, idx) => (
                             <tr key={idx} className="border-t">
                               <td className="px-4 py-2">{prod.codigo_produto}</td>
                               <td className="px-4 py-2">{prod.descricao}</td>
