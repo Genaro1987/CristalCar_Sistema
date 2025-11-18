@@ -388,198 +388,459 @@ async function seedDatabase() {
     }
     console.log(`✅ ${planoContas.length} contas criadas\n`);
 
-    // 3. CRIAR ESTRUTURA DO DRE
-    console.log("📊 Criando estrutura do DRE...");
+    // 3. CRIAR TIPOS E ESTRUTURAS DO DRE OFICIAL/EBITDA/CUSTEIO
+    console.log("📊 Criando estruturas padrão de DRE (Oficial, EBITDA e Custeio)...");
 
-    const estruturaDre = [
+    const tiposDrePadrao = [
       {
-        codigo: "DRE-01",
-        descricao: "RECEITA OPERACIONAL BRUTA",
-        nivel: 1,
-        tipo: "RECEITA_BRUTA",
-        ordem: 1,
-        formula: null,
-        negativo: false,
-        negrito: true,
+        codigo: "DRE-OFICIAL",
+        nome: "DRE OFICIAL",
+        descricao:
+          "Estrutura padrão de DRE conforme legislação contábil brasileira. Ideal para demonstrativos formais.",
       },
       {
-        codigo: "DRE-02",
-        descricao: "(-) DEDUÇÕES DA RECEITA",
-        nivel: 1,
-        tipo: "DEDUCOES",
-        ordem: 2,
-        formula: null,
-        negativo: true,
-        negrito: false,
+        codigo: "DRE-EBITDA",
+        nome: "DRE EBITDA",
+        descricao:
+          "Modelo focado em resultado operacional antes de juros, impostos, depreciação e amortização.",
       },
       {
-        codigo: "DRE-03",
-        descricao: "(=) RECEITA OPERACIONAL LÍQUIDA",
-        nivel: 1,
-        tipo: "RECEITA_LIQUIDA",
-        ordem: 3,
-        formula: "DRE-01 - DRE-02",
-        negativo: false,
-        negrito: true,
-      },
-      {
-        codigo: "DRE-04",
-        descricao: "(-) CUSTOS DIRETOS",
-        nivel: 1,
-        tipo: "CUSTOS_DIRETOS",
-        ordem: 4,
-        formula: null,
-        negativo: true,
-        negrito: false,
-      },
-      {
-        codigo: "DRE-05",
-        descricao: "(=) LUCRO BRUTO",
-        nivel: 1,
-        tipo: "LUCRO_BRUTO",
-        ordem: 5,
-        formula: "DRE-03 - DRE-04",
-        negativo: false,
-        negrito: true,
-      },
-      {
-        codigo: "DRE-06",
-        descricao: "(-) DESPESAS OPERACIONAIS",
-        nivel: 1,
-        tipo: "DESPESAS_OPERACIONAIS",
-        ordem: 6,
-        formula: null,
-        negativo: true,
-        negrito: false,
-      },
-      {
-        codigo: "DRE-06.1",
-        descricao: "Despesas com Pessoal",
-        nivel: 2,
-        tipo: "DESPESAS_PESSOAL",
-        ordem: 7,
-        formula: null,
-        negativo: true,
-        negrito: false,
-      },
-      {
-        codigo: "DRE-06.2",
-        descricao: "Despesas Administrativas",
-        nivel: 2,
-        tipo: "DESPESAS_ADMINISTRATIVAS",
-        ordem: 8,
-        formula: null,
-        negativo: true,
-        negrito: false,
-      },
-      {
-        codigo: "DRE-06.3",
-        descricao: "Despesas com Veículos",
-        nivel: 2,
-        tipo: "DESPESAS_VEICULOS",
-        ordem: 9,
-        formula: null,
-        negativo: true,
-        negrito: false,
-      },
-      {
-        codigo: "DRE-07",
-        descricao: "(=) RESULTADO OPERACIONAL (EBITDA)",
-        nivel: 1,
-        tipo: "EBITDA",
-        ordem: 10,
-        formula: "DRE-05 - DRE-06",
-        negativo: false,
-        negrito: true,
-      },
-      {
-        codigo: "DRE-08",
-        descricao: "(-) DESPESAS FINANCEIRAS",
-        nivel: 1,
-        tipo: "DESPESAS_FINANCEIRAS",
-        ordem: 11,
-        formula: null,
-        negativo: true,
-        negrito: false,
-      },
-      {
-        codigo: "DRE-09",
-        descricao: "(+) RECEITAS FINANCEIRAS",
-        nivel: 1,
-        tipo: "RECEITAS_FINANCEIRAS",
-        ordem: 12,
-        formula: null,
-        negativo: false,
-        negrito: false,
-      },
-      {
-        codigo: "DRE-10",
-        descricao: "(=) RESULTADO ANTES DOS TRIBUTOS",
-        nivel: 1,
-        tipo: "RESULTADO_ANTES_TRIBUTOS",
-        ordem: 13,
-        formula: "DRE-07 - DRE-08 + DRE-09",
-        negativo: false,
-        negrito: true,
-      },
-      {
-        codigo: "DRE-11",
-        descricao: "(-) TRIBUTOS",
-        nivel: 1,
-        tipo: "TRIBUTOS",
-        ordem: 14,
-        formula: null,
-        negativo: true,
-        negrito: false,
-      },
-      {
-        codigo: "DRE-12",
-        descricao: "(=) RESULTADO LÍQUIDO",
-        nivel: 1,
-        tipo: "RESULTADO_LIQUIDO",
-        ordem: 15,
-        formula: "DRE-10 - DRE-11",
-        negativo: false,
-        negrito: true,
+        codigo: "DRE-CUSTEIO",
+        nome: "DRE CUSTEIO VARIAVEL",
+        descricao:
+          "Estrutura voltada para análise de custos e despesas fixas/variáveis e cálculo de margem de contribuição.",
       },
     ];
 
-    const dreIds = {};
-    for (const item of estruturaDre) {
-      const result = await turso.execute({
-        sql: `INSERT INTO fin_estrutura_dre
-              (codigo, descricao, nivel, tipo, ordem_exibicao, formula, exibir_negativo, negrito)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        args: [
-          item.codigo,
-          item.descricao,
-          item.nivel,
-          item.tipo,
-          item.ordem,
-          item.formula,
-          item.negativo ? 1 : 0,
-          item.negrito ? 1 : 0,
-        ],
+    for (const tipo of tiposDrePadrao) {
+      await turso.execute({
+        sql: `INSERT INTO fin_tipos_estrutura_dre (codigo, nome, descricao)
+              VALUES (?, ?, ?)
+              ON CONFLICT(codigo) DO UPDATE SET nome = excluded.nome, descricao = excluded.descricao`,
+        args: [tipo.codigo, tipo.nome, tipo.descricao],
       });
-      dreIds[item.codigo] = result.lastInsertRowid;
     }
-    console.log(`✅ ${estruturaDre.length} itens da estrutura DRE criados\n`);
+
+    const tiposMap = {};
+    const tiposRows = (
+      await turso.execute({
+        sql: "SELECT id, codigo FROM fin_tipos_estrutura_dre WHERE codigo IN ('DRE-OFICIAL','DRE-EBITDA','DRE-CUSTEIO')",
+      })
+    ).rows;
+    for (const row of tiposRows) {
+      tiposMap[row.codigo] = row.id;
+    }
+
+    const estruturasPadrao = [
+      {
+        tipoCodigo: "DRE-OFICIAL",
+        linhas: [
+          {
+            codigo: "1",
+            descricao: "(=) Receita Bruta",
+            nivel: 1,
+            tipo: "RECEITA_BRUTA",
+            ordem: 1,
+            formula: null,
+            negativo: false,
+            negrito: true,
+          },
+          {
+            codigo: "2",
+            descricao: "(-) Deduções e Impostos",
+            nivel: 1,
+            tipo: "DEDUCOES_IMPOSTOS",
+            ordem: 2,
+            formula: null,
+            negativo: true,
+            negrito: false,
+          },
+          {
+            codigo: "3",
+            descricao: "(=) Receita Líquida",
+            nivel: 1,
+            tipo: "RECEITA_LIQUIDA",
+            ordem: 3,
+            formula: "1 - 2",
+            negativo: false,
+            negrito: true,
+          },
+          {
+            codigo: "4",
+            descricao: "(-) CPV/CMV",
+            nivel: 1,
+            tipo: "CPV_CMV",
+            ordem: 4,
+            formula: null,
+            negativo: true,
+            negrito: false,
+          },
+          {
+            codigo: "5",
+            descricao: "(=) Lucro Bruto",
+            nivel: 1,
+            tipo: "LUCRO_BRUTO",
+            ordem: 5,
+            formula: "3 - 4",
+            negativo: false,
+            negrito: true,
+          },
+          {
+            codigo: "6",
+            descricao: "(-) Despesas Operacionais",
+            nivel: 1,
+            tipo: "DESPESAS_OPERACIONAIS",
+            ordem: 6,
+            formula: null,
+            negativo: true,
+            negrito: false,
+          },
+          {
+            codigo: "7",
+            descricao: "(-) Despesas Financeiras",
+            nivel: 1,
+            tipo: "DESPESAS_FINANCEIRAS",
+            ordem: 7,
+            formula: null,
+            negativo: true,
+            negrito: false,
+          },
+          {
+            codigo: "8",
+            descricao: "(+) Receitas Financeiras",
+            nivel: 1,
+            tipo: "RECEITAS_FINANCEIRAS",
+            ordem: 8,
+            formula: null,
+            negativo: false,
+            negrito: false,
+          },
+          {
+            codigo: "9",
+            descricao: "(+) Outras Receitas Operacionais",
+            nivel: 1,
+            tipo: "OUTRAS_RECEITAS_OPERACIONAIS",
+            ordem: 9,
+            formula: null,
+            negativo: false,
+            negrito: false,
+          },
+          {
+            codigo: "10",
+            descricao: "(=) Resultado Antes do IRPJ e CSLL",
+            nivel: 1,
+            tipo: "RESULTADO_ANTES_IRPJ_CSLL",
+            ordem: 10,
+            formula: "5 - 6 - 7 + 8 + 9",
+            negativo: false,
+            negrito: true,
+          },
+          {
+            codigo: "11",
+            descricao: "(-) IRPJ / CSLL",
+            nivel: 1,
+            tipo: "IRPJ_CSLL",
+            ordem: 11,
+            formula: null,
+            negativo: true,
+            negrito: false,
+          },
+          {
+            codigo: "12",
+            descricao: "(=) Lucro Líquido do Exercício",
+            nivel: 1,
+            tipo: "LUCRO_LIQUIDO",
+            ordem: 12,
+            formula: "10 - 11",
+            negativo: false,
+            negrito: true,
+          },
+        ],
+      },
+      {
+        tipoCodigo: "DRE-EBITDA",
+        linhas: [
+          {
+            codigo: "1",
+            descricao: "(+) Receita de Vendas",
+            nivel: 1,
+            tipo: "RECEITA_VENDAS",
+            ordem: 1,
+            formula: null,
+            negativo: false,
+            negrito: true,
+          },
+          {
+            codigo: "2",
+            descricao: "(-) Deduções e Impostos",
+            nivel: 1,
+            tipo: "DEDUCOES_IMPOSTOS",
+            ordem: 2,
+            formula: null,
+            negativo: true,
+            negrito: false,
+          },
+          {
+            codigo: "3",
+            descricao: "(=) Receita Líquida",
+            nivel: 1,
+            tipo: "RECEITA_LIQUIDA",
+            ordem: 3,
+            formula: "1 - 2",
+            negativo: false,
+            negrito: true,
+          },
+          {
+            codigo: "4",
+            descricao: "(-) Custo Variável (CPV ou CMV)",
+            nivel: 1,
+            tipo: "CUSTO_VARIAVEL",
+            ordem: 4,
+            formula: null,
+            negativo: true,
+            negrito: false,
+          },
+          {
+            codigo: "5",
+            descricao: "(=) Margem Bruta",
+            nivel: 1,
+            tipo: "MARGEM_BRUTA",
+            ordem: 5,
+            formula: "3 - 4",
+            negativo: false,
+            negrito: true,
+          },
+          {
+            codigo: "6",
+            descricao: "(-) Despesas Variáveis",
+            nivel: 1,
+            tipo: "DESPESAS_VARIAVEIS",
+            ordem: 6,
+            formula: null,
+            negativo: true,
+            negrito: false,
+          },
+          {
+            codigo: "7",
+            descricao: "(=) Margem de Contribuição",
+            nivel: 1,
+            tipo: "MARGEM_CONTRIBUICAO",
+            ordem: 7,
+            formula: "5 - 6",
+            negativo: false,
+            negrito: true,
+          },
+          {
+            codigo: "8",
+            descricao: "(-) Gastos com Pessoal",
+            nivel: 1,
+            tipo: "GASTOS_PESSOAL",
+            ordem: 8,
+            formula: null,
+            negativo: true,
+            negrito: false,
+          },
+          {
+            codigo: "9",
+            descricao: "(-) Despesas Operacionais",
+            nivel: 1,
+            tipo: "DESPESAS_OPERACIONAIS",
+            ordem: 9,
+            formula: null,
+            negativo: true,
+            negrito: false,
+          },
+          {
+            codigo: "10",
+            descricao: "(=) EBITDA",
+            nivel: 1,
+            tipo: "EBITDA",
+            ordem: 10,
+            formula: "7 - 8 - 9",
+            negativo: false,
+            negrito: true,
+          },
+          {
+            codigo: "11",
+            descricao: "(-) Depreciação, Amortização ou Exaustão",
+            nivel: 1,
+            tipo: "DEPRECIACAO_AMORTIZACAO",
+            ordem: 11,
+            formula: null,
+            negativo: true,
+            negrito: false,
+          },
+          {
+            codigo: "12",
+            descricao: "(-) Outras Receitas e Despesas",
+            nivel: 1,
+            tipo: "OUTRAS_RECEITAS_DESPESAS",
+            ordem: 12,
+            formula: null,
+            negativo: true,
+            negrito: false,
+          },
+          {
+            codigo: "13",
+            descricao: "(=) Resultado Antes do IRPJ e CSLL",
+            nivel: 1,
+            tipo: "RESULTADO_ANTES_IRPJ_CSLL",
+            ordem: 13,
+            formula: "10 - 11 - 12",
+            negativo: false,
+            negrito: true,
+          },
+          {
+            codigo: "14",
+            descricao: "(-) IRPJ e CSLL",
+            nivel: 1,
+            tipo: "IRPJ_CSLL",
+            ordem: 14,
+            formula: null,
+            negativo: true,
+            negrito: false,
+          },
+          {
+            codigo: "15",
+            descricao: "(=) Resultado Líquido",
+            nivel: 1,
+            tipo: "RESULTADO_LIQUIDO",
+            ordem: 15,
+            formula: "13 - 14",
+            negativo: false,
+            negrito: true,
+          },
+        ],
+      },
+      {
+        tipoCodigo: "DRE-CUSTEIO",
+        linhas: [
+          {
+            codigo: "1",
+            descricao: "Receita de Vendas",
+            nivel: 1,
+            tipo: "RECEITA_VENDAS",
+            ordem: 1,
+            formula: null,
+            negativo: false,
+            negrito: true,
+          },
+          {
+            codigo: "2",
+            descricao: "(-) Custos Variáveis",
+            nivel: 1,
+            tipo: "CUSTOS_VARIAVEIS",
+            ordem: 2,
+            formula: null,
+            negativo: true,
+            negrito: false,
+          },
+          {
+            codigo: "3",
+            descricao: "(-) Despesas Variáveis",
+            nivel: 1,
+            tipo: "DESPESAS_VARIAVEIS",
+            ordem: 3,
+            formula: null,
+            negativo: true,
+            negrito: false,
+          },
+          {
+            codigo: "4",
+            descricao: "(=) Margem de Contribuição Total",
+            nivel: 1,
+            tipo: "MARGEM_CONTRIBUICAO",
+            ordem: 4,
+            formula: "1 - 2 - 3",
+            negativo: false,
+            negrito: true,
+          },
+          {
+            codigo: "5",
+            descricao: "(-) Custos Fixos",
+            nivel: 1,
+            tipo: "CUSTOS_FIXOS",
+            ordem: 5,
+            formula: null,
+            negativo: true,
+            negrito: false,
+          },
+          {
+            codigo: "6",
+            descricao: "(-) Despesas Fixas",
+            nivel: 1,
+            tipo: "DESPESAS_FIXAS",
+            ordem: 6,
+            formula: null,
+            negativo: true,
+            negrito: false,
+          },
+          {
+            codigo: "7",
+            descricao: "(=) Lucro Líquido",
+            nivel: 1,
+            tipo: "LUCRO_LIQUIDO",
+            ordem: 7,
+            formula: "4 - 5 - 6",
+            negativo: false,
+            negrito: true,
+          },
+        ],
+      },
+    ];
+
+    for (const estrutura of estruturasPadrao) {
+      const tipoId = tiposMap[estrutura.tipoCodigo];
+      if (!tipoId) continue;
+
+      await turso.execute({
+        sql: "DELETE FROM fin_estrutura_dre WHERE tipo_estrutura_id = ?",
+        args: [tipoId],
+      });
+
+      for (const linha of estrutura.linhas) {
+        await turso.execute({
+          sql: `INSERT INTO fin_estrutura_dre
+                (codigo, descricao, nivel, tipo, tipo_estrutura_id, ordem_exibicao, formula, exibir_negativo, negrito)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          args: [
+            linha.codigo,
+            linha.descricao,
+            linha.nivel,
+            linha.tipo,
+            tipoId,
+            linha.ordem,
+            linha.formula,
+            linha.negativo,
+            linha.negrito,
+          ],
+        });
+      }
+    }
+    console.log("✅ Estruturas de DRE padrão cadastradas\n");
 
     // 4. VINCULAR PLANO DE CONTAS AO DRE
     console.log("🔗 Vinculando plano de contas ao DRE...");
 
+    const dreIds = {};
+    const linhasOficiais = (
+      await turso.execute({
+        sql: "SELECT id, codigo FROM fin_estrutura_dre WHERE tipo_estrutura_id = ?",
+        args: [tiposMap["DRE-OFICIAL"]],
+      })
+    ).rows;
+
+    for (const linha of linhasOficiais) {
+      dreIds[linha.codigo] = linha.id;
+    }
+
     const vinculos = [
-      { dre: "DRE-01", contas: ["1.1.1", "1.1.2", "1.1.3"] }, // Receitas operacionais
-      { dre: "DRE-04", contas: ["2.2.1", "2.2.2"] }, // Custos diretos
-      { dre: "DRE-06.1", contas: ["2.1.1.01", "2.1.1.02", "2.1.1.03"] }, // Despesas pessoal
-      {
-        dre: "DRE-06.2",
-        contas: ["2.1.2.01", "2.1.2.02", "2.1.2.03", "2.1.2.04", "2.1.2.05"],
-      }, // Despesas adm
-      { dre: "DRE-06.3", contas: ["2.1.3.01", "2.1.3.02"] }, // Despesas veículos
-      { dre: "DRE-08", contas: ["2.3.1", "2.3.2"] }, // Despesas financeiras
-      { dre: "DRE-09", contas: ["1.2.1"] }, // Receitas financeiras
-      { dre: "DRE-11", contas: ["2.4.1", "2.4.2", "2.4.3"] }, // Tributos
+      { dre: "1", contas: ["1.1.1", "1.1.2", "1.1.3"] }, // Receita Bruta
+      { dre: "4", contas: ["2.2.1", "2.2.2"] }, // CPV/CMV
+      { dre: "6", contas: ["2.1.1.01", "2.1.1.02", "2.1.1.03", "2.1.2.01", "2.1.2.02", "2.1.2.03", "2.1.2.04", "2.1.2.05", "2.1.3.01", "2.1.3.02"] }, // Despesas operacionais
+      { dre: "7", contas: ["2.3.1", "2.3.2"] }, // Despesas financeiras
+      { dre: "8", contas: ["1.2.1"] }, // Receitas financeiras
+      { dre: "11", contas: ["2.4.1", "2.4.2", "2.4.3"] }, // IRPJ/CSLL
     ];
 
     let vinculosCount = 0;
