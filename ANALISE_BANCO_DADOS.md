@@ -28,7 +28,7 @@ Se o banco for recriado usando apenas `schema.sql`, várias funcionalidades para
 - Verifica se coluna existe
 - Cria a coluna `compoe_dre` se necessário
 - Migra dados de `considera_resultado` se existir
-- **Arquivo**: `frontend/app/api/plano-contas/route.js`
+- **Arquivo**: `frontend/app/api/financeiro/plano-contas/route.js`
 
 ### ✅ Logs Detalhados para Debug
 **Problema**: Exclusões não funcionavam mas não havia logs
@@ -123,8 +123,8 @@ CREATE TABLE IF NOT EXISTS fin_tipos_dre (
 );
 ```
 **Status**: Criada dinamicamente na API
-**Conflito**: Schema tem `fin_tipos_estrutura_dre` (nome confuso)
-**Recomendação**: UNIFICAR - Usar `fin_tipos_dre` (nome mais claro)
+**Conflito**: Resolvido - schema oficial agora usa `fin_tipos_dre`
+**Recomendação**: Garantir que migrations antigas sejam removidas
 
 ### Tabelas de Preços
 #### 5. tab_tabelas_precos_itens

@@ -97,7 +97,7 @@ export default function EstruturaDREPage() {
 
   const carregarTiposEstrutura = async () => {
     try {
-      const resp = await fetch('/api/tipos-estrutura-dre');
+      const resp = await fetch('/api/modelos-plano/tipos-dre');
       if (resp.ok) {
         const data = await resp.json();
         const normalizados = (data || []).map((tipo) => ({
@@ -138,7 +138,7 @@ export default function EstruturaDREPage() {
       if (modeloId) params.append('modelo_id', modeloId);
       if (empresaId) params.append('empresa_id', empresaId);
       const query = params.toString();
-      const response = await fetch(`/api/estrutura-dre${query ? `?${query}` : ''}`);
+      const response = await fetch(`/api/modelos-plano/estrutura-dre${query ? `?${query}` : ''}`);
       const data = await response.json();
 
       if (data.success) {
@@ -231,7 +231,7 @@ export default function EstruturaDREPage() {
 
       if (editingId) {
         // Atualizar item existente
-        const response = await fetch('/api/estrutura-dre', {
+        const response = await fetch('/api/modelos-plano/estrutura-dre', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ...payload, id: editingId })
@@ -261,7 +261,7 @@ export default function EstruturaDREPage() {
         }
       } else {
         // Criar novo item
-        const response = await fetch('/api/estrutura-dre', {
+        const response = await fetch('/api/modelos-plano/estrutura-dre', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -340,7 +340,7 @@ export default function EstruturaDREPage() {
   const handleDelete = async (id) => {
     if (confirm('Tem certeza que deseja excluir este item da estrutura DRE?')) {
       try {
-        const response = await fetch(`/api/estrutura-dre?id=${id}`, {
+        const response = await fetch(`/api/modelos-plano/estrutura-dre?id=${id}`, {
           method: 'DELETE'
         });
 

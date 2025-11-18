@@ -414,7 +414,7 @@ async function seedDatabase() {
 
     for (const tipo of tiposDrePadrao) {
       await turso.execute({
-        sql: `INSERT INTO fin_tipos_estrutura_dre (codigo, nome, descricao)
+      sql: `INSERT INTO fin_tipos_dre (codigo, nome, descricao)
               VALUES (?, ?, ?)
               ON CONFLICT(codigo) DO UPDATE SET nome = excluded.nome, descricao = excluded.descricao`,
         args: [tipo.codigo, tipo.nome, tipo.descricao],
@@ -424,7 +424,7 @@ async function seedDatabase() {
     const tiposMap = {};
     const tiposRows = (
       await turso.execute({
-        sql: "SELECT id, codigo FROM fin_tipos_estrutura_dre WHERE codigo IN ('DRE-OFICIAL','DRE-EBITDA','DRE-CUSTEIO')",
+      sql: "SELECT id, codigo FROM fin_tipos_dre WHERE codigo IN ('DRE-OFICIAL','DRE-EBITDA','DRE-CUSTEIO')",
       })
     ).rows;
     for (const row of tiposRows) {

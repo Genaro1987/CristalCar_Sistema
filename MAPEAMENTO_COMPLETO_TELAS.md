@@ -35,7 +35,7 @@ Status: AUDITORIA COMPLETA REALIZADA
 | 7 | Departamentos | ADM-006 | `/modules/administrativo/departamentos` | `/api/administrativo/departamentos` | CRUD | `adm_departamentos` | ⚠️ Não | ❌ Não | ⚠️ Tabela não no schema |
 | 8 | Produtos | ADM-007 | `/modules/administrativo/produtos` | `/api/administrativo/produtos` | CRUD | `adm_produtos` | ⚠️ Não | ❌ Não | ⚠️ Tabela não no schema |
 | 9 | Migrar Banco | ADM-MIGRATE | `/modules/administrativo/migrar-banco` | `/api/database/migrate` | RC | Múltiplas | N/A | ❌ Não | ✅ OK |
-| 10 | Plano de Contas | FIN-001 | `/modules/modelos-plano/plano-contas` | `/api/plano-contas` | CRUD | `fin_plano_contas` | ✅ Sim | ❌ Não | ✅ OK |
+| 10 | Plano de Contas | FIN-001 | `/modules/modelos-plano/plano-contas` | `/api/financeiro/plano-contas` | CRUD | `fin_plano_contas` | ✅ Sim | ❌ Não | ✅ OK |
 | 11 | Formas Pagamento | FIN-010 | `/modules/financeiro/formas-pagamento` | `/api/financeiro/formas-pagamento` | CRUD | `fin_formas_pagamento` | ✅ Sim | ❌ Não | ✅ OK |
 | 12 | Condições Pagamento | FIN-011 | `/modules/financeiro/condicoes-pagamento` | `/api/financeiro/condicoes-pagamento` | CRUD | `fin_condicoes_pagamento` | ✅ Sim | ✅ Sim | ✅ OK |
 | 13 | Bancos | FIN-012 | `/modules/financeiro/bancos` | `/api/financeiro/bancos` | CRUD | `fin_bancos` | ✅ Sim | ✅ Sim | ✅ OK |
@@ -52,7 +52,7 @@ Status: AUDITORIA COMPLETA REALIZADA
 | 24 | Tipos DRE Lista | ⚠️ SEM CÓDIGO | `/modules/modelos-plano/tipos-dre-lista` | `/api/modelos-plano/tipos-dre` | R | `fin_tipos_dre` | ⚠️ Não | ❌ Não | 🔴 **SEM screenCode** |
 | 25 | Planos Padrões | ⚠️ SEM CÓDIGO | `/modules/modelos-plano/planos-padroes` | ❌ SEM API | - | - | N/A | ❌ Não | 🔴 **SEM API** |
 | 26 | Estrutura DRE | ⚠️ SEM CÓDIGO | `/modules/modelos-plano/estrutura-dre` | `/api/modelos-plano/estrutura-dre` | CRUD | `fin_estrutura_dre` | ✅ Sim | ❌ Não | 🔴 **SEM screenCode** |
-| 27 | Editor Estrutura DRE | ⚠️ SEM CÓDIGO | `/modules/modelos-plano/estrutura-dre-editor` | `/api/estrutura-dre` | CRUD | `fin_estrutura_dre` | ✅ Sim | ❌ Não | 🔴 **SEM screenCode** |
+| 27 | Editor Estrutura DRE | ⚠️ SEM CÓDIGO | `/modules/modelos-plano/estrutura-dre-editor` | `/api/modelos-plano/estrutura-dre` | CRUD | `fin_estrutura_dre` | ✅ Sim | ❌ Não | 🔴 **SEM screenCode** |
 
 ---
 
@@ -159,9 +159,8 @@ Apenas 4 telas têm botão de ajuda implementado:
 ### Nomenclatura de APIs
 - ✅ Padronizado: `/api/administrativo/*`, `/api/financeiro/*`, `/api/parceiros/*`
 - ⚠️ Inconsistente:
-  - `/api/plano-contas` (deveria ser `/api/financeiro/plano-contas`)
-  - `/api/estrutura-dre` (deveria ser `/api/modelos-plano/estrutura-dre`)
-  - `/api/modelos-plano/*` vs `/api/estrutura-dre` (mesmo módulo, caminhos diferentes)
+  - `/api/modelos-plano/*` vs `/api/estrutura-dre` (mesmo módulo, caminhos diferentes) **[CORRIGIDO → `/api/modelos-plano/estrutura-dre`]**
+  - `/api/plano-contas` (deveria ser `/api/financeiro/plano-contas`) **[CORRIGIDO]**
 
 ### Nomenclatura de Tabelas
 - ✅ Padronizado: `adm_`, `fin_`, `par_`, `tab_`, `imp_`, `ind_`, `obj_`
@@ -196,7 +195,7 @@ Apenas 4 telas têm botão de ajuda implementado:
 
 ### FASE 4: UNIFICAÇÕES DO BANCO (MÉDIA)
 11. ⏳ **Unificar** `fin_centro_custo` e `adm_departamentos`
-12. ⏳ **Renomear** `fin_tipos_estrutura_dre` → `fin_tipos_dre`
+12. ✅ **Renomear** `fin_tipos_estrutura_dre` → `fin_tipos_dre`
 13. ⏳ **Unificar** `fin_dre_plano_contas` e `fin_estrutura_dre_vinculos`
 14. ⏳ **Padronizar** `cad_parceiros` → `par_parceiros`
 

@@ -200,8 +200,8 @@ Executa as migrações necessárias.
 ### APIs Corrigidas (BigInt → Number):
 - `/frontend/app/api/administrativo/empresa/route.js`
 - `/frontend/app/api/administrativo/funcionarios/route.js`
-- `/frontend/app/api/plano-contas/route.js`
-- `/frontend/app/api/estrutura-dre/route.js`
+- `/frontend/app/api/financeiro/plano-contas/route.js`
+- `/frontend/app/api/modelos-plano/estrutura-dre/route.js`
 - `/frontend/app/api/financeiro/formas-pagamento/route.js`
 
 ### Ferramentas de Migração:
