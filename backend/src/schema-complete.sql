@@ -256,8 +256,9 @@ CREATE TABLE IF NOT EXISTS fin_plano_contas (
     FOREIGN KEY (conta_pai_id) REFERENCES fin_plano_contas(id)
 );
 
--- Tipos de Estrutura do DRE
-CREATE TABLE IF NOT EXISTS fin_tipos_estrutura_dre (
+-- Tipos de Estrutura do DRE (padronizado em 2025-11-18)
+DROP TABLE IF EXISTS fin_tipos_estrutura_dre; -- remove legado duplicado
+CREATE TABLE IF NOT EXISTS fin_tipos_dre (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     codigo VARCHAR(50) UNIQUE NOT NULL,
     nome VARCHAR(200) NOT NULL,
@@ -290,7 +291,7 @@ CREATE TABLE IF NOT EXISTS fin_estrutura_dre (
     status VARCHAR(20) DEFAULT 'ATIVO',
     criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
     atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (tipo_estrutura_id) REFERENCES fin_tipos_estrutura_dre(id)
+    FOREIGN KEY (tipo_estrutura_id) REFERENCES fin_tipos_dre(id)
 );
 
 -- Tabela de Vinculação DRE x Plano de Contas
