@@ -212,8 +212,8 @@ CREATE TABLE IF NOT EXISTS fin_plano_contas (
     FOREIGN KEY (conta_pai_id) REFERENCES fin_plano_contas(id)
 );
 
--- Tabela de Tipos de Estrutura do DRE
-CREATE TABLE IF NOT EXISTS fin_tipos_estrutura_dre (
+-- Tabela de Tipos de DRE (renomeado de fin_tipos_estrutura_dre em 2025-11-18)
+CREATE TABLE IF NOT EXISTS fin_tipos_dre (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     codigo VARCHAR(50) UNIQUE NOT NULL,
     nome VARCHAR(200) NOT NULL,
@@ -237,7 +237,7 @@ CREATE TABLE IF NOT EXISTS fin_estrutura_dre (
     negrito BOOLEAN DEFAULT 0,
     criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
     atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (tipo_estrutura_id) REFERENCES fin_tipos_estrutura_dre(id)
+    FOREIGN KEY (tipo_estrutura_id) REFERENCES fin_tipos_dre(id)
 );
 
 -- Tabela de Vinculação DRE x Plano de Contas
@@ -339,18 +339,14 @@ CREATE TABLE IF NOT EXISTS fin_regras_conciliacao (
     criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
     atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (plano_contas_id) REFERENCES fin_plano_contas(id),
-    FOREIGN KEY (centro_custo_id) REFERENCES fin_centro_custo(id)
+    FOREIGN KEY (centro_custo_id) REFERENCES adm_departamentos(id)
 );
 
--- Tabela de Centro de Custo
-CREATE TABLE IF NOT EXISTS fin_centro_custo (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    codigo VARCHAR(20) UNIQUE NOT NULL,
-    descricao VARCHAR(200) NOT NULL,
-    status VARCHAR(20) DEFAULT 'ATIVO',
-    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
-    atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+-- ============================================================================
+-- NOTA: Tabela fin_centro_custo foi DEPRECADA e substituída por adm_departamentos
+-- Todas as referências agora apontam para adm_departamentos
+-- Data da mudança: 2025-11-18
+-- ============================================================================
 
 -- ============================================================================
 -- MÓDULO DE MOVIMENTAÇÃO FINANCEIRA (Prefixo: mov_)
@@ -379,7 +375,7 @@ CREATE TABLE IF NOT EXISTS mov_financeiro (
     criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
     atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (plano_contas_id) REFERENCES fin_plano_contas(id),
-    FOREIGN KEY (centro_custo_id) REFERENCES fin_centro_custo(id),
+    FOREIGN KEY (centro_custo_id) REFERENCES adm_departamentos(id),
     FOREIGN KEY (banco_id) REFERENCES fin_bancos(id),
     FOREIGN KEY (forma_pagamento_id) REFERENCES fin_formas_pagamento(id),
     FOREIGN KEY (usuario_id) REFERENCES adm_usuarios(id)
@@ -488,7 +484,7 @@ CREATE TABLE IF NOT EXISTS fat_cobrancas (
     FOREIGN KEY (nota_fiscal_id) REFERENCES fat_notas_fiscais(id),
     FOREIGN KEY (cliente_id) REFERENCES fat_clientes(id),
     FOREIGN KEY (plano_contas_id) REFERENCES fin_plano_contas(id),
-    FOREIGN KEY (centro_custo_id) REFERENCES fin_centro_custo(id),
+    FOREIGN KEY (centro_custo_id) REFERENCES adm_departamentos(id),
     FOREIGN KEY (forma_pagamento_id) REFERENCES fin_formas_pagamento(id)
 );
 
@@ -602,7 +598,7 @@ CREATE TABLE IF NOT EXISTS com_pagamentos (
     FOREIGN KEY (nota_fiscal_id) REFERENCES com_notas_fiscais(id),
     FOREIGN KEY (fornecedor_id) REFERENCES com_fornecedores(id),
     FOREIGN KEY (plano_contas_id) REFERENCES fin_plano_contas(id),
-    FOREIGN KEY (centro_custo_id) REFERENCES fin_centro_custo(id),
+    FOREIGN KEY (centro_custo_id) REFERENCES adm_departamentos(id),
     FOREIGN KEY (forma_pagamento_id) REFERENCES fin_formas_pagamento(id)
 );
 
@@ -809,6 +805,177 @@ CREATE TABLE IF NOT EXISTS obj_metas_semanais (
 );
 
 -- ============================================================================
+-- MÓDULO ADMINISTRATIVO - COMPLEMENTOS (Prefixo: adm_)
+-- ============================================================================
+
+-- Tabela de Departamentos
+CREATE TABLE IF NOT EXISTS adm_departamentos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    codigo VARCHAR(20) UNIQUE NOT NULL,
+    nome VARCHAR(200) NOT NULL,
+    descricao TEXT,
+    responsavel_id INTEGER,
+    empresa_id INTEGER,
+    status VARCHAR(20) DEFAULT 'ATIVO',
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (responsavel_id) REFERENCES adm_funcionarios(id),
+    FOREIGN KEY (empresa_id) REFERENCES adm_empresa(id)
+);
+
+-- Tabela de Produtos
+CREATE TABLE IF NOT EXISTS adm_produtos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    codigo VARCHAR(50) UNIQUE NOT NULL,
+    nome VARCHAR(200) NOT NULL,
+    descricao TEXT,
+    unidade_medida VARCHAR(20), -- UN, KG, M, L, CX, etc
+    local_estoque VARCHAR(100),
+    tipo VARCHAR(50), -- PRODUTO, SERVICO, MATERIA_PRIMA
+    finalidade VARCHAR(100),
+    foto_path VARCHAR(500),
+    qtd_minima_estoque DECIMAL(15,3) DEFAULT 0,
+    empresa_id INTEGER,
+    status VARCHAR(20) DEFAULT 'ATIVO',
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (empresa_id) REFERENCES adm_empresa(id)
+);
+
+-- Tabela de Log de Ações (Auditoria)
+CREATE TABLE IF NOT EXISTS adm_log_acoes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    usuario_id INTEGER,
+    modulo VARCHAR(50), -- ADMINISTRATIVO, FINANCEIRO, FATURAMENTO, etc
+    tela VARCHAR(100), -- Nome/código da tela
+    acao VARCHAR(20), -- CREATE, READ, UPDATE, DELETE, LOGIN, LOGOUT
+    registro_id INTEGER, -- ID do registro afetado
+    dados_anteriores TEXT, -- JSON com dados antes da alteração
+    dados_novos TEXT, -- JSON com dados após a alteração
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES adm_usuarios(id)
+);
+
+-- ============================================================================
+-- MÓDULO DE TABELAS DE PREÇOS - COMPLEMENTOS (Prefixo: tab_)
+-- ============================================================================
+
+-- Tabela de Itens das Tabelas de Preços
+CREATE TABLE IF NOT EXISTS tab_tabelas_precos_itens (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tabela_preco_id INTEGER NOT NULL,
+    produto_id INTEGER NOT NULL,
+    preco_venda DECIMAL(15,2),
+    preco_custo DECIMAL(15,2),
+    margem_lucro DECIMAL(5,2), -- Percentual
+    ativo BOOLEAN DEFAULT 1,
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (tabela_preco_id) REFERENCES tab_tabelas_precos(id) ON DELETE CASCADE,
+    FOREIGN KEY (produto_id) REFERENCES adm_produtos(id) ON DELETE CASCADE,
+    UNIQUE(tabela_preco_id, produto_id)
+);
+
+-- ============================================================================
+-- MÓDULO DE IMPORTAÇÃO - COMPLEMENTOS (Prefixo: imp_)
+-- ============================================================================
+
+-- Tabela de Layouts de Importação de Extratos
+CREATE TABLE IF NOT EXISTS imp_layouts_extrato (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    codigo VARCHAR(20) UNIQUE NOT NULL,
+    nome VARCHAR(200) NOT NULL,
+    tipo VARCHAR(30), -- OFX, CSV, TXT, EXCEL
+    formato VARCHAR(20), -- Para CSV: DELIMITADO, FIXO
+    separador VARCHAR(5), -- Para CSV
+    col_data INTEGER, -- Número da coluna
+    col_descricao INTEGER,
+    col_valor INTEGER,
+    col_tipo INTEGER, -- Coluna que indica D/C ou +/-
+    formato_data VARCHAR(20), -- DDMMYYYY, YYYYMMDD, DD/MM/YYYY, etc
+    ativo BOOLEAN DEFAULT 1,
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabela de Extratos Bancários Importados
+CREATE TABLE IF NOT EXISTS imp_extratos_bancarios (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    codigo VARCHAR(20) UNIQUE,
+    empresa_id INTEGER,
+    banco_id INTEGER,
+    layout_id INTEGER,
+    nome_arquivo VARCHAR(255) NOT NULL,
+    data_importacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+    periodo_inicio DATE,
+    periodo_fim DATE,
+    total_linhas INTEGER DEFAULT 0,
+    linhas_processadas INTEGER DEFAULT 0,
+    linhas_erro INTEGER DEFAULT 0,
+    status VARCHAR(20) DEFAULT 'PENDENTE', -- PENDENTE, PROCESSANDO, CONCLUIDO, ERRO
+    observacoes TEXT,
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (empresa_id) REFERENCES adm_empresa(id),
+    FOREIGN KEY (banco_id) REFERENCES fin_bancos(id),
+    FOREIGN KEY (layout_id) REFERENCES imp_layouts_extrato(id)
+);
+
+-- Tabela de Linhas dos Extratos
+CREATE TABLE IF NOT EXISTS imp_extrato_linhas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    extrato_id INTEGER NOT NULL,
+    linha_numero INTEGER,
+    data_movimento DATE,
+    descricao VARCHAR(500),
+    valor DECIMAL(15,2),
+    tipo VARCHAR(20), -- DEBITO, CREDITO
+    conciliado BOOLEAN DEFAULT 0,
+    lancamento_id INTEGER, -- ID do lançamento financeiro criado
+    regra_id INTEGER, -- ID da regra de conciliação aplicada
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (extrato_id) REFERENCES imp_extratos_bancarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (lancamento_id) REFERENCES mov_financeiro(id),
+    FOREIGN KEY (regra_id) REFERENCES fin_regras_conciliacao(id)
+);
+
+-- ============================================================================
+-- MÓDULO DE INDICADORES (Prefixo: ind_)
+-- ============================================================================
+
+-- Tabela de Indicadores Customizáveis
+CREATE TABLE IF NOT EXISTS ind_indicadores (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    codigo VARCHAR(50) UNIQUE NOT NULL,
+    nome VARCHAR(200) NOT NULL,
+    descricao TEXT,
+    formula TEXT, -- Fórmula para cálculo (ex: "receita / despesa * 100")
+    unidade VARCHAR(20), -- %, R$, UNIDADES, DIAS, etc
+    categoria VARCHAR(50), -- FINANCEIRO, OPERACIONAL, VENDAS, etc
+    fonte_dados VARCHAR(100), -- Tabela/origem dos dados
+    periodicidade VARCHAR(20), -- DIARIA, SEMANAL, MENSAL, TRIMESTRAL, ANUAL
+    empresa_id INTEGER,
+    ativo BOOLEAN DEFAULT 1,
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (empresa_id) REFERENCES adm_empresa(id)
+);
+
+-- Tabela de Valores dos Indicadores (Histórico)
+CREATE TABLE IF NOT EXISTS ind_indicadores_valores (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    indicador_id INTEGER NOT NULL,
+    data_referencia DATE NOT NULL,
+    valor_calculado DECIMAL(15,2),
+    meta DECIMAL(15,2),
+    observacoes TEXT,
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (indicador_id) REFERENCES ind_indicadores(id) ON DELETE CASCADE,
+    UNIQUE(indicador_id, data_referencia)
+);
+
+-- ============================================================================
 -- ÍNDICES PARA PERFORMANCE
 -- ============================================================================
 
@@ -850,6 +1017,41 @@ CREATE INDEX IF NOT EXISTS idx_com_pagamentos_fornecedor ON com_pagamentos(forne
 -- Índices Objetivos
 CREATE INDEX IF NOT EXISTS idx_obj_trimestral_ano_tri ON obj_objetivos_trimestrais(ano, trimestre);
 CREATE INDEX IF NOT EXISTS idx_obj_trimestral_conta ON obj_objetivos_trimestrais(plano_contas_id);
+
+-- Índices Departamentos
+CREATE INDEX IF NOT EXISTS idx_adm_departamentos_codigo ON adm_departamentos(codigo);
+CREATE INDEX IF NOT EXISTS idx_adm_departamentos_status ON adm_departamentos(status);
+CREATE INDEX IF NOT EXISTS idx_adm_departamentos_empresa ON adm_departamentos(empresa_id);
+
+-- Índices Produtos
+CREATE INDEX IF NOT EXISTS idx_adm_produtos_codigo ON adm_produtos(codigo);
+CREATE INDEX IF NOT EXISTS idx_adm_produtos_status ON adm_produtos(status);
+CREATE INDEX IF NOT EXISTS idx_adm_produtos_tipo ON adm_produtos(tipo);
+CREATE INDEX IF NOT EXISTS idx_adm_produtos_empresa ON adm_produtos(empresa_id);
+
+-- Índices Log de Ações
+CREATE INDEX IF NOT EXISTS idx_adm_log_acoes_usuario ON adm_log_acoes(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_adm_log_acoes_modulo ON adm_log_acoes(modulo);
+CREATE INDEX IF NOT EXISTS idx_adm_log_acoes_acao ON adm_log_acoes(acao);
+CREATE INDEX IF NOT EXISTS idx_adm_log_acoes_data ON adm_log_acoes(criado_em);
+
+-- Índices Tabelas de Preços Itens
+CREATE INDEX IF NOT EXISTS idx_tab_precos_itens_tabela ON tab_tabelas_precos_itens(tabela_preco_id);
+CREATE INDEX IF NOT EXISTS idx_tab_precos_itens_produto ON tab_tabelas_precos_itens(produto_id);
+
+-- Índices Importação de Extratos
+CREATE INDEX IF NOT EXISTS idx_imp_extratos_banco ON imp_extratos_bancarios(banco_id);
+CREATE INDEX IF NOT EXISTS idx_imp_extratos_layout ON imp_extratos_bancarios(layout_id);
+CREATE INDEX IF NOT EXISTS idx_imp_extratos_status ON imp_extratos_bancarios(status);
+CREATE INDEX IF NOT EXISTS idx_imp_extrato_linhas_extrato ON imp_extrato_linhas(extrato_id);
+CREATE INDEX IF NOT EXISTS idx_imp_extrato_linhas_conciliado ON imp_extrato_linhas(conciliado);
+
+-- Índices Indicadores
+CREATE INDEX IF NOT EXISTS idx_ind_indicadores_codigo ON ind_indicadores(codigo);
+CREATE INDEX IF NOT EXISTS idx_ind_indicadores_categoria ON ind_indicadores(categoria);
+CREATE INDEX IF NOT EXISTS idx_ind_indicadores_empresa ON ind_indicadores(empresa_id);
+CREATE INDEX IF NOT EXISTS idx_ind_valores_indicador ON ind_indicadores_valores(indicador_id);
+CREATE INDEX IF NOT EXISTS idx_ind_valores_data ON ind_indicadores_valores(data_referencia);
 
 -- ============================================================================
 -- VIEWS ÚTEIS PARA RELATÓRIOS
