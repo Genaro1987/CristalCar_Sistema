@@ -75,28 +75,28 @@ export async function POST(request) {
     await garantirTabelaItens();
     const data = await request.json();
 
-    if (!data.tabela_preco_id || !data.produto_id || !data.preco_venda) {
+    if (!data.tabela_preco_id || !data.produto_id) {
       return Response.json({
-        error: 'Campos obrigatórios: tabela_preco_id, produto_id, preco_venda'
+        error: 'Campos obrigatórios: tabela_preco_id, produto_id'
       }, { status: 400 });
     }
 
-    // Calcular margem de lucro se houver preço de custo
-    let margemLucro = null;
-    if (data.preco_custo && data.preco_custo > 0) {
-      margemLucro = ((data.preco_venda - data.preco_custo) / data.preco_custo) * 100;
+    // Validação: pelo menos um preço deve ser fornecido
+    if (!data.preco_venda && !data.preco_custo) {
+      return Response.json({
+        error: 'Informe pelo menos Preço de Venda ou Preço de Custo'
+      }, { status: 400 });
     }
 
     const result = await turso.execute({
       sql: `INSERT INTO tab_tabelas_precos_itens
-            (tabela_preco_id, produto_id, preco_venda, preco_custo, margem_lucro, ativo)
-            VALUES (?, ?, ?, ?, ?, ?)`,
+            (tabela_preco_id, produto_id, preco_venda, preco_custo, ativo)
+            VALUES (?, ?, ?, ?, ?)`,
       args: [
         data.tabela_preco_id,
         data.produto_id,
-        data.preco_venda,
+        data.preco_venda || null,
         data.preco_custo || null,
-        margemLucro,
         data.ativo !== undefined ? (data.ativo ? 1 : 0) : 1
       ]
     });
@@ -130,18 +130,11 @@ export async function PUT(request) {
 
     if (data.preco_venda !== undefined) {
       updates.push('preco_venda = ?');
-      args.push(data.preco_venda);
+      args.push(data.preco_venda || null);
     }
     if (data.preco_custo !== undefined) {
       updates.push('preco_custo = ?');
-      args.push(data.preco_custo);
-
-      // Recalcular margem de lucro
-      if (data.preco_custo && data.preco_custo > 0 && data.preco_venda) {
-        const margem = ((data.preco_venda - data.preco_custo) / data.preco_custo) * 100;
-        updates.push('margem_lucro = ?');
-        args.push(margem);
-      }
+      args.push(data.preco_custo || null);
     }
     if (data.ativo !== undefined) {
       updates.push('ativo = ?');
