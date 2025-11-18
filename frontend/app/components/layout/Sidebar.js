@@ -272,49 +272,61 @@ export default function Sidebar() {
                     {/* Submenu Nível 2 */}
                     {expandedModule === item.id && (
                       <ul className="mt-2 ml-0 space-y-1 pl-2">
-                        {item.submenu.map((subitem) => (
-                          <li key={subitem.id}>
-                            <div>
-                              <button
-                                onClick={() => toggleSubmodule(subitem.id)}
-                                className="w-full cursor-pointer px-3 py-2.5 rounded-lg text-base font-medium text-secondary-300 hover:bg-secondary-700 hover:text-white transition-all duration-200 text-left"
-                              >
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-2">
-                                    <span className="text-lg">{subitem.icon}</span>
+                        {item.submenu.map((subitem, subIdx) => (
+                          <li key={subitem.id || subIdx}>
+                            {/* Se subitem tem submenu, é um grupo (nível 2 com nível 3) */}
+                            {subitem.submenu ? (
+                              <div>
+                                <button
+                                  onClick={() => toggleSubmodule(subitem.id)}
+                                  className="w-full cursor-pointer px-3 py-2.5 rounded-lg text-base font-bold text-secondary-300 hover:bg-secondary-700 hover:text-white transition-all duration-200 text-left"
+                                >
+                                  <div className="flex items-center justify-between">
                                     <span>{subitem.name}</span>
+                                    <svg
+                                      className={`w-3 h-3 transition-transform ${expandedSubmodules.has(subitem.id) ? 'rotate-90' : ''}`}
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                    </svg>
                                   </div>
-                                  <svg
-                                    className={`w-3 h-3 transition-transform ${expandedSubmodules.has(subitem.id) ? 'rotate-90' : ''}`}
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                  </svg>
-                                </div>
-                              </button>
+                                </button>
 
-                              {/* Submenu Nível 3 */}
-                              {expandedSubmodules.has(subitem.id) && (
-                                <ul className="mt-1 ml-0 space-y-0.5 pl-6">
-                                  {subitem.submenu.map((subsubitem, idx) => (
-                                    <li key={idx}>
-                                      <Link
-                                        href={subsubitem.href}
-                                        className={`block px-3 py-2 rounded-lg text-sm transition-all duration-200 text-left ${
-                                          isActive(subsubitem.href)
-                                            ? 'bg-primary-500 text-white font-semibold shadow-md'
-                                            : 'text-secondary-400 hover:bg-secondary-700 hover:text-white'
-                                        }`}
-                                      >
-                                        • {subsubitem.name}
-                                      </Link>
-                                    </li>
-                                  ))}
-                                </ul>
-                              )}
-                            </div>
+                                {/* Submenu Nível 3 */}
+                                {expandedSubmodules.has(subitem.id) && (
+                                  <ul className="mt-1 ml-0 space-y-0.5 pl-6">
+                                    {subitem.submenu.map((subsubitem, idx) => (
+                                      <li key={idx}>
+                                        <Link
+                                          href={subsubitem.href}
+                                          className={`block px-3 py-2 rounded-lg text-sm transition-all duration-200 text-left ${
+                                            isActive(subsubitem.href)
+                                              ? 'bg-primary-500 text-white font-semibold shadow-md'
+                                              : 'text-secondary-400 hover:bg-secondary-700 hover:text-white'
+                                          }`}
+                                        >
+                                          • {subsubitem.name}
+                                        </Link>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </div>
+                            ) : (
+                              /* Se subitem não tem submenu, é um link direto (nível 2 final) */
+                              <Link
+                                href={subitem.href}
+                                className={`block px-3 py-2.5 rounded-lg text-base font-bold transition-all duration-200 text-left ${
+                                  isActive(subitem.href)
+                                    ? 'bg-primary-500 text-white shadow-md'
+                                    : 'text-secondary-300 hover:bg-secondary-700 hover:text-white'
+                                }`}
+                              >
+                                {subitem.name}
+                              </Link>
+                            )}
                           </li>
                         ))}
                       </ul>
