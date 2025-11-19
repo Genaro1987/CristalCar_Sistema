@@ -208,22 +208,25 @@ export default function Sidebar() {
   const isActive = (href) => pathname === href;
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-80 bg-gradient-to-b from-secondary-800 to-secondary-900 text-white shadow-xl flex flex-col">
+    <aside className="fixed left-0 top-0 h-screen w-80 bg-gradient-to-br from-secondary-900 via-secondary-800 to-secondary-900 text-white shadow-2xl flex flex-col border-r border-secondary-700/50">
       {/* Logo */}
-      <div className="flex-shrink-0 pt-2 pb-4 border-b border-secondary-700">
+      <div className="flex-shrink-0 pt-4 pb-4 border-b border-primary-500/20 bg-gradient-to-r from-transparent via-primary-500/5 to-transparent">
         <div className="flex flex-col items-center">
           <div className="w-56 h-20 flex items-center justify-center">
-            {empresa?.logo_path ? (
+            {empresa?.logo_url ? (
               <img
-                src={empresa.logo_path}
+                src={empresa.logo_url}
                 alt="Logo empresa"
-                className="max-w-full max-h-full object-contain"
+                className="max-w-full max-h-full object-contain drop-shadow-lg"
                 style={{ margin: 0, padding: 0 }}
               />
             ) : (
-              <span className="text-6xl font-bold text-white">
-                {(empresa?.nome_fantasia || 'ERP').substring(0, 2).toUpperCase()}
-              </span>
+              <div className="relative">
+                <div className="absolute inset-0 bg-primary-500 blur-xl opacity-30 rounded-full"></div>
+                <span className="relative text-6xl font-bold bg-gradient-to-br from-primary-400 to-primary-600 bg-clip-text text-transparent">
+                  {(empresa?.nome_fantasia || 'ERP').substring(0, 2).toUpperCase()}
+                </span>
+              </div>
             )}
           </div>
         </div>
@@ -238,28 +241,32 @@ export default function Sidebar() {
                 {item.submenu.length === 0 ? (
                   <Link
                     href={item.href}
-                    className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                    className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
                       isActive(item.href)
-                        ? 'bg-primary-500 text-white shadow-lg'
-                        : 'hover:bg-secondary-700 text-secondary-300 hover:text-white'
+                        ? 'bg-gradient-to-r from-primary-600 to-primary-500 text-white shadow-lg shadow-primary-500/30'
+                        : 'hover:bg-secondary-700/70 text-secondary-300 hover:text-white hover:shadow-md'
                     }`}
                   >
-                    <span className="text-2xl">{item.icon}</span>
+                    <span className="text-2xl transition-transform duration-200 group-hover:scale-110">{item.icon}</span>
                     <span className="font-medium text-lg">{item.name}</span>
                   </Link>
                 ) : (
                   <>
                     <button
                       onClick={() => toggleModule(item.id)}
-                      className="w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 hover:bg-secondary-700 text-secondary-300 hover:text-white"
+                      className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group ${
+                        expandedModule === item.id
+                          ? 'bg-secondary-700/70 text-white shadow-md'
+                          : 'hover:bg-secondary-700/50 text-secondary-300 hover:text-white'
+                      }`}
                     >
                       <div className="flex items-center space-x-3">
-                        <span className="text-2xl">{item.icon}</span>
+                        <span className="text-2xl transition-transform duration-200 group-hover:scale-110">{item.icon}</span>
                         <span className="font-medium text-lg">{item.name}</span>
                       </div>
                       <svg
                         className={`w-4 h-4 transition-transform duration-200 ${
-                          expandedModule === item.id ? 'rotate-180' : ''
+                          expandedModule === item.id ? 'rotate-180 text-primary-400' : ''
                         }`}
                         fill="none"
                         stroke="currentColor"
@@ -301,13 +308,14 @@ export default function Sidebar() {
                                       <li key={idx}>
                                         <Link
                                           href={subsubitem.href}
-                                          className={`block px-3 py-2 rounded-lg text-sm transition-all duration-200 text-left ${
+                                          className={`block px-3 py-2 rounded-lg text-sm transition-all duration-200 text-left group ${
                                             isActive(subsubitem.href)
-                                              ? 'bg-primary-500 text-white font-semibold shadow-md'
-                                              : 'text-secondary-400 hover:bg-secondary-700 hover:text-white'
+                                              ? 'bg-gradient-to-r from-primary-600 to-primary-500 text-white font-semibold shadow-md shadow-primary-500/20 border-l-2 border-primary-300'
+                                              : 'text-secondary-400 hover:bg-secondary-700/60 hover:text-white hover:border-l-2 hover:border-primary-500/50'
                                           }`}
                                         >
-                                          • {subsubitem.name}
+                                          <span className={`inline-block mr-1 transition-transform duration-200 ${isActive(subsubitem.href) ? 'text-primary-200' : 'group-hover:translate-x-0.5'}`}>•</span>
+                                          {subsubitem.name}
                                         </Link>
                                       </li>
                                     ))}
@@ -318,10 +326,10 @@ export default function Sidebar() {
                               /* Se subitem não tem submenu, é um link direto (nível 2 final) */
                               <Link
                                 href={subitem.href}
-                                className={`block px-3 py-2.5 rounded-lg text-base font-bold transition-all duration-200 text-left ${
+                                className={`block px-3 py-2.5 rounded-lg text-base font-bold transition-all duration-200 text-left group ${
                                   isActive(subitem.href)
-                                    ? 'bg-primary-500 text-white shadow-md'
-                                    : 'text-secondary-300 hover:bg-secondary-700 hover:text-white'
+                                    ? 'bg-gradient-to-r from-primary-600 to-primary-500 text-white shadow-md shadow-primary-500/20'
+                                    : 'text-secondary-300 hover:bg-secondary-700/60 hover:text-white'
                                 }`}
                               >
                                 {subitem.name}

@@ -86,9 +86,25 @@ export default function HomePage() {
           {carregando ? (
             <div className="flex items-center justify-center py-12 text-gray-500">Carregando empresas...</div>
           ) : empresas.length === 0 ? (
-            <div className="text-center py-10">
-              <p className="text-gray-600">Nenhuma empresa cadastrada ainda.</p>
-              <p className="text-sm text-gray-500 mt-2">Cadastre uma empresa para continuar.</p>
+            <div className="text-center py-10 space-y-4">
+              <div className="flex justify-center mb-4">
+                <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center">
+                  <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                </div>
+              </div>
+              <p className="text-lg font-semibold text-gray-900">Nenhuma empresa cadastrada</p>
+              <p className="text-sm text-gray-500 max-w-md mx-auto">Para começar a usar o sistema, você precisa cadastrar sua primeira empresa.</p>
+              <button
+                onClick={() => router.push('/modules/administrativo/empresa')}
+                className="mt-4 inline-flex items-center px-6 py-3 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-all duration-200 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Cadastrar Primeira Empresa
+              </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -133,15 +149,27 @@ export default function HomePage() {
           )}
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <p className="text-sm text-gray-500">
-              A empresa selecionada será usada em todas as telas do sistema.
-            </p>
+            <div className="flex-1 flex items-center justify-between">
+              <p className="text-sm text-gray-500">
+                A empresa selecionada será usada em todas as telas do sistema.
+              </p>
+              <button
+                onClick={() => router.push('/modules/administrativo/empresa')}
+                className="text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors flex items-center gap-1"
+                title="Cadastrar nova empresa"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Nova empresa
+              </button>
+            </div>
             <button
               onClick={prosseguir}
               disabled={!empresaSelecionada}
               className={`px-5 py-2 rounded-lg text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 ${
                 empresaSelecionada
-                  ? "bg-primary-600 text-white hover:bg-primary-700"
+                  ? "bg-primary-600 text-white hover:bg-primary-700 shadow-md hover:shadow-lg"
                   : "bg-gray-200 text-gray-500 cursor-not-allowed"
               }`}
             >

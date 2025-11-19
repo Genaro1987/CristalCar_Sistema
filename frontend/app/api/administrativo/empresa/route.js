@@ -90,8 +90,8 @@ export async function GET(request) {
     if (listarTodas) {
       const empresas = data.map(emp => ({
         ...emp,
-        logo_path: emp.logo_path || emp.logo_url || null,
-        site: emp.site || emp.website || null,
+        logo_url: emp.logo_url || null,
+        website: emp.website || null,
         padrao: !!emp.padrao,
       }))
       return Response.json(empresas)
@@ -100,8 +100,8 @@ export async function GET(request) {
     const empresa = data[0]
     return Response.json({
       ...empresa,
-      logo_path: empresa.logo_path || empresa.logo_url || null,
-      site: empresa.site || empresa.website || null,
+      logo_url: empresa.logo_url || null,
+      website: empresa.website || null,
       padrao: !!empresa.padrao,
     })
   } catch (error) {
@@ -125,16 +125,14 @@ export async function POST(request) {
     const payload = {
       razao_social: normalizedData.razao_social,
       nome_fantasia: normalizedData.nome_fantasia || null,
-      cnpj: normalizedData.cnpj || normalizedData.cpf_cnpj || null,
-      cpf_cnpj: normalizedData.cpf_cnpj || normalizedData.cnpj || null,
+      cnpj: normalizedData.cnpj || null,
       inscricao_estadual: normalizedData.inscricao_estadual || null,
       inscricao_municipal: normalizedData.inscricao_municipal || null,
       regime_tributario: normalizedData.regime_tributario || 'SIMPLES_NACIONAL',
       telefone: normalizedData.telefone || null,
       celular: normalizedData.celular || null,
       email: normalizedData.email || null,
-      website: normalizedData.website || normalizedData.site || null,
-      site: normalizedData.site || normalizedData.website || null,
+      website: normalizedData.website || null,
       endereco: normalizedData.endereco || null,
       numero: normalizedData.numero || null,
       complemento: normalizedData.complemento || null,
@@ -142,8 +140,7 @@ export async function POST(request) {
       cidade: normalizedData.cidade || null,
       estado: normalizedData.estado || null,
       cep: normalizedData.cep || null,
-      logo_path: normalizedData.logo_path || normalizedData.logo_url || null,
-      logo_url: normalizedData.logo_url || normalizedData.logo_path || null,
+      logo_url: normalizedData.logo_url || null,
       observacoes: normalizedData.observacoes || null,
       padrao: normalizedData.padrao,
       atualizado_em: new Date().toISOString(),
