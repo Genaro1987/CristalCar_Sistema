@@ -1,238 +1,183 @@
-import { createClient } from '@libsql/client';
-import { normalizarTexto } from '@/lib/text-utils';
-import { serializeRows, serializeValue } from '@/lib/db-utils';
+import { getSupabaseClient, isSupabaseConfigured, getSupabaseErrorMessage } from '@/lib/supabase'
+import { normalizarTexto } from '@/lib/text-utils'
 
-export const dynamic = 'force-dynamic';
-
-const turso = createClient({
-  url: process.env.TURSO_DATABASE_URL,
-  authToken: process.env.TURSO_AUTH_TOKEN,
-});
-
-async function garantirTabelaProdutos() {
-  await turso.execute(`
-    CREATE TABLE IF NOT EXISTS adm_produtos (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      codigo VARCHAR(20) UNIQUE NOT NULL,
-      nome VARCHAR(200) NOT NULL,
-      unidade_medida VARCHAR(20),
-      local_estoque VARCHAR(100),
-      tipo VARCHAR(20) DEFAULT 'PRODUTO',
-      finalidade VARCHAR(20) DEFAULT 'AMBOS',
-      foto_path VARCHAR(500),
-      qtd_minima_estoque DECIMAL(10,2) DEFAULT 0,
-      empresa_id INTEGER,
-      status VARCHAR(20) DEFAULT 'ATIVO',
-      criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
-      atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (empresa_id) REFERENCES adm_empresa(id)
-    )
-  `);
-
-  // Migração: garantir empresa_id
-  try {
-    const tableInfo = await turso.execute('PRAGMA table_info(adm_produtos)');
-    const colunas = tableInfo.rows?.map(row => row.name) || [];
-
-    if (!colunas.includes('empresa_id')) {
-      await turso.execute('ALTER TABLE adm_produtos ADD COLUMN empresa_id INTEGER');
-    }
-  } catch (error) {
-    console.log('Migração produtos:', error.message);
-  }
-}
+export const dynamic = 'force-dynamic'
 
 export async function GET(request) {
   try {
-    await garantirTabelaProdutos();
+    if (!isSupabaseConfigured()) {
+      return Response.json(getSupabaseErrorMessage(), { status: 500 })
+    }
 
-    const { searchParams } = new URL(request.url);
-    const empresaId = searchParams.get('empresa_id');
-    const tipo = searchParams.get('tipo');
-    const finalidade = searchParams.get('finalidade');
-    const status = searchParams.get('status');
+    const supabase = getSupabaseClient()
+    const { searchParams } = new URL(request.url)
+    const empresaId = searchParams.get('empresa_id')
+    const tipo = searchParams.get('tipo')
+    const finalidade = searchParams.get('finalidade')
+    const status = searchParams.get('status')
 
-    let sql = 'SELECT * FROM adm_produtos WHERE 1=1';
-    const args = [];
+    let query = supabase
+      .from('adm_produtos')
+      .select('*')
+      .order('nome', { ascending: true })
 
     if (empresaId) {
-      sql += ' AND (empresa_id = ? OR empresa_id IS NULL)';
-      args.push(Number(empresaId));
+      query = query.or(`empresa_id.eq.${empresaId},empresa_id.is.null`)
     }
 
     if (tipo) {
-      sql += ' AND tipo = ?';
-      args.push(tipo);
+      query = query.eq('tipo', tipo)
     }
 
     if (finalidade) {
-      sql += ' AND (finalidade = ? OR finalidade = "AMBOS")';
-      args.push(finalidade);
+      query = query.or(`finalidade.eq.${finalidade},finalidade.eq.AMBOS`)
     }
 
     if (status) {
-      sql += ' AND status = ?';
-      args.push(status);
+      query = query.eq('status', status)
     } else {
-      sql += ' AND status = ?';
-      args.push('ATIVO');
+      query = query.eq('status', 'ATIVO')
     }
 
-    sql += ' ORDER BY nome ASC';
+    const { data, error } = await query
 
-    const result = args.length > 0
-      ? await turso.execute({ sql, args })
-      : await turso.execute(sql);
+    if (error) throw error
 
-    return Response.json(serializeRows(result.rows));
+    return Response.json(data || [])
   } catch (error) {
-    console.error('Erro ao buscar produtos:', error);
-    return Response.json({ error: 'Erro ao buscar produtos' }, { status: 500 });
+    console.error('Erro ao buscar produtos:', error)
+    return Response.json({ error: 'Erro ao buscar produtos: ' + error.message }, { status: 500 })
   }
 }
 
 export async function POST(request) {
   try {
-    await garantirTabelaProdutos();
-    const data = await request.json();
-
-    if (!data.nome) {
-      return Response.json({ error: 'Nome é obrigatório' }, { status: 400 });
+    if (!isSupabaseConfigured()) {
+      return Response.json(getSupabaseErrorMessage(), { status: 500 })
     }
 
-    // Gerar código sequencial
-    let codigo = data.codigo;
-    if (!codigo) {
-      const ultimoCodigo = await turso.execute(`
-        SELECT codigo FROM adm_produtos
-        WHERE codigo LIKE 'PROD-%'
-        ORDER BY codigo DESC LIMIT 1
-      `);
+    const supabase = getSupabaseClient()
+    const data = await request.json()
 
-      if (ultimoCodigo.rows.length > 0) {
-        const ultimoNumero = parseInt(ultimoCodigo.rows[0].codigo.split('-')[1]) || 0;
-        codigo = `PROD-${String(ultimoNumero + 1).padStart(4, '0')}`;
+    if (!data.nome) {
+      return Response.json({ error: 'Nome é obrigatório' }, { status: 400 })
+    }
+
+    // Gerar código sequencial se não fornecido
+    let codigo = data.codigo
+    if (!codigo) {
+      const { data: ultimoCodigo } = await supabase
+        .from('adm_produtos')
+        .select('codigo')
+        .like('codigo', 'PROD-%')
+        .order('codigo', { ascending: false })
+        .limit(1)
+
+      if (ultimoCodigo && ultimoCodigo.length > 0) {
+        const ultimoNumero = parseInt(ultimoCodigo[0].codigo.split('-')[1]) || 0
+        codigo = `PROD-${String(ultimoNumero + 1).padStart(4, '0')}`
       } else {
-        codigo = 'PROD-0001';
+        codigo = 'PROD-0001'
       }
     }
 
-    codigo = normalizarTexto(codigo);
-    const nome = normalizarTexto(data.nome);
-
-    const result = await turso.execute({
-      sql: `INSERT INTO adm_produtos
-            (codigo, nome, unidade_medida, local_estoque, tipo, finalidade, foto_path, qtd_minima_estoque, empresa_id, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      args: [
-        codigo,
-        nome,
-        data.unidade_medida || null,
-        data.local_estoque || null,
-        data.tipo || 'PRODUTO',
-        data.finalidade || 'AMBOS',
-        data.foto_path || null,
-        data.qtd_minima_estoque || 0,
-        data.empresa_id || null,
-        data.status || 'ATIVO'
-      ]
-    });
-
-    return Response.json({
-      success: true,
-      id: serializeValue(result.lastInsertRowid),
-      codigo: codigo
-    });
-  } catch (error) {
-    if (error.message?.includes('UNIQUE')) {
-      return Response.json({ error: 'Já existe um produto com este código' }, { status: 400 });
+    const payload = {
+      codigo: normalizarTexto(codigo),
+      nome: normalizarTexto(data.nome),
+      unidade_medida: data.unidade_medida || null,
+      local_estoque: data.local_estoque || null,
+      tipo: data.tipo || 'PRODUTO',
+      finalidade: data.finalidade || 'AMBOS',
+      foto_path: data.foto_path || null,
+      qtd_minima_estoque: data.qtd_minima_estoque || 0,
+      empresa_id: data.empresa_id || null,
+      status: data.status || 'ATIVO',
     }
-    console.error('Erro ao criar produto:', error);
-    return Response.json({ error: 'Erro ao criar produto: ' + error.message }, { status: 500 });
+
+    const { data: inserted, error } = await supabase
+      .from('adm_produtos')
+      .insert(payload)
+      .select('id, codigo')
+      .single()
+
+    if (error) {
+      if (error.message?.includes('duplicate') || error.code === '23505') {
+        return Response.json({ error: 'Já existe um produto com este código' }, { status: 400 })
+      }
+      throw error
+    }
+
+    return Response.json({ success: true, id: inserted.id, codigo: inserted.codigo })
+  } catch (error) {
+    console.error('Erro ao criar produto:', error)
+    return Response.json({ error: 'Erro ao criar produto: ' + error.message }, { status: 500 })
   }
 }
 
 export async function PUT(request) {
   try {
-    await garantirTabelaProdutos();
-    const data = await request.json();
+    if (!isSupabaseConfigured()) {
+      return Response.json(getSupabaseErrorMessage(), { status: 500 })
+    }
+
+    const supabase = getSupabaseClient()
+    const data = await request.json()
 
     if (!data.id) {
-      return Response.json({ error: 'ID não fornecido' }, { status: 400 });
+      return Response.json({ error: 'ID não fornecido' }, { status: 400 })
     }
 
-    const nome = data.nome ? normalizarTexto(data.nome) : undefined;
-
-    const updates = [];
-    const args = [];
-
-    if (nome) {
-      updates.push('nome = ?');
-      args.push(nome);
-    }
-    if (data.unidade_medida !== undefined) {
-      updates.push('unidade_medida = ?');
-      args.push(data.unidade_medida);
-    }
-    if (data.local_estoque !== undefined) {
-      updates.push('local_estoque = ?');
-      args.push(data.local_estoque);
-    }
-    if (data.tipo) {
-      updates.push('tipo = ?');
-      args.push(data.tipo);
-    }
-    if (data.finalidade) {
-      updates.push('finalidade = ?');
-      args.push(data.finalidade);
-    }
-    if (data.foto_path !== undefined) {
-      updates.push('foto_path = ?');
-      args.push(data.foto_path);
-    }
-    if (data.qtd_minima_estoque !== undefined) {
-      updates.push('qtd_minima_estoque = ?');
-      args.push(data.qtd_minima_estoque);
-    }
-    if (data.status) {
-      updates.push('status = ?');
-      args.push(data.status);
+    const payload = {
+      atualizado_em: new Date().toISOString(),
     }
 
-    updates.push('atualizado_em = CURRENT_TIMESTAMP');
-    args.push(data.id);
+    if (data.nome) payload.nome = normalizarTexto(data.nome)
+    if (data.unidade_medida !== undefined) payload.unidade_medida = data.unidade_medida
+    if (data.local_estoque !== undefined) payload.local_estoque = data.local_estoque
+    if (data.tipo) payload.tipo = data.tipo
+    if (data.finalidade) payload.finalidade = data.finalidade
+    if (data.foto_path !== undefined) payload.foto_path = data.foto_path
+    if (data.qtd_minima_estoque !== undefined) payload.qtd_minima_estoque = data.qtd_minima_estoque
+    if (data.status) payload.status = data.status
 
-    await turso.execute({
-      sql: `UPDATE adm_produtos SET ${updates.join(', ')} WHERE id = ?`,
-      args
-    });
+    const { error } = await supabase
+      .from('adm_produtos')
+      .update(payload)
+      .eq('id', data.id)
 
-    return Response.json({ success: true });
+    if (error) throw error
+
+    return Response.json({ success: true })
   } catch (error) {
-    console.error('Erro ao atualizar produto:', error);
-    return Response.json({ error: 'Erro ao atualizar produto: ' + error.message }, { status: 500 });
+    console.error('Erro ao atualizar produto:', error)
+    return Response.json({ error: 'Erro ao atualizar produto: ' + error.message }, { status: 500 })
   }
 }
 
 export async function DELETE(request) {
   try {
-    await garantirTabelaProdutos();
-
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
-
-    if (!id) {
-      return Response.json({ error: 'ID não fornecido' }, { status: 400 });
+    if (!isSupabaseConfigured()) {
+      return Response.json(getSupabaseErrorMessage(), { status: 500 })
     }
 
-    await turso.execute({
-      sql: 'DELETE FROM adm_produtos WHERE id = ?',
-      args: [id]
-    });
+    const supabase = getSupabaseClient()
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
 
-    return Response.json({ success: true });
+    if (!id) {
+      return Response.json({ error: 'ID não fornecido' }, { status: 400 })
+    }
+
+    const { error } = await supabase
+      .from('adm_produtos')
+      .delete()
+      .eq('id', id)
+
+    if (error) throw error
+
+    return Response.json({ success: true })
   } catch (error) {
-    console.error('Erro ao excluir produto:', error);
-    return Response.json({ error: 'Erro ao excluir produto: ' + error.message }, { status: 500 });
+    console.error('Erro ao excluir produto:', error)
+    return Response.json({ error: 'Erro ao excluir produto: ' + error.message }, { status: 500 })
   }
 }
